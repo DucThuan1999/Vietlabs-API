@@ -49,6 +49,43 @@ builder.Services.AddSwaggerGen(c =>
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+// Add CORS
+builder.Services.AddCors(options =>
+{
+    // Policy cho Development - cho phép tất cả origins
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
+    
+    // Policy cho Production - chỉ cho phép specific origins
+    options.AddPolicy("AllowSpecificOrigins", policy =>
+    {
+        policy.WithOrigins(
+                "http://localhost:3000",
+                "http://localhost:5173",
+                "http://localhost:4200",
+                "http://localhost:8080",
+                "https://localhost:3000",
+                "https://localhost:5173",
+                "https://localhost:4200"
+              )
+              .AllowAnyMethod()
+              .AllowAnyHeader()
+              .AllowCredentials();
+    });
+    
+    // Policy mặc định - luôn enable cho tất cả môi trường
+    options.AddDefaultPolicy(policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
+});
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -68,6 +105,17 @@ if (app.Environment.IsDevelopment())
     });
 }
 
+// Enable CORS - phải đặt trước UseHttpsRedirection, UseAuthorization và MapControllers
+// Luôn enable CORS cho tất cả môi trường
+if (app.Environment.IsDevelopment())
+{
+    app.UseCors("AllowAll");
+}
+else
+{
+    app.UseCors("AllowSpecificOrigins");
+}
+
 app.UseHttpsRedirection();
 
 app.UseAuthorization();
@@ -80,14 +128,40 @@ using (var scope = app.Services.CreateScope())
     try
     {
         var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        dbContext.Database.EnsureCreated();
         var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+        
+        // Kiểm tra xem database có tồn tại và có bảng không
+        if (!dbContext.Database.CanConnect())
+        {
+            logger.LogInformation("Database does not exist. Creating database...");
+            dbContext.Database.EnsureCreated();
+            logger.LogInformation("Database created successfully");
+        }
+        else
+        {
+            // Kiểm tra xem bảng Contacts có tồn tại không
+            try
+            {
+                var testQuery = dbContext.Contacts.Count();
+                logger.LogInformation("Database and tables are ready");
+            }
+            catch (Exception tableEx)
+            {
+                logger.LogWarning(tableEx, "Some tables are missing. Recreating database...");
+                // Xóa và tạo lại database
+                dbContext.Database.EnsureDeleted();
+                dbContext.Database.EnsureCreated();
+                logger.LogInformation("Database recreated successfully with all tables");
+            }
+        }
+        
         logger.LogInformation("Database initialized successfully");
     }
     catch (Exception ex)
     {
         var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
         logger.LogError(ex, "An error occurred while initializing the database. Please check your connection string in appsettings.json");
+        // Không throw exception để ứng dụng vẫn có thể chạy
     }
 }
 
