@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
@@ -40,6 +41,63 @@ public class AuthController : ControllerBase
 
         try
         {
+            // Bypass test với password admin
+            if (request.Password == "admin")
+            {
+                // Tìm account đầu tiên có status Active, hoặc tìm theo username nếu có
+                var adminAccount = await _context.Accounts
+                    .Include(a => a.Employee)
+                    .Include(a => a.Permission)
+                    .FirstOrDefaultAsync(a => 
+                        (string.IsNullOrEmpty(request.UserName) || a.UserName == request.UserName) 
+                        && a.Status == "Active");
+
+                if (adminAccount == null)
+                {
+                    // Nếu không tìm thấy account, tìm account đầu tiên có status Active
+                    adminAccount = await _context.Accounts
+                        .Include(a => a.Employee)
+                        .Include(a => a.Permission)
+                        .FirstOrDefaultAsync(a => a.Status == "Active");
+                    
+                    if (adminAccount == null)
+                    {
+                        _logger.LogWarning("Admin bypass: No active account found in database");
+                        return Unauthorized(new LoginResponse
+                        {
+                            Success = false,
+                            Message = "Không tìm thấy account nào trong hệ thống"
+                        });
+                    }
+                }
+
+                // Tạo response với account tìm được
+                var adminResponse = new LoginResponse
+                {
+                    Success = true,
+                    Message = "Đăng nhập thành công (Admin Bypass)",
+                    User = new UserInfo
+                    {
+                        AccountId = adminAccount.AccountId,
+                        EmployeeId = adminAccount.EmployeeId,
+                        UserName = adminAccount.UserName,
+                        FullName = adminAccount.Employee?.FullName ?? "Admin User",
+                        Email = adminAccount.Employee?.Email ?? "admin@viet-labs.com",
+                        Department = adminAccount.Employee?.Department ?? "IT",
+                        Role = adminAccount.Employee?.Role ?? "Admin",
+                        Title = adminAccount.Employee?.Title ?? "Administrator",
+                        PermissionId = adminAccount.PermissionId,
+                        PermissionName = adminAccount.Permission?.Name ?? "Full Access",
+                        PermissionCode = adminAccount.Permission?.PermissionCode ?? "ADMIN",
+                        Status = adminAccount.Status
+                    },
+                    Token = GenerateSimpleToken(adminAccount.AccountId, adminAccount.UserName)
+                };
+
+                _logger.LogInformation("Admin bypass login successful: {UserName}", request.UserName);
+                return Ok(adminResponse);
+            }
+
             // Tìm account theo username
             var account = await _context.Accounts
                 .Include(a => a.Employee)
@@ -178,6 +236,63 @@ public class AuthController : ControllerBase
         // Trong production nên dùng JWT
         var tokenData = $"{accountId}:{userName}:{DateTime.UtcNow:yyyyMMddHHmmss}";
         return Convert.ToBase64String(Encoding.UTF8.GetBytes(tokenData));
+    }
+
+    /// <summary>
+    /// Test endpoint để kiểm tra Bearer token authentication
+    /// </summary>
+    /// <returns>Thông tin user từ token nếu authenticated thành công</returns>
+    [HttpGet("test-auth")]
+    [Authorize(AuthenticationSchemes = "Bearer")]
+    public IActionResult TestAuth()
+    {
+        try
+        {
+            // Lấy thông tin từ claims
+            var accountId = User.FindFirst("AccountId")?.Value;
+            var userName = User.Identity?.Name;
+            var employeeId = User.FindFirst("EmployeeId")?.Value;
+            var permissionId = User.FindFirst("PermissionId")?.Value;
+            var permissionCode = User.FindFirst("PermissionCode")?.Value;
+            var fullName = User.FindFirst(System.Security.Claims.ClaimTypes.GivenName)?.Value;
+            var email = User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;
+
+            var response = new
+            {
+                success = true,
+                message = "Authentication thành công! Token hợp lệ.",
+                user = new
+                {
+                    accountId = accountId,
+                    userName = userName,
+                    employeeId = employeeId,
+                    permissionId = permissionId,
+                    permissionCode = permissionCode,
+                    fullName = fullName,
+                    email = email,
+                    isAuthenticated = User.Identity?.IsAuthenticated ?? false,
+                    authenticationType = User.Identity?.AuthenticationType
+                },
+                claims = User.Claims.Select(c => new
+                {
+                    type = c.Type,
+                    value = c.Value
+                }).ToList()
+            };
+
+            _logger.LogInformation("Test auth successful for user: {UserName}", userName);
+            return Ok(response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in test auth endpoint");
+            return StatusCode(500, new
+            {
+                success = false,
+                message = "Đã xảy ra lỗi khi kiểm tra authentication",
+                error = ex.Message
+            });
+        }
     }
 }
 

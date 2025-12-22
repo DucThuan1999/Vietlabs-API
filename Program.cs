@@ -1,11 +1,46 @@
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.OData;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OData.Edm;
 using Microsoft.OData.ModelBuilder;
 using VietLab.Data;
+using VietLab.Middleware;
 using VietLab.Models;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Cấu hình base path cho IIS sub application
+// Trong Development, không dùng base path. Chỉ dùng khi deploy lên IIS
+var basePath = Environment.GetEnvironmentVariable("ASPNETCORE_BASEPATH");
+if (string.IsNullOrEmpty(basePath))
+{
+    // Chỉ đọc từ appsettings.json nếu không phải Development
+    var environment = builder.Environment.EnvironmentName;
+    if (environment != "Development")
+    {
+        basePath = builder.Configuration["BasePath"] ?? "/crm-api";
+    }
+    else
+    {
+        basePath = ""; // Không dùng base path trong Development
+    }
+}
+
+if (!string.IsNullOrEmpty(basePath))
+{
+    if (!basePath.StartsWith("/"))
+    {
+        basePath = "/" + basePath;
+    }
+    if (basePath.EndsWith("/"))
+    {
+        basePath = basePath.TrimEnd('/');
+    }
+}
+else
+{
+    basePath = ""; // Empty string cho Development
+}
 
 // Add services to the container.
 builder.Services.AddControllers()
@@ -33,6 +68,41 @@ builder.Services.AddSwaggerGen(c =>
         }
     });
 
+    // Cấu hình base path cho Swagger khi deploy trên IIS sub application
+    if (!string.IsNullOrEmpty(basePath) && basePath != "/")
+    {
+        c.AddServer(new Microsoft.OpenApi.Models.OpenApiServer
+        {
+            Url = basePath,
+            Description = "IIS Sub Application Base Path"
+        });
+    }
+
+    // Cấu hình Bearer Token Authentication cho Swagger
+    c.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+    {
+        Description = "JWT Authorization header using the Bearer scheme. Enter 'Bearer' [space] and then your token in the text input below.",
+        Name = "Authorization",
+        In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+        Type = Microsoft.OpenApi.Models.SecuritySchemeType.ApiKey,
+        Scheme = "Bearer"
+    });
+
+    c.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
+    {
+        {
+            new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+            {
+                Reference = new Microsoft.OpenApi.Models.OpenApiReference
+                {
+                    Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
+
     // Giải quyết xung đột route OData (Swagger không hiểu template "()")
     c.ResolveConflictingActions(apiDescriptions => apiDescriptions.First());
 
@@ -48,6 +118,18 @@ builder.Services.AddSwaggerGen(c =>
 // Add Entity Framework
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// Add Authentication
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = "Bearer";
+    options.DefaultChallengeScheme = "Bearer";
+    options.DefaultScheme = "Bearer";
+})
+.AddScheme<AuthenticationSchemeOptions, TokenAuthenticationHandler>("Bearer", options => { });
+
+// Add Authorization
+builder.Services.AddAuthorization();
 
 // Add CORS
 builder.Services.AddCors(options =>
@@ -88,23 +170,57 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+// Log base path để debug
+var startupLogger = app.Services.GetRequiredService<ILogger<Program>>();
+startupLogger.LogInformation("Base Path configured: {BasePath}", basePath);
+
+// Cấu hình base path middleware cho IIS sub application
+// Lưu ý: Với IIS sub application, IIS có thể đã tự động xử lý base path
+// Chỉ enable UsePathBase khi có base path và không phải Development
+var usePathBaseMiddleware = builder.Configuration.GetValue<bool>("UsePathBaseMiddleware", false);
+if (usePathBaseMiddleware && !string.IsNullOrEmpty(basePath) && basePath != "/")
 {
-    app.UseSwagger();
-    app.UseSwaggerUI(c =>
-    {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "VietLab CRM API v1");
-        c.RoutePrefix = "swagger";
-        c.DisplayRequestDuration();
-        c.EnableDeepLinking();
-        c.EnableFilter();
-        c.ShowExtensions();
-        c.EnableValidator();
-        c.DocExpansion(Swashbuckle.AspNetCore.SwaggerUI.DocExpansion.List);
-    });
+    app.UsePathBase(new PathString(basePath));
+    startupLogger.LogInformation("PathBase middleware enabled with: {BasePath}", basePath);
+}
+else
+{
+    startupLogger.LogInformation("PathBase middleware disabled. BasePath: {BasePath}", basePath ?? "empty");
 }
 
+// Configure the HTTP request pipeline.
+app.UseSwagger(c =>
+{
+    c.RouteTemplate = "swagger/{documentName}/swagger.json";
+    if (!string.IsNullOrEmpty(basePath) && basePath != "/")
+    {
+        c.PreSerializeFilters.Add((swaggerDoc, httpReq) =>
+        {
+            swaggerDoc.Servers = new List<Microsoft.OpenApi.Models.OpenApiServer>
+            {
+                new Microsoft.OpenApi.Models.OpenApiServer
+                {
+                    Url = $"{httpReq.Scheme}://{httpReq.Host.Value}{basePath}"
+                }
+            };
+        });
+    }
+});
+
+app.UseSwaggerUI(c =>
+{
+    // SwaggerEndpoint là relative path từ RoutePrefix
+    // Vì RoutePrefix = "swagger", nên endpoint chỉ cần "v1/swagger.json"
+    // Hoặc có thể dùng absolute path "/swagger/v1/swagger.json"
+    c.SwaggerEndpoint("v1/swagger.json", "VietLab CRM API v1");
+    c.RoutePrefix = "swagger";
+    c.DisplayRequestDuration();
+    c.EnableDeepLinking();
+    c.EnableFilter();
+    c.ShowExtensions();
+    c.EnableValidator();
+    c.DocExpansion(Swashbuckle.AspNetCore.SwaggerUI.DocExpansion.List);
+});
 // Enable CORS - phải đặt trước UseHttpsRedirection, UseAuthorization và MapControllers
 // Luôn enable CORS cho tất cả môi trường
 if (app.Environment.IsDevelopment())
@@ -118,6 +234,8 @@ else
 
 app.UseHttpsRedirection();
 
+// Authentication & Authorization middleware
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
