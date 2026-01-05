@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.OData.Edm;
 using Microsoft.OData.ModelBuilder;
 using VietLab.Data;
+using VietLab.Filters;
 using VietLab.Middleware;
 using VietLab.Models;
 
@@ -44,13 +45,33 @@ else
 
 // Add services to the container.
 builder.Services.AddControllers()
-    .AddOData(options => options
-        .Select()
-        .Filter()
-        .OrderBy()
-        .SetMaxTop(100)
-        .Count()
-        .AddRouteComponents("odata", GetEdmModel()));
+    .AddJsonOptions(options =>
+    {
+        // Convert tất cả property names sang camelCase cho frontend
+        options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
+        // Giữ nguyên tên dictionary keys
+        options.JsonSerializerOptions.DictionaryKeyPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
+        // Format enum sang string (camelCase)
+        options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter(System.Text.Json.JsonNamingPolicy.CamelCase));
+    })
+    .AddOData(options =>
+    {
+        options.Select()
+               .Filter()
+               .OrderBy()
+               .SetMaxTop(100)
+               .Count();
+        
+        // Cấu hình OData route options
+        // OData yêu cầu ít nhất một trong hai tùy chọn phải được bật
+        options.RouteOptions.EnableKeyInParenthesis = true;  // Cho phép /Clients(123)
+        options.RouteOptions.EnableKeyAsSegment = false;   // Không dùng /Clients/123
+        options.RouteOptions.EnableControllerNameCaseInsensitive = true;
+        
+        // Sử dụng EDM model
+        // OData sẽ tự động sử dụng JsonSerializerOptions từ AddJsonOptions ở trên
+        options.AddRouteComponents("odata", GetEdmModel());
+    });
 
 // Configure Swagger/OpenAPI
 builder.Services.AddEndpointsApiExplorer();
@@ -67,6 +88,16 @@ builder.Services.AddSwaggerGen(c =>
             Email = "admin@viet-labs.com"
         }
     });
+
+    // Cấu hình Swagger sử dụng camelCase cho schema (để khớp với JSON response)
+    c.UseInlineDefinitionsForEnums();
+    
+    // Schema Filter để convert property names sang camelCase
+    c.SchemaFilter<CamelCaseSchemaFilter>();
+    
+    // Sử dụng System.Text.Json naming policy cho Swagger schema
+    c.UseAllOfToExtendReferenceSchemas();
+    c.SupportNonNullableReferenceTypes();
 
     // Cấu hình base path cho Swagger khi deploy trên IIS sub application
     if (!string.IsNullOrEmpty(basePath) && basePath != "/")
@@ -234,6 +265,10 @@ else
 
 app.UseHttpsRedirection();
 
+// CamelCase middleware cho OData - đảm bảo OData response là camelCase
+// Tạm thời disable để test - OData có thể đã tự động sử dụng JsonSerializerOptions
+// app.UseMiddleware<CamelCaseODataMiddleware>();
+
 // Authentication & Authorization middleware
 app.UseAuthentication();
 app.UseAuthorization();
@@ -288,6 +323,7 @@ app.Run();
 static IEdmModel GetEdmModel()
 {
     var builder = new ODataConventionModelBuilder();
+    
     builder.EntitySet<Client>("Clients");
     builder.EntitySet<Contact>("Contacts");
     builder.EntitySet<Employee>("Employees");
@@ -295,6 +331,12 @@ static IEdmModel GetEdmModel()
     builder.EntitySet<Department>("Departments");
     builder.EntitySet<Account>("Accounts");
     builder.EntitySet<Permission>("Permissions");
+    builder.EntitySet<SampleMatrixGroup>("SampleMatrixGroups");
+    builder.EntitySet<SampleMatrix>("SampleMatrices");
+    builder.EntitySet<EquipmentType>("EquipmentTypes");
+    builder.EntitySet<AnalysisGroup>("AnalysisGroups");
+    builder.EntitySet<AnalysisItem>("AnalysisItems");
+    
     return builder.GetEdmModel();
 }
 

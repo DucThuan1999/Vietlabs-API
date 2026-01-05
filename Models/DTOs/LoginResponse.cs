@@ -5,7 +5,10 @@ public class LoginResponse
     public bool Success { get; set; }
     public string Message { get; set; } = string.Empty;
     public UserInfo? User { get; set; }
-    public string? Token { get; set; } // Có thể thêm JWT token sau
+    public string? Token { get; set; } // Access token
+    public string? RefreshToken { get; set; } // Refresh token để lấy access token mới
+    public DateTime? TokenExpiresAt { get; set; } // Thời gian hết hạn của access token
+    public DateTime? RefreshTokenExpiresAt { get; set; } // Thời gian hết hạn của refresh token
 }
 
 public class UserInfo

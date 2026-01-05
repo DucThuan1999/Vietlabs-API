@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using VietLab.Models;
+using VietLab.Data.Configurations;
 
 namespace VietLab.Data;
 
@@ -17,10 +18,99 @@ public class ApplicationDbContext : DbContext
     public DbSet<Department> Departments { get; set; }
     public DbSet<Account> Accounts { get; set; }
     public DbSet<Permission> Permissions { get; set; }
+    public DbSet<RefreshToken> RefreshTokens { get; set; }
+    public DbSet<SampleMatrixGroup> SampleMatrixGroups { get; set; }
+    public DbSet<SampleMatrix> SampleMatrices { get; set; }
+    public DbSet<EquipmentType> EquipmentTypes { get; set; }
+    public DbSet<AnalysisGroup> AnalysisGroups { get; set; }
+    public DbSet<AnalysisItem> AnalysisItems { get; set; }
+    public DbSet<DepartmentAnalysisCapability> DepartmentAnalysisCapabilities { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+        // Apply Fluent API configurations
+        modelBuilder.ApplyConfiguration(new AnalysisGroupConfiguration());
+        modelBuilder.ApplyConfiguration(new AnalysisItemConfiguration());
+        modelBuilder.ApplyConfiguration(new DepartmentAnalysisCapabilityConfiguration());
+
+        // Map tên bảng cho SampleMatrixGroup, SampleMatrix và EquipmentType trước (database dùng số ít)
+        // Phải đặt trước phần convert tự động để không bị ghi đè
+        modelBuilder.Entity<SampleMatrixGroup>()
+            .ToTable("sample_matrix_group");
+
+        modelBuilder.Entity<SampleMatrix>()
+            .ToTable("sample_matrix");
+
+        modelBuilder.Entity<EquipmentType>()
+            .ToTable("equipment_type");
+
+        // Convert tất cả tên cột sang snake_case
+        foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+        {
+            // Convert tên bảng sang snake_case (nếu chưa được set cụ thể)
+            var tableName = entityType.GetTableName();
+            if (!string.IsNullOrEmpty(tableName))
+            {
+                // Chỉ convert nếu tên bảng chưa được set cụ thể (không phải snake_case đã có)
+                // Kiểm tra xem có phải là tên đã được set thủ công không
+                var isManuallySet = entityType.ClrType.Name == "SampleMatrixGroup" || 
+                                   entityType.ClrType.Name == "SampleMatrix" ||
+                                   entityType.ClrType.Name == "EquipmentType" ||
+                                   entityType.ClrType.Name == "AnalysisGroup" ||
+                                   entityType.ClrType.Name == "AnalysisItem" ||
+                                   entityType.ClrType.Name == "DepartmentAnalysisCapability";
+                
+                if (!isManuallySet)
+                {
+                    entityType.SetTableName(ToSnakeCase(tableName));
+                }
+            }
+
+            // Convert tên cột sang snake_case (chỉ nếu chưa được set cụ thể)
+            foreach (var property in entityType.GetProperties())
+            {
+                var columnName = property.GetColumnName();
+                if (!string.IsNullOrEmpty(columnName))
+                {
+                    // Kiểm tra xem có phải là cột đã được set thủ công không
+                    // (ví dụ: SampleMatrix.SampleMatrixGroupId -> sample_matrix_group_id)
+                    // Hoặc các entity đã được config bằng IEntityTypeConfiguration
+                    var isManuallySet = (entityType.ClrType.Name == "SampleMatrix" && 
+                                       property.Name == "SampleMatrixGroupId" &&
+                                       columnName == "sample_matrix_group_id") ||
+                                       entityType.ClrType.Name == "AnalysisGroup" ||
+                                       entityType.ClrType.Name == "AnalysisItem" ||
+                                       entityType.ClrType.Name == "DepartmentAnalysisCapability";
+                    
+                    if (!isManuallySet)
+                    {
+                        property.SetColumnName(ToSnakeCase(columnName));
+                    }
+                }
+            }
+
+            // Convert tên foreign key constraints sang snake_case
+            foreach (var foreignKey in entityType.GetForeignKeys())
+            {
+                var constraintName = foreignKey.GetConstraintName();
+                if (!string.IsNullOrEmpty(constraintName))
+                {
+                    foreignKey.SetConstraintName(ToSnakeCase(constraintName));
+                }
+            }
+
+            // Convert tên index sang snake_case
+            foreach (var index in entityType.GetIndexes())
+            {
+                var indexName = index.GetDatabaseName();
+                if (!string.IsNullOrEmpty(indexName))
+                {
+                    index.SetDatabaseName(ToSnakeCase(indexName));
+                }
+            }
+        }
 
         // Precision cho DiscountRate để tránh truncate
         modelBuilder.Entity<Client>()
@@ -42,7 +132,7 @@ public class ApplicationDbContext : DbContext
         // Quan hệ 1-1: Employee - Account
         modelBuilder.Entity<Account>()
             .HasOne(a => a.Employee)
-            .WithOne()
+            .WithOne(e => e.Account)
             .HasForeignKey<Account>(a => a.EmployeeId);
 
         // Quan hệ 1-n: Permission - Accounts (một account có 1 permission)
@@ -50,6 +140,25 @@ public class ApplicationDbContext : DbContext
             .HasOne(a => a.Permission)
             .WithMany(p => p.Accounts)
             .HasForeignKey(a => a.PermissionId);
+
+        // Quan hệ 1-n: Account - RefreshTokens
+        modelBuilder.Entity<RefreshToken>()
+            .HasOne(rt => rt.Account)
+            .WithMany()
+            .HasForeignKey(rt => rt.AccountId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Quan hệ 1-n: SampleMatrixGroup - SampleMatrix
+        modelBuilder.Entity<SampleMatrix>()
+            .HasOne(sm => sm.SampleMatrixGroup)
+            .WithMany(smg => smg.SampleMatrices)
+            .HasForeignKey(sm => sm.SampleMatrixGroupId);
+
+        // Map tên cột foreign key: SampleMatrixGroupId -> sample_matrix_group_id
+        // (EF Core tự động thêm _id vào tên foreign key)
+        modelBuilder.Entity<SampleMatrix>()
+            .Property(sm => sm.SampleMatrixGroupId)
+            .HasColumnName("sample_matrix_group_id");
 
         // Seed Employees (Guid cố định)
         var emp1Id = Guid.Parse("44444444-4444-4444-4444-444444444444");
@@ -1034,6 +1143,34 @@ public class ApplicationDbContext : DbContext
                 IsPrimary = false
             }
         );
+    }
+
+    /// <summary>
+    /// Chuyển đổi PascalCase hoặc camelCase sang snake_case
+    /// Ví dụ: EmployeeId -> employee_id, FullName -> full_name
+    /// </summary>
+    private static string ToSnakeCase(string input)
+    {
+        if (string.IsNullOrEmpty(input))
+            return input;
+
+        var result = new System.Text.StringBuilder();
+        result.Append(char.ToLowerInvariant(input[0]));
+
+        for (int i = 1; i < input.Length; i++)
+        {
+            if (char.IsUpper(input[i]))
+            {
+                result.Append('_');
+                result.Append(char.ToLowerInvariant(input[i]));
+            }
+            else
+            {
+                result.Append(input[i]);
+            }
+        }
+
+        return result.ToString();
     }
 }
 

@@ -1,0 +1,110 @@
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.OData.Query;
+using Microsoft.AspNetCore.OData.Routing.Controllers;
+using Microsoft.EntityFrameworkCore;
+using VietLab.Data;
+using VietLab.Models;
+
+namespace VietLab.Controllers;
+
+[ApiController]
+[Route("odata")]
+public class SampleMatricesController : ODataController
+{
+    private readonly ApplicationDbContext _context;
+
+    public SampleMatricesController(ApplicationDbContext context)
+    {
+        _context = context;
+    }
+
+    [HttpGet("SampleMatrices")]
+    [EnableQuery]
+    public IActionResult Get()
+    {
+        return Ok(_context.SampleMatrices.Include(sm => sm.SampleMatrixGroup));
+    }
+
+    [HttpGet("SampleMatrices({key})")]
+    [EnableQuery]
+    public IActionResult Get([FromRoute] Guid key)
+    {
+        var matrix = _context.SampleMatrices
+            .Include(sm => sm.SampleMatrixGroup)
+            .FirstOrDefault(sm => sm.SampleMatrixId == key);
+        if (matrix == null)
+        {
+            return NotFound();
+        }
+        return Ok(matrix);
+    }
+
+    [HttpPost("SampleMatrices")]
+    public async Task<IActionResult> Post([FromBody] SampleMatrix matrix)
+    {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+
+        matrix.SampleMatrixId = matrix.SampleMatrixId == Guid.Empty ? Guid.NewGuid() : matrix.SampleMatrixId;
+        matrix.CreatedAt = DateTime.UtcNow;
+        _context.SampleMatrices.Add(matrix);
+        await _context.SaveChangesAsync();
+
+        return Created($"odata/SampleMatrices({matrix.SampleMatrixId})", matrix);
+    }
+
+    [HttpPut("SampleMatrices({key})")]
+    public async Task<IActionResult> Put([FromRoute] Guid key, [FromBody] SampleMatrix matrix)
+    {
+        if (key != matrix.SampleMatrixId)
+        {
+            return BadRequest();
+        }
+
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+
+        matrix.UpdatedAt = DateTime.UtcNow;
+        _context.Entry(matrix).State = EntityState.Modified;
+
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            if (!SampleMatrixExists(key))
+            {
+                return NotFound();
+            }
+            throw;
+        }
+
+        return Updated(matrix);
+    }
+
+    [HttpDelete("SampleMatrices({key})")]
+    public async Task<IActionResult> Delete([FromRoute] Guid key)
+    {
+        var matrix = await _context.SampleMatrices.FindAsync(key);
+        if (matrix == null)
+        {
+            return NotFound();
+        }
+
+        _context.SampleMatrices.Remove(matrix);
+        await _context.SaveChangesAsync();
+
+        return NoContent();
+    }
+
+    private bool SampleMatrixExists(Guid key)
+    {
+        return _context.SampleMatrices.Any(e => e.SampleMatrixId == key);
+    }
+}
+
