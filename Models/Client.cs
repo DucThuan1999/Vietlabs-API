@@ -29,6 +29,17 @@ public class Client
     public bool IsBlacklisted { get; set; }
     public string? BlacklistReason { get; set; }
 
+    // Thông tin bổ sung cho báo giá
+    public string? AgentName { get; set; } // Tên Đại lý
+    public decimal? Forecast { get; set; } // Forcast
+    public decimal? Revenue { get; set; } // Doanh thu
+
+    // Thông tin công nợ
+    public string? DebtContactName { get; set; } // Người liên lạc công nợ
+    public string? DebtContactPhone { get; set; } // SĐT liên lạc công nợ
+    public string? DebtContactEmail { get; set; } // Email liên lạc công nợ
+    public string? PaymentMethod { get; set; } // Hình thức thanh toán
+
     public DateTime CreatedDate { get; set; }
     public DateTime? LastContactDate { get; set; }
     public string Status { get; set; } = "Active"; // Active, Inactive, Prospect
@@ -36,5 +47,11 @@ public class Client
 
     // Navigation: mỗi khách hàng có nhiều người liên hệ
     public ICollection<Contact> Contacts { get; set; } = new List<Contact>();
+    // Navigation: mỗi khách hàng có nhiều báo giá
+    public ICollection<Quotation> Quotations { get; set; } = new List<Quotation>();
+    // Navigation: mỗi khách hàng có 1 công nợ latest
+    public ClientDebt? ClientDebt { get; set; }
+    // Navigation: mỗi khách hàng có nhiều forecast
+    public ICollection<ClientForecast> ClientForecasts { get; set; } = new List<ClientForecast>();
 }
 

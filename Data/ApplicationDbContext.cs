@@ -25,48 +25,40 @@ public class ApplicationDbContext : DbContext
     public DbSet<AnalysisGroup> AnalysisGroups { get; set; }
     public DbSet<AnalysisItem> AnalysisItems { get; set; }
     public DbSet<DepartmentAnalysisCapability> DepartmentAnalysisCapabilities { get; set; }
+    public DbSet<Quotation> Quotations { get; set; }
+    public DbSet<QuotationItem> QuotationItems { get; set; }
+    public DbSet<Package> Packages { get; set; }
+    public DbSet<PackageAnalysisGroup> PackageAnalysisGroups { get; set; }
+    public DbSet<ClientDebt> ClientDebts { get; set; }
+    public DbSet<ClientForecast> ClientForecasts { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
 
         // Apply Fluent API configurations
+        modelBuilder.ApplyConfiguration(new ClientConfiguration());
+        modelBuilder.ApplyConfiguration(new ContactConfiguration());
+        modelBuilder.ApplyConfiguration(new EmployeeConfiguration());
+        modelBuilder.ApplyConfiguration(new BranchConfiguration());
+        modelBuilder.ApplyConfiguration(new DepartmentConfiguration());
+        modelBuilder.ApplyConfiguration(new AccountConfiguration());
+        modelBuilder.ApplyConfiguration(new PermissionConfiguration());
+        modelBuilder.ApplyConfiguration(new RefreshTokenConfiguration());
+        modelBuilder.ApplyConfiguration(new QuotationConfiguration());
+        modelBuilder.ApplyConfiguration(new QuotationItemConfiguration());
+        modelBuilder.ApplyConfiguration(new ClientDebtConfiguration());
+        modelBuilder.ApplyConfiguration(new ClientForecastConfiguration());
         modelBuilder.ApplyConfiguration(new AnalysisGroupConfiguration());
         modelBuilder.ApplyConfiguration(new AnalysisItemConfiguration());
         modelBuilder.ApplyConfiguration(new DepartmentAnalysisCapabilityConfiguration());
+        modelBuilder.ApplyConfiguration(new PackageConfiguration());
+        modelBuilder.ApplyConfiguration(new PackageAnalysisGroupConfiguration());
 
-        // Map tên bảng cho SampleMatrixGroup, SampleMatrix và EquipmentType trước (database dùng số ít)
-        // Phải đặt trước phần convert tự động để không bị ghi đè
-        modelBuilder.Entity<SampleMatrixGroup>()
-            .ToTable("sample_matrix_group");
-
-        modelBuilder.Entity<SampleMatrix>()
-            .ToTable("sample_matrix");
-
-        modelBuilder.Entity<EquipmentType>()
-            .ToTable("equipment_type");
-
-        // Convert tất cả tên cột sang snake_case
+        // Tất cả tên bảng đã được set trong Configuration classes
+        // Chỉ cần convert tên cột sang snake_case
         foreach (var entityType in modelBuilder.Model.GetEntityTypes())
         {
-            // Convert tên bảng sang snake_case (nếu chưa được set cụ thể)
-            var tableName = entityType.GetTableName();
-            if (!string.IsNullOrEmpty(tableName))
-            {
-                // Chỉ convert nếu tên bảng chưa được set cụ thể (không phải snake_case đã có)
-                // Kiểm tra xem có phải là tên đã được set thủ công không
-                var isManuallySet = entityType.ClrType.Name == "SampleMatrixGroup" || 
-                                   entityType.ClrType.Name == "SampleMatrix" ||
-                                   entityType.ClrType.Name == "EquipmentType" ||
-                                   entityType.ClrType.Name == "AnalysisGroup" ||
-                                   entityType.ClrType.Name == "AnalysisItem" ||
-                                   entityType.ClrType.Name == "DepartmentAnalysisCapability";
-                
-                if (!isManuallySet)
-                {
-                    entityType.SetTableName(ToSnakeCase(tableName));
-                }
-            }
 
             // Convert tên cột sang snake_case (chỉ nếu chưa được set cụ thể)
             foreach (var property in entityType.GetProperties())
@@ -159,6 +151,87 @@ public class ApplicationDbContext : DbContext
         modelBuilder.Entity<SampleMatrix>()
             .Property(sm => sm.SampleMatrixGroupId)
             .HasColumnName("sample_matrix_group_id");
+
+        // Quan hệ 1-n: Client - Quotations
+        modelBuilder.Entity<Quotation>()
+            .HasOne(q => q.Client)
+            .WithMany(c => c.Quotations)
+            .HasForeignKey(q => q.ClientId);
+
+        // Quan hệ n-1: Quotation - Employee (nhân viên tạo báo giá)
+        modelBuilder.Entity<Quotation>()
+            .HasOne(q => q.Employee)
+            .WithMany(e => e.Quotations)
+            .HasForeignKey(q => q.EmployeeId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        // Quan hệ n-1: Quotation - Contact (người liên hệ)
+        modelBuilder.Entity<Quotation>()
+            .HasOne(q => q.Contact)
+            .WithMany()
+            .HasForeignKey(q => q.ContactId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        // Quan hệ 1-1: Client - ClientDebt (mỗi client có 1 công nợ latest)
+        modelBuilder.Entity<ClientDebt>()
+            .HasOne(cd => cd.Client)
+            .WithOne(c => c.ClientDebt)
+            .HasForeignKey<ClientDebt>(cd => cd.ClientId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Quan hệ 1-n: Client - ClientForecasts (mỗi client có nhiều forecast)
+        modelBuilder.Entity<ClientForecast>()
+            .HasOne(cf => cf.Client)
+            .WithMany(c => c.ClientForecasts)
+            .HasForeignKey(cf => cf.ClientId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Quan hệ 1-n: Quotation - QuotationItems
+        modelBuilder.Entity<QuotationItem>()
+            .HasOne(qi => qi.Quotation)
+            .WithMany(q => q.QuotationItems)
+            .HasForeignKey(qi => qi.QuotationId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Quan hệ n-1: QuotationItem - AnalysisItem (optional)
+        modelBuilder.Entity<QuotationItem>()
+            .HasOne(qi => qi.AnalysisItem)
+            .WithMany()
+            .HasForeignKey(qi => qi.AnalysisItemId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        // Quan hệ n-1: QuotationItem - AnalysisGroup (optional)
+        modelBuilder.Entity<QuotationItem>()
+            .HasOne(qi => qi.AnalysisGroup)
+            .WithMany()
+            .HasForeignKey(qi => qi.AnalysisGroupId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        // Quan hệ n-1: QuotationItem - Package (optional)
+        modelBuilder.Entity<QuotationItem>()
+            .HasOne(qi => qi.Package)
+            .WithMany()
+            .HasForeignKey(qi => qi.PackageId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        // Quan hệ many-to-many: Package - AnalysisGroup (qua PackageAnalysisGroup)
+        modelBuilder.Entity<PackageAnalysisGroup>()
+            .HasKey(pag => pag.PackageAnalysisGroupId);
+
+        modelBuilder.Entity<PackageAnalysisGroup>()
+            .HasOne(pag => pag.Package)
+            .WithMany(p => p.PackageAnalysisGroups)
+            .HasForeignKey(pag => pag.PackageId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<PackageAnalysisGroup>()
+            .HasOne(pag => pag.AnalysisGroup)
+            .WithMany()
+            .HasForeignKey(pag => pag.AnalysisGroupId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Check constraint: Đảm bảo chỉ một trong 3 foreign keys có giá trị
+        // (sẽ được thêm trong SQL script vì EF Core không hỗ trợ check constraint trực tiếp)
 
         // Seed Employees (Guid cố định)
         var emp1Id = Guid.Parse("44444444-4444-4444-4444-444444444444");

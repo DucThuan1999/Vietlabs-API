@@ -184,3 +184,161 @@ dotnet ef migrations add InitialCreate
 dotnet ef database update
 ```
 
+## Deploy lên IIS Subapplication
+
+### Yêu cầu
+
+- Windows Server với IIS đã được cài đặt
+- .NET 8.0 Runtime (ASP.NET Core Runtime) đã được cài đặt
+- ASP.NET Core Module V2 (tự động cài với .NET Runtime)
+- Quyền Administrator trên server
+
+### Các bước deploy
+
+#### 1. Build và Publish ứng dụng
+
+```bash
+dotnet publish -c Release -o publish
+```
+
+#### 2. Sử dụng script tự động (Khuyến nghị)
+
+Mở PowerShell với quyền Administrator và chạy:
+
+```powershell
+.\deploy-iis.ps1
+```
+
+Script sẽ tự động:
+- Kiểm tra IIS và .NET Runtime
+- Tạo Application Pool `crm-api`
+- Copy files vào `C:\inetpub\wwwroot\crm-api`
+- Tạo Application `crm-api` trong IIS Site
+- Cấu hình quyền truy cập
+- Restart Application Pool
+
+**Tham số tùy chọn:**
+```powershell
+.\deploy-iis.ps1 -SiteName "Default Web Site" -AppName "crm-api" -PhysicalPath "C:\inetpub\wwwroot\crm-api"
+```
+
+#### 3. Deploy thủ công
+
+**Bước 1: Tạo Application Pool**
+
+1. Mở IIS Manager
+2. Chọn **Application Pools** → Click phải → **Add Application Pool**
+3. Đặt tên: `crm-api`
+4. .NET CLR Version: **No Managed Code**
+5. Managed Pipeline Mode: **Integrated**
+6. Click **OK**
+
+**Bước 2: Copy files**
+
+Copy toàn bộ nội dung từ thư mục `publish` vào thư mục IIS, ví dụ: `C:\inetpub\wwwroot\crm-api`
+
+**Bước 3: Tạo Application trong IIS**
+
+1. Mở IIS Manager
+2. Chọn Site (ví dụ: **Default Web Site**)
+3. Click phải → **Add Application**
+4. Alias: `crm-api`
+5. Application Pool: `crm-api`
+6. Physical Path: `C:\inetpub\wwwroot\crm-api`
+7. Click **OK**
+
+**Bước 4: Cấu hình quyền**
+
+Cấp quyền cho Application Pool Identity:
+- Click phải vào thư mục `C:\inetpub\wwwroot\crm-api` → **Properties** → **Security**
+- Click **Edit** → **Add**
+- Nhập: `IIS AppPool\crm-api`
+- Chọn quyền: **Read & Execute**, **List folder contents**, **Read**
+- Click **OK**
+
+**Bước 5: Tạo thư mục logs**
+
+Tạo thư mục `logs` trong `C:\inetpub\wwwroot\crm-api` và cấp quyền tương tự như trên.
+
+### Kiểm tra sau khi deploy
+
+1. **Truy cập Swagger UI:**
+   ```
+   http://your-server/crm-api/swagger
+   ```
+
+2. **Kiểm tra API endpoint:**
+   ```
+   http://your-server/crm-api/odata/Clients
+   ```
+
+3. **Kiểm tra logs:**
+   - Logs được lưu tại: `C:\inetpub\wwwroot\crm-api\logs\stdout_*.log`
+   - Nếu có lỗi, kiểm tra Event Viewer → Windows Logs → Application
+
+### Cấu hình Base Path
+
+Ứng dụng đã được cấu hình sẵn để chạy như subapplication với base path `/crm-api`:
+
+- `web.config` đã có `ASPNETCORE_BASEPATH=/crm-api`
+- `appsettings.json` có `BasePath: "/crm-api"`
+- `Program.cs` tự động xử lý base path
+
+### Troubleshooting
+
+**Lỗi 500.31 - Failed to load ASP.NET Core runtime (QUAN TRỌNG):**
+
+Đây là lỗi phổ biến nhất khi deploy. Nguyên nhân: **.NET 8.0 Runtime chưa được cài đặt trên server IIS**.
+
+**Cách khắc phục:**
+
+1. **Cài đặt .NET 8.0 Hosting Bundle:**
+   - Truy cập: https://dotnet.microsoft.com/download/dotnet/8.0
+   - Tải: **ASP.NET Core Runtime 8.0.x - Windows Hosting Bundle**
+   - (Bao gồm .NET Runtime + ASP.NET Core Runtime + ASP.NET Core Module V2)
+   - Chạy file installer và làm theo hướng dẫn
+
+2. **Sau khi cài đặt, restart IIS:**
+   ```powershell
+   iisreset
+   ```
+
+3. **Sử dụng script tự động để kiểm tra:**
+   ```powershell
+   .\fix-500-31-error.ps1
+   ```
+
+4. **Kiểm tra Application Pool:**
+   - Mở IIS Manager → Application Pools → `crm-api`
+   - Đảm bảo:
+     - .NET CLR Version: **No Managed Code**
+     - Managed Pipeline Mode: **Integrated**
+     - Status: **Started**
+
+5. **Kiểm tra Event Viewer:**
+   - Windows Logs → Application
+   - Tìm các lỗi liên quan đến ASP.NET Core
+
+**Lỗi 500.30 - In-Process Start Failure:**
+- Kiểm tra .NET 8.0 Runtime đã được cài đặt
+- Kiểm tra Application Pool đang chạy
+- Xem logs trong `logs\stdout_*.log`
+
+**Lỗi 500.0 - ANCM In-Process Handler Load Failure:**
+- Kiểm tra ASP.NET Core Module V2 đã được cài đặt
+- Restart IIS: `iisreset`
+
+**Lỗi 503 - Service Unavailable:**
+- Kiểm tra Application Pool đang chạy
+- Kiểm tra .NET Runtime đã được cài đặt (xem lỗi 500.31)
+- Xem logs trong `logs\stdout_*.log`
+
+**Lỗi kết nối Database:**
+- Kiểm tra connection string trong `appsettings.json`
+- Đảm bảo SQL Server có thể truy cập từ server IIS
+- Kiểm tra firewall và network
+
+**Swagger không hiển thị đúng:**
+- Kiểm tra base path trong `web.config` và `appsettings.json`
+- Đảm bảo URL truy cập có đúng path: `http://server/crm-api/swagger`
+

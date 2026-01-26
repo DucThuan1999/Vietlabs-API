@@ -14,6 +14,7 @@ public class Employee
 
     // Navigation
     public Account? Account { get; set; }
+    public ICollection<Quotation> Quotations { get; set; } = new List<Quotation>();
 }
 
 
