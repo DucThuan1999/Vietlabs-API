@@ -16,15 +16,27 @@ public class QuotationItem
     public Guid? AnalysisGroupId { get; set; } // Nếu ItemType = "AnalysisGroup"
     public Guid? PackageId { get; set; } // Nếu ItemType = "Package"
 
+    // Phân biệt AnalysisItem standalone hay trong nhóm
+    public bool? IsStandalone { get; set; } // true nếu AnalysisItem đứng riêng, false nếu trong nhóm, null nếu không phải AnalysisItem
+
     // Thông tin hiển thị (có thể override từ master data)
     public string? ItemCode { get; set; } // Mã item
     public string? ItemNameVi { get; set; } // Tên tiếng Việt
     public string? ItemNameEn { get; set; } // Tên tiếng Anh
     public string? Description { get; set; } // Mô tả
 
+    // Snapshot dữ liệu từ AnalysisItem (lưu khi tạo để backup)
+    public string? SampleMatrixName { get; set; } // Tên nền mẫu (snapshot từ SampleMatrix.NameVi)
+    public string? PublishedGroupCode { get; set; } // Mã phương pháp (snapshot từ AnalysisItem.PublishedGroupCode)
+    public string? Unit { get; set; } // Đơn vị tính (snapshot từ AnalysisItem.Unit)
+    public string? Lod { get; set; } // Giới hạn phát hiện (snapshot từ AnalysisItem.Lod, format string)
+    public string? Loq { get; set; } // Giới hạn định lượng (snapshot từ AnalysisItem.Loq, format string)
+    public string? Tat { get; set; } // Thời gian quay vòng (snapshot từ AnalysisItemTat, format string)
+
     // Thông tin giá và số lượng
     public int Quantity { get; set; } = 1; // Số lượng
-    public decimal UnitPrice { get; set; } // Đơn giá
+    public decimal? DefaultPrice { get; set; } // Đơn giá chuẩn (snapshot từ AnalysisItem.UnitPrice hoặc Package.DefaultPrice)
+    public decimal UnitPrice { get; set; } // Đơn giá bán (có thể chỉnh sửa)
     public decimal? DiscountPercent { get; set; } // % giảm giá cho item này
     public decimal? DiscountAmount { get; set; } // Số tiền giảm giá
     public decimal SubTotal { get; set; } // Thành tiền (Quantity * UnitPrice - DiscountAmount)

@@ -191,3 +191,5 @@ FodyWeavers.xsd
 .idea/
 *.sln.iml
 
+.scripts/
+.publish/

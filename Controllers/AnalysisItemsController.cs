@@ -26,7 +26,8 @@ public class AnalysisItemsController : ODataController
             .Include(ai => ai.EquipmentType)
             .Include(ai => ai.AnalysisGroup)
             .Include(ai => ai.SampleMatrix)
-            .Include(ai => ai.SampleMatrixGroup));
+            .Include(ai => ai.SampleMatrixGroup)
+            .Include(ai => ai.AnalysisItemTats));
     }
 
     [HttpGet("AnalysisItems({key})")]
@@ -38,6 +39,7 @@ public class AnalysisItemsController : ODataController
             .Include(ai => ai.AnalysisGroup)
             .Include(ai => ai.SampleMatrix)
             .Include(ai => ai.SampleMatrixGroup)
+            .Include(ai => ai.AnalysisItemTats)
             .FirstOrDefault(ai => ai.AnalysisItemId == key);
         if (item == null)
         {

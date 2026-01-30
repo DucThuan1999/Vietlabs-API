@@ -37,6 +37,13 @@ public class PackageConfiguration : IEntityTypeConfiguration<Package>
             .HasColumnName("default_price")
             .HasPrecision(18, 2);
 
+        builder.Property(p => p.PublishedGroupCode)
+            .HasColumnName("published_group_code")
+            .HasMaxLength(100);
+
+        builder.Property(p => p.SampleMatrixId)
+            .HasColumnName("sample_matrix_id");
+
         builder.Property(p => p.Status)
             .HasColumnName("status")
             .HasMaxLength(50)
@@ -58,6 +65,12 @@ public class PackageConfiguration : IEntityTypeConfiguration<Package>
             .WithOne(pag => pag.Package)
             .HasForeignKey(pag => pag.PackageId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        // Navigation: Package - SampleMatrix (optional)
+        builder.HasOne(p => p.SampleMatrix)
+            .WithMany()
+            .HasForeignKey(p => p.SampleMatrixId)
+            .OnDelete(DeleteBehavior.SetNull);
     }
 }
 

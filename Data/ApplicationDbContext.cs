@@ -31,6 +31,12 @@ public class ApplicationDbContext : DbContext
     public DbSet<PackageAnalysisGroup> PackageAnalysisGroups { get; set; }
     public DbSet<ClientDebt> ClientDebts { get; set; }
     public DbSet<ClientForecast> ClientForecasts { get; set; }
+    public DbSet<StoreRecord> StoreRecords { get; set; }
+    public DbSet<ClientHistory> ClientHistories { get; set; }
+    public DbSet<AnalysisItemTat> AnalysisItemTats { get; set; }
+    public DbSet<Country> Countries { get; set; }
+    public DbSet<Province> Provinces { get; set; }
+    public DbSet<Ward> Wards { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -54,6 +60,15 @@ public class ApplicationDbContext : DbContext
         modelBuilder.ApplyConfiguration(new DepartmentAnalysisCapabilityConfiguration());
         modelBuilder.ApplyConfiguration(new PackageConfiguration());
         modelBuilder.ApplyConfiguration(new PackageAnalysisGroupConfiguration());
+        modelBuilder.ApplyConfiguration(new EquipmentTypeConfiguration());
+        modelBuilder.ApplyConfiguration(new SampleMatrixConfiguration());
+        modelBuilder.ApplyConfiguration(new SampleMatrixGroupConfiguration());
+        modelBuilder.ApplyConfiguration(new StoreRecordConfiguration());
+        modelBuilder.ApplyConfiguration(new ClientHistoryConfiguration());
+        modelBuilder.ApplyConfiguration(new AnalysisItemTatConfiguration());
+        modelBuilder.ApplyConfiguration(new CountryConfiguration());
+        modelBuilder.ApplyConfiguration(new ProvinceConfiguration());
+        modelBuilder.ApplyConfiguration(new WardConfiguration());
 
         // Tất cả tên bảng đã được set trong Configuration classes
         // Chỉ cần convert tên cột sang snake_case
@@ -67,14 +82,13 @@ public class ApplicationDbContext : DbContext
                 if (!string.IsNullOrEmpty(columnName))
                 {
                     // Kiểm tra xem có phải là cột đã được set thủ công không
-                    // (ví dụ: SampleMatrix.SampleMatrixGroupId -> sample_matrix_group_id)
                     // Hoặc các entity đã được config bằng IEntityTypeConfiguration
-                    var isManuallySet = (entityType.ClrType.Name == "SampleMatrix" && 
-                                       property.Name == "SampleMatrixGroupId" &&
-                                       columnName == "sample_matrix_group_id") ||
-                                       entityType.ClrType.Name == "AnalysisGroup" ||
+                    var isManuallySet = entityType.ClrType.Name == "AnalysisGroup" ||
                                        entityType.ClrType.Name == "AnalysisItem" ||
-                                       entityType.ClrType.Name == "DepartmentAnalysisCapability";
+                                       entityType.ClrType.Name == "DepartmentAnalysisCapability" ||
+                                       entityType.ClrType.Name == "SampleMatrix" ||
+                                       entityType.ClrType.Name == "SampleMatrixGroup" ||
+                                       entityType.ClrType.Name == "EquipmentType";
                     
                     if (!isManuallySet)
                     {
@@ -139,18 +153,6 @@ public class ApplicationDbContext : DbContext
             .WithMany()
             .HasForeignKey(rt => rt.AccountId)
             .OnDelete(DeleteBehavior.Cascade);
-
-        // Quan hệ 1-n: SampleMatrixGroup - SampleMatrix
-        modelBuilder.Entity<SampleMatrix>()
-            .HasOne(sm => sm.SampleMatrixGroup)
-            .WithMany(smg => smg.SampleMatrices)
-            .HasForeignKey(sm => sm.SampleMatrixGroupId);
-
-        // Map tên cột foreign key: SampleMatrixGroupId -> sample_matrix_group_id
-        // (EF Core tự động thêm _id vào tên foreign key)
-        modelBuilder.Entity<SampleMatrix>()
-            .Property(sm => sm.SampleMatrixGroupId)
-            .HasColumnName("sample_matrix_group_id");
 
         // Quan hệ 1-n: Client - Quotations
         modelBuilder.Entity<Quotation>()
@@ -1214,6 +1216,366 @@ public class ApplicationDbContext : DbContext
                 Department = "Kinh doanh",
                 Title = "Giám đốc Kinh doanh",
                 IsPrimary = false
+            }
+        );
+
+        // Seed AnalysisGroups (Guid cố định)
+        var ag1Id = Guid.Parse("aaaaaaaa-0001-0001-0001-000000000001");
+        var ag2Id = Guid.Parse("aaaaaaaa-0002-0002-0002-000000000002");
+        var ag3Id = Guid.Parse("aaaaaaaa-0003-0003-0003-000000000003");
+        var ag4Id = Guid.Parse("aaaaaaaa-0004-0004-0004-000000000004");
+        var ag5Id = Guid.Parse("aaaaaaaa-0005-0005-0005-000000000005");
+        var ag6Id = Guid.Parse("aaaaaaaa-0006-0006-0006-000000000006");
+
+        modelBuilder.Entity<AnalysisGroup>().HasData(
+            new AnalysisGroup
+            {
+                AnalysisGroupId = ag1Id,
+                AnalysisGroupCode = "AG-001",
+                NameVi = "Huyết học",
+                NameEn = "Hematology",
+                Status = "Active",
+                Notes = "Nhóm chỉ tiêu về huyết học",
+                CreatedAt = DateTime.UtcNow
+            },
+            new AnalysisGroup
+            {
+                AnalysisGroupId = ag2Id,
+                AnalysisGroupCode = "AG-002",
+                NameVi = "Sinh hóa",
+                NameEn = "Biochemistry",
+                Status = "Active",
+                Notes = "Nhóm chỉ tiêu về sinh hóa",
+                CreatedAt = DateTime.UtcNow
+            },
+            new AnalysisGroup
+            {
+                AnalysisGroupId = ag3Id,
+                AnalysisGroupCode = "AG-003",
+                NameVi = "Vi sinh",
+                NameEn = "Microbiology",
+                Status = "Active",
+                Notes = "Nhóm chỉ tiêu về vi sinh",
+                CreatedAt = DateTime.UtcNow
+            },
+            new AnalysisGroup
+            {
+                AnalysisGroupId = ag4Id,
+                AnalysisGroupCode = "AG-004",
+                NameVi = "Miễn dịch",
+                NameEn = "Immunology",
+                Status = "Active",
+                Notes = "Nhóm chỉ tiêu về miễn dịch",
+                CreatedAt = DateTime.UtcNow
+            },
+            new AnalysisGroup
+            {
+                AnalysisGroupId = ag5Id,
+                AnalysisGroupCode = "AG-005",
+                NameVi = "Nước tiểu",
+                NameEn = "Urine Analysis",
+                Status = "Active",
+                Notes = "Nhóm chỉ tiêu về nước tiểu",
+                CreatedAt = DateTime.UtcNow
+            },
+            new AnalysisGroup
+            {
+                AnalysisGroupId = ag6Id,
+                AnalysisGroupCode = "AG-006",
+                NameVi = "Huyết thanh học",
+                NameEn = "Serology",
+                Status = "Active",
+                Notes = "Nhóm chỉ tiêu về huyết thanh học",
+                CreatedAt = DateTime.UtcNow
+            }
+        );
+
+        // Seed Packages (Guid cố định)
+        var pkg1Id = Guid.Parse("bbbbbbbb-0001-0001-0001-000000000001");
+        var pkg2Id = Guid.Parse("bbbbbbbb-0002-0002-0002-000000000002");
+        var pkg3Id = Guid.Parse("bbbbbbbb-0003-0003-0003-000000000003");
+        var pkg4Id = Guid.Parse("bbbbbbbb-0004-0004-0004-000000000004");
+        var pkg5Id = Guid.Parse("bbbbbbbb-0005-0005-0005-000000000005");
+
+        modelBuilder.Entity<Package>().HasData(
+            new Package
+            {
+                PackageId = pkg1Id,
+                PackageCode = "PKG-001",
+                NameVi = "Gói xét nghiệm tổng quát",
+                NameEn = "General Health Check Package",
+                Description = "Gói xét nghiệm tổng quát bao gồm các chỉ tiêu cơ bản về huyết học, sinh hóa và nước tiểu",
+                DefaultPrice = 1500000.00m,
+                PublishedGroupCode = "PP-001",
+                SampleMatrixId = null,
+                Status = "Active",
+                Notes = "Gói phù hợp cho khám sức khỏe định kỳ",
+                CreatedAt = DateTime.UtcNow
+            },
+            new Package
+            {
+                PackageId = pkg2Id,
+                PackageCode = "PKG-002",
+                NameVi = "Gói xét nghiệm nâng cao",
+                NameEn = "Advanced Health Check Package",
+                Description = "Gói xét nghiệm nâng cao bao gồm đầy đủ các chỉ tiêu: huyết học, sinh hóa, vi sinh, miễn dịch",
+                DefaultPrice = 3500000.00m,
+                PublishedGroupCode = "PP-002",
+                SampleMatrixId = null,
+                Status = "Active",
+                Notes = "Gói phù hợp cho khám sức khỏe toàn diện",
+                CreatedAt = DateTime.UtcNow
+            },
+            new Package
+            {
+                PackageId = pkg3Id,
+                PackageCode = "PKG-003",
+                NameVi = "Gói xét nghiệm cơ bản",
+                NameEn = "Basic Health Check Package",
+                Description = "Gói xét nghiệm cơ bản chỉ bao gồm huyết học và sinh hóa",
+                DefaultPrice = 800000.00m,
+                PublishedGroupCode = "PP-003",
+                SampleMatrixId = null,
+                Status = "Active",
+                Notes = "Gói phù hợp cho khám sức khỏe đơn giản",
+                CreatedAt = DateTime.UtcNow
+            },
+            new Package
+            {
+                PackageId = pkg4Id,
+                PackageCode = "PKG-004",
+                NameVi = "Gói xét nghiệm vi sinh",
+                NameEn = "Microbiology Package",
+                Description = "Gói xét nghiệm chuyên sâu về vi sinh và miễn dịch",
+                DefaultPrice = 2500000.00m,
+                PublishedGroupCode = "PP-004",
+                SampleMatrixId = null,
+                Status = "Active",
+                Notes = "Gói phù hợp cho xét nghiệm nhiễm trùng",
+                CreatedAt = DateTime.UtcNow
+            },
+            new Package
+            {
+                PackageId = pkg5Id,
+                PackageCode = "PKG-005",
+                NameVi = "Gói xét nghiệm chuyên sâu",
+                NameEn = "Comprehensive Health Package",
+                Description = "Gói xét nghiệm đầy đủ tất cả các chỉ tiêu có sẵn",
+                DefaultPrice = 5000000.00m,
+                PublishedGroupCode = "PP-005",
+                SampleMatrixId = null,
+                Status = "Active",
+                Notes = "Gói phù hợp cho khám sức khỏe toàn diện nhất",
+                CreatedAt = DateTime.UtcNow
+            }
+        );
+
+        // Seed PackageAnalysisGroups
+        modelBuilder.Entity<PackageAnalysisGroup>().HasData(
+            // Package 1: Gói tổng quát (Huyết học, Sinh hóa, Nước tiểu)
+            new PackageAnalysisGroup
+            {
+                PackageAnalysisGroupId = Guid.Parse("cccccccc-0001-0001-0001-000000000001"),
+                PackageId = pkg1Id,
+                AnalysisGroupId = ag1Id,
+                DisplayOrder = 1,
+                IsRequired = true,
+                Notes = "Nhóm chỉ tiêu bắt buộc",
+                CreatedAt = DateTime.UtcNow
+            },
+            new PackageAnalysisGroup
+            {
+                PackageAnalysisGroupId = Guid.Parse("cccccccc-0001-0002-0002-000000000002"),
+                PackageId = pkg1Id,
+                AnalysisGroupId = ag2Id,
+                DisplayOrder = 2,
+                IsRequired = true,
+                Notes = "Nhóm chỉ tiêu bắt buộc",
+                CreatedAt = DateTime.UtcNow
+            },
+            new PackageAnalysisGroup
+            {
+                PackageAnalysisGroupId = Guid.Parse("cccccccc-0001-0003-0003-000000000003"),
+                PackageId = pkg1Id,
+                AnalysisGroupId = ag5Id,
+                DisplayOrder = 3,
+                IsRequired = true,
+                Notes = "Nhóm chỉ tiêu bắt buộc",
+                CreatedAt = DateTime.UtcNow
+            },
+            // Package 2: Gói nâng cao (Tất cả các nhóm)
+            new PackageAnalysisGroup
+            {
+                PackageAnalysisGroupId = Guid.Parse("cccccccc-0002-0001-0001-000000000001"),
+                PackageId = pkg2Id,
+                AnalysisGroupId = ag1Id,
+                DisplayOrder = 1,
+                IsRequired = true,
+                Notes = "Nhóm chỉ tiêu bắt buộc",
+                CreatedAt = DateTime.UtcNow
+            },
+            new PackageAnalysisGroup
+            {
+                PackageAnalysisGroupId = Guid.Parse("cccccccc-0002-0002-0002-000000000002"),
+                PackageId = pkg2Id,
+                AnalysisGroupId = ag2Id,
+                DisplayOrder = 2,
+                IsRequired = true,
+                Notes = "Nhóm chỉ tiêu bắt buộc",
+                CreatedAt = DateTime.UtcNow
+            },
+            new PackageAnalysisGroup
+            {
+                PackageAnalysisGroupId = Guid.Parse("cccccccc-0002-0003-0003-000000000003"),
+                PackageId = pkg2Id,
+                AnalysisGroupId = ag3Id,
+                DisplayOrder = 3,
+                IsRequired = true,
+                Notes = "Nhóm chỉ tiêu bắt buộc",
+                CreatedAt = DateTime.UtcNow
+            },
+            new PackageAnalysisGroup
+            {
+                PackageAnalysisGroupId = Guid.Parse("cccccccc-0002-0004-0004-000000000004"),
+                PackageId = pkg2Id,
+                AnalysisGroupId = ag4Id,
+                DisplayOrder = 4,
+                IsRequired = true,
+                Notes = "Nhóm chỉ tiêu bắt buộc",
+                CreatedAt = DateTime.UtcNow
+            },
+            new PackageAnalysisGroup
+            {
+                PackageAnalysisGroupId = Guid.Parse("cccccccc-0002-0005-0005-000000000005"),
+                PackageId = pkg2Id,
+                AnalysisGroupId = ag5Id,
+                DisplayOrder = 5,
+                IsRequired = true,
+                Notes = "Nhóm chỉ tiêu bắt buộc",
+                CreatedAt = DateTime.UtcNow
+            },
+            new PackageAnalysisGroup
+            {
+                PackageAnalysisGroupId = Guid.Parse("cccccccc-0002-0006-0006-000000000006"),
+                PackageId = pkg2Id,
+                AnalysisGroupId = ag6Id,
+                DisplayOrder = 6,
+                IsRequired = true,
+                Notes = "Nhóm chỉ tiêu bắt buộc",
+                CreatedAt = DateTime.UtcNow
+            },
+            // Package 3: Gói cơ bản (Chỉ Huyết học và Sinh hóa)
+            new PackageAnalysisGroup
+            {
+                PackageAnalysisGroupId = Guid.Parse("cccccccc-0003-0001-0001-000000000001"),
+                PackageId = pkg3Id,
+                AnalysisGroupId = ag1Id,
+                DisplayOrder = 1,
+                IsRequired = true,
+                Notes = "Nhóm chỉ tiêu bắt buộc",
+                CreatedAt = DateTime.UtcNow
+            },
+            new PackageAnalysisGroup
+            {
+                PackageAnalysisGroupId = Guid.Parse("cccccccc-0003-0002-0002-000000000002"),
+                PackageId = pkg3Id,
+                AnalysisGroupId = ag2Id,
+                DisplayOrder = 2,
+                IsRequired = true,
+                Notes = "Nhóm chỉ tiêu bắt buộc",
+                CreatedAt = DateTime.UtcNow
+            },
+            // Package 4: Gói vi sinh (Vi sinh và Miễn dịch)
+            new PackageAnalysisGroup
+            {
+                PackageAnalysisGroupId = Guid.Parse("cccccccc-0004-0001-0001-000000000001"),
+                PackageId = pkg4Id,
+                AnalysisGroupId = ag3Id,
+                DisplayOrder = 1,
+                IsRequired = true,
+                Notes = "Nhóm chỉ tiêu bắt buộc",
+                CreatedAt = DateTime.UtcNow
+            },
+            new PackageAnalysisGroup
+            {
+                PackageAnalysisGroupId = Guid.Parse("cccccccc-0004-0002-0002-000000000002"),
+                PackageId = pkg4Id,
+                AnalysisGroupId = ag4Id,
+                DisplayOrder = 2,
+                IsRequired = true,
+                Notes = "Nhóm chỉ tiêu bắt buộc",
+                CreatedAt = DateTime.UtcNow
+            },
+            new PackageAnalysisGroup
+            {
+                PackageAnalysisGroupId = Guid.Parse("cccccccc-0004-0003-0003-000000000003"),
+                PackageId = pkg4Id,
+                AnalysisGroupId = ag6Id,
+                DisplayOrder = 3,
+                IsRequired = false,
+                Notes = "Nhóm chỉ tiêu tùy chọn",
+                CreatedAt = DateTime.UtcNow
+            },
+            // Package 5: Gói chuyên sâu (Tất cả các nhóm, một số tùy chọn)
+            new PackageAnalysisGroup
+            {
+                PackageAnalysisGroupId = Guid.Parse("cccccccc-0005-0001-0001-000000000001"),
+                PackageId = pkg5Id,
+                AnalysisGroupId = ag1Id,
+                DisplayOrder = 1,
+                IsRequired = true,
+                Notes = "Nhóm chỉ tiêu bắt buộc",
+                CreatedAt = DateTime.UtcNow
+            },
+            new PackageAnalysisGroup
+            {
+                PackageAnalysisGroupId = Guid.Parse("cccccccc-0005-0002-0002-000000000002"),
+                PackageId = pkg5Id,
+                AnalysisGroupId = ag2Id,
+                DisplayOrder = 2,
+                IsRequired = true,
+                Notes = "Nhóm chỉ tiêu bắt buộc",
+                CreatedAt = DateTime.UtcNow
+            },
+            new PackageAnalysisGroup
+            {
+                PackageAnalysisGroupId = Guid.Parse("cccccccc-0005-0003-0003-000000000003"),
+                PackageId = pkg5Id,
+                AnalysisGroupId = ag3Id,
+                DisplayOrder = 3,
+                IsRequired = true,
+                Notes = "Nhóm chỉ tiêu bắt buộc",
+                CreatedAt = DateTime.UtcNow
+            },
+            new PackageAnalysisGroup
+            {
+                PackageAnalysisGroupId = Guid.Parse("cccccccc-0005-0004-0004-000000000004"),
+                PackageId = pkg5Id,
+                AnalysisGroupId = ag4Id,
+                DisplayOrder = 4,
+                IsRequired = true,
+                Notes = "Nhóm chỉ tiêu bắt buộc",
+                CreatedAt = DateTime.UtcNow
+            },
+            new PackageAnalysisGroup
+            {
+                PackageAnalysisGroupId = Guid.Parse("cccccccc-0005-0005-0005-000000000005"),
+                PackageId = pkg5Id,
+                AnalysisGroupId = ag5Id,
+                DisplayOrder = 5,
+                IsRequired = true,
+                Notes = "Nhóm chỉ tiêu bắt buộc",
+                CreatedAt = DateTime.UtcNow
+            },
+            new PackageAnalysisGroup
+            {
+                PackageAnalysisGroupId = Guid.Parse("cccccccc-0005-0006-0006-000000000006"),
+                PackageId = pkg5Id,
+                AnalysisGroupId = ag6Id,
+                DisplayOrder = 6,
+                IsRequired = false,
+                Notes = "Nhóm chỉ tiêu tùy chọn - có thể bỏ qua",
+                CreatedAt = DateTime.UtcNow
             }
         );
     }

@@ -63,6 +63,12 @@ public class AnalysisItemConfiguration : IEntityTypeConfiguration<AnalysisItem>
             .HasColumnName("loq")
             .HasColumnType("decimal(10,3)");
 
+        builder.Property(ai => ai.UnitPrice)
+            .HasColumnName("unit_price")
+            .HasColumnType("decimal(18,2)")
+            .IsRequired()
+            .HasDefaultValue(0);
+
         builder.Property(ai => ai.Unit)
             .HasColumnName("unit")
             .HasMaxLength(50);

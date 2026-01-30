@@ -58,8 +58,9 @@ builder.Services.AddControllers()
     {
         options.Select()
                .Filter()
+               .Expand()
                .OrderBy()
-               .SetMaxTop(100)
+               .SetMaxTop(2000)
                .Count();
         
         // Cấu hình OData route options
@@ -149,6 +150,12 @@ builder.Services.AddSwaggerGen(c =>
 // Add Entity Framework
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// Add Repositories
+builder.Services.AddScoped<VietLab.Repositories.IStoreRepository, VietLab.Repositories.StoreRepository>();
+
+// Add Services
+builder.Services.AddScoped<VietLab.Services.IClientHistoryService, VietLab.Services.ClientHistoryService>();
 
 // Add Authentication
 builder.Services.AddAuthentication(options =>
@@ -324,6 +331,7 @@ static IEdmModel GetEdmModel()
 {
     var builder = new ODataConventionModelBuilder();
     
+    // Core entities
     builder.EntitySet<Client>("Clients");
     builder.EntitySet<Contact>("Contacts");
     builder.EntitySet<Employee>("Employees");
@@ -331,11 +339,35 @@ static IEdmModel GetEdmModel()
     builder.EntitySet<Department>("Departments");
     builder.EntitySet<Account>("Accounts");
     builder.EntitySet<Permission>("Permissions");
+    
+    // Sample and Analysis entities
     builder.EntitySet<SampleMatrixGroup>("SampleMatrixGroups");
     builder.EntitySet<SampleMatrix>("SampleMatrices");
     builder.EntitySet<EquipmentType>("EquipmentTypes");
     builder.EntitySet<AnalysisGroup>("AnalysisGroups");
     builder.EntitySet<AnalysisItem>("AnalysisItems");
+    builder.EntitySet<AnalysisItemTat>("AnalysisItemTats");
+    
+    // Quotation entities
+    builder.EntitySet<Quotation>("Quotations");
+    builder.EntitySet<QuotationItem>("QuotationItems");
+    
+    // Package entities
+    builder.EntitySet<Package>("Packages");
+    builder.EntitySet<PackageAnalysisGroup>("PackageAnalysisGroups");
+    
+    // Client related entities
+    builder.EntitySet<ClientDebt>("ClientDebts");
+    builder.EntitySet<ClientForecast>("ClientForecasts");
+    builder.EntitySet<ClientHistory>("ClientHistories");
+    
+    // Location entities
+    builder.EntitySet<Country>("Countries");
+    builder.EntitySet<Province>("Provinces");
+    builder.EntitySet<Ward>("Wards");
+    
+    // Department capability
+    builder.EntitySet<DepartmentAnalysisCapability>("DepartmentAnalysisCapabilities");
     
     return builder.GetEdmModel();
 }

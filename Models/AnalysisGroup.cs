@@ -6,6 +6,8 @@ public class AnalysisGroup
     public string? AnalysisGroupCode { get; set; }
     public string? NameVi { get; set; }
     public string? NameEn { get; set; }
+    public decimal? WholeGroupStandardPrice { get; set; } // Giá group (Whole group standard)
+    public decimal? StepPrice { get; set; } // Giá bước nhảy
     public string Status { get; set; } = "Active";
     public string? Notes { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

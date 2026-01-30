@@ -14,7 +14,18 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="5.1.5" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="8.0.0" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Exclude script files from compilation, except ImportCsvData -->
+    <Compile Remove="Scripts\ValidateCsvDataProgram.cs" />
+    <Compile Remove="Scripts\ValidateCsvData.cs" />
+    <Content Include="Scripts\ValidateCsvDataProgram.cs" />
+    <Content Include="Scripts\ValidateCsvData.cs" />
   </ItemGroup>
 
 </Project>

@@ -30,6 +30,14 @@ public class AnalysisGroupConfiguration : IEntityTypeConfiguration<AnalysisGroup
             .HasColumnName("name_en")
             .HasMaxLength(500);
 
+        builder.Property(ag => ag.WholeGroupStandardPrice)
+            .HasColumnName("whole_group_standard_price")
+            .HasColumnType("decimal(18,2)");
+
+        builder.Property(ag => ag.StepPrice)
+            .HasColumnName("step_price")
+            .HasColumnType("decimal(18,2)");
+
         builder.Property(ag => ag.Status)
             .HasColumnName("status")
             .HasMaxLength(50)

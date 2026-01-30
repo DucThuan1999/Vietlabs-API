@@ -17,6 +17,7 @@ public class AnalysisItem
     public string? PublishedGroupCode { get; set; }
     public decimal? Lod { get; set; }
     public decimal? Loq { get; set; }
+    public decimal UnitPrice { get; set; } // Đơn giá
     public string? Unit { get; set; }
     
     // Boolean flags
@@ -37,5 +38,6 @@ public class AnalysisItem
     public AnalysisGroup? AnalysisGroup { get; set; }
     public SampleMatrix? SampleMatrix { get; set; }
     public SampleMatrixGroup? SampleMatrixGroup { get; set; }
+    public ICollection<AnalysisItemTat> AnalysisItemTats { get; set; } = new List<AnalysisItemTat>();
 }
 

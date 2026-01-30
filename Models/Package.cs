@@ -11,6 +11,8 @@ public class Package
     public string? NameEn { get; set; } // Tên gói tiếng Anh
     public string? Description { get; set; } // Mô tả gói
     public decimal? DefaultPrice { get; set; } // Giá mặc định của gói
+    public string? PublishedGroupCode { get; set; } // Phương pháp
+    public Guid? SampleMatrixId { get; set; } // Foreign key đến SampleMatrix (Nền mẫu)
 
     public string Status { get; set; } = "Active";
     public string? Notes { get; set; }
@@ -19,5 +21,8 @@ public class Package
 
     // Navigation: 1 Package có nhiều PackageAnalysisGroup (many-to-many với AnalysisGroup)
     public ICollection<PackageAnalysisGroup> PackageAnalysisGroups { get; set; } = new List<PackageAnalysisGroup>();
+    
+    // Navigation: Package - SampleMatrix (nền mẫu)
+    public SampleMatrix? SampleMatrix { get; set; }
 }
 
