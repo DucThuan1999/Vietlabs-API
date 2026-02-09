@@ -23,7 +23,9 @@ public class ClientForecastsController : ODataController
     public IActionResult Get()
     {
         return Ok(_context.ClientForecasts
-            .Include(cf => cf.Client));
+            .Include(cf => cf.Client)
+            .Include(cf => cf.CreatedByAccount)
+            .Include(cf => cf.UpdatedByAccount));
     }
 
     [HttpGet("ClientForecasts({key})")]
@@ -32,6 +34,8 @@ public class ClientForecastsController : ODataController
     {
         var clientForecast = _context.ClientForecasts
             .Include(cf => cf.Client)
+            .Include(cf => cf.CreatedByAccount)
+            .Include(cf => cf.UpdatedByAccount)
             .FirstOrDefault(cf => cf.ClientForecastId == key);
         if (clientForecast == null)
         {
@@ -55,7 +59,14 @@ public class ClientForecastsController : ODataController
         _context.ClientForecasts.Add(clientForecast);
         await _context.SaveChangesAsync();
 
-        return Created($"odata/ClientForecasts({clientForecast.ClientForecastId})", clientForecast);
+        // Reload với đầy đủ navigation properties
+        var createdForecast = await _context.ClientForecasts
+            .Include(cf => cf.Client)
+            .Include(cf => cf.CreatedByAccount)
+            .Include(cf => cf.UpdatedByAccount)
+            .FirstOrDefaultAsync(cf => cf.ClientForecastId == clientForecast.ClientForecastId);
+
+        return Created($"odata/ClientForecasts({clientForecast.ClientForecastId})", createdForecast);
     }
 
     [HttpPut("ClientForecasts({key})")]
@@ -87,7 +98,14 @@ public class ClientForecastsController : ODataController
             throw;
         }
 
-        return Updated(clientForecast);
+        // Reload với đầy đủ navigation properties
+        var updatedForecast = await _context.ClientForecasts
+            .Include(cf => cf.Client)
+            .Include(cf => cf.CreatedByAccount)
+            .Include(cf => cf.UpdatedByAccount)
+            .FirstOrDefaultAsync(cf => cf.ClientForecastId == key);
+
+        return Updated(updatedForecast);
     }
 
     [HttpDelete("ClientForecasts({key})")]

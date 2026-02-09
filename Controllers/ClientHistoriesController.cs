@@ -103,7 +103,14 @@ public class ClientHistoriesController : ODataController
         _context.ClientHistories.Add(clientHistory);
         await _context.SaveChangesAsync();
 
-        return Created($"odata/ClientHistories({clientHistory.ClientHistoryId})", clientHistory);
+        // Reload với đầy đủ navigation properties
+        var createdHistory = await _context.ClientHistories
+            .Include(ch => ch.Client)
+            .Include(ch => ch.ChangedByAccount)
+                .ThenInclude(a => a!.Employee)
+            .FirstOrDefaultAsync(ch => ch.ClientHistoryId == clientHistory.ClientHistoryId);
+
+        return Created($"odata/ClientHistories({clientHistory.ClientHistoryId})", createdHistory);
     }
 
     [HttpPut("ClientHistories({key})")]
@@ -155,7 +162,14 @@ public class ClientHistoriesController : ODataController
             throw;
         }
 
-        return Updated(clientHistory);
+        // Reload với đầy đủ navigation properties
+        var updatedHistory = await _context.ClientHistories
+            .Include(ch => ch.Client)
+            .Include(ch => ch.ChangedByAccount)
+                .ThenInclude(a => a!.Employee)
+            .FirstOrDefaultAsync(ch => ch.ClientHistoryId == key);
+
+        return Updated(updatedHistory);
     }
 
     [HttpDelete("ClientHistories({key})")]

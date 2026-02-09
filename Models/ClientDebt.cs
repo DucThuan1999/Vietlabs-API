@@ -14,6 +14,11 @@ public class ClientDebt
     public int DebtTermDays { get; set; } // Thời hạn công nợ (số ngày)
     public decimal CreditLimit { get; set; } // Hạn mức dư nợ
     
+    // Thông tin liên hệ công nợ
+    public string? DebtContactName { get; set; } // Người liên lạc công nợ
+    public string? DebtContactPhone { get; set; } // SĐT liên lạc công nợ
+    public string? DebtContactEmail { get; set; } // Email liên lạc công nợ
+    
     // Tình trạng hợp đồng
     public DateTime? ContractEffectiveDate { get; set; } // Tình trạng hợp đồng hiệu lực ngày
     public DateTime? ContractEndDate { get; set; } // Tình trạng hợp đồng kết thúc ngày

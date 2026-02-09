@@ -62,5 +62,6 @@ public class Quotation
     public Client? Client { get; set; }
     public Contact? Contact { get; set; }
     public ICollection<QuotationItem> QuotationItems { get; set; } = new List<QuotationItem>();
+    public ICollection<QuotationAnalysisGroup> QuotationAnalysisGroups { get; set; } = new List<QuotationAnalysisGroup>();
 }
 

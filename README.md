@@ -150,7 +150,8 @@ Model `Client` bao gồm các trường:
 - `Industry` - Ngành nghề
 - `Scale` - Quy mô
 - `CustomerType` - Loại khách hàng
-- `DiscountRate` - Mức chiết khấu (%)
+- `DiscountRate` - Giảm giá (%)
+- `CommissionRate` - Tỷ lệ hoa hồng (%)
 - `RepresentativeName` - Người đại diện
 - `RepresentativeEmail` - Email người đại diện
 - `RepresentativePhone` - Số điện thoại người đại diện

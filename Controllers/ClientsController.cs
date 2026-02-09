@@ -42,7 +42,9 @@ public class ClientsController : ODataController
     [EnableQuery]
     public IActionResult Get()
     {
-        return Ok(_context.Clients.Include(c => c.Contacts));
+        return Ok(_context.Clients
+            .Include(c => c.Contacts)
+            .Include(c => c.AgentClient));
     }
 
     [HttpGet("Clients({key})")]
@@ -51,6 +53,7 @@ public class ClientsController : ODataController
     {
         var client = _context.Clients
             .Include(c => c.Contacts)
+            .Include(c => c.AgentClient)
             .FirstOrDefault(c => c.ClientId == key);
         if (client == null)
         {
@@ -118,7 +121,9 @@ public class ClientsController : ODataController
         if (originalClient.Status != client.Status)
             changes.Add($"Trạng thái: '{originalClient.Status}' → '{client.Status}'");
         if (originalClient.DiscountRate != client.DiscountRate)
-            changes.Add($"Mức chiết khấu: {originalClient.DiscountRate}% → {client.DiscountRate}%");
+            changes.Add($"Giảm giá: {originalClient.DiscountRate}% → {client.DiscountRate}%");
+        if (originalClient.CommissionRate != client.CommissionRate)
+            changes.Add($"Tỷ lệ hoa hồng: {originalClient.CommissionRate}% → {client.CommissionRate}%");
         if (originalClient.IsBlacklisted != client.IsBlacklisted)
             changes.Add($"Blacklist: {(originalClient.IsBlacklisted ? "Có" : "Không")} → {(client.IsBlacklisted ? "Có" : "Không")}");
 

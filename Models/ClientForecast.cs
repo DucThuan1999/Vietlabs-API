@@ -21,5 +21,7 @@ public class ClientForecast
 
     // Navigation
     public Client? Client { get; set; }
+    public Account? CreatedByAccount { get; set; } // Thông tin người tạo
+    public Account? UpdatedByAccount { get; set; } // Thông tin người cập nhật
 }
 

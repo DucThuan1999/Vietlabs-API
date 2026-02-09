@@ -1,12 +1,9 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.OData;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.OData.Edm;
-using Microsoft.OData.ModelBuilder;
 using VietLab.Data;
 using VietLab.Filters;
 using VietLab.Middleware;
-using VietLab.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -60,7 +57,7 @@ builder.Services.AddControllers()
                .Filter()
                .Expand()
                .OrderBy()
-               .SetMaxTop(2000)
+               .SetMaxTop(5000)
                .Count();
         
         // Cấu hình OData route options
@@ -71,7 +68,7 @@ builder.Services.AddControllers()
         
         // Sử dụng EDM model
         // OData sẽ tự động sử dụng JsonSerializerOptions từ AddJsonOptions ở trên
-        options.AddRouteComponents("odata", GetEdmModel());
+        options.AddRouteComponents("odata", ODataEdmModel.GetEdmModel());
     });
 
 // Configure Swagger/OpenAPI
@@ -157,17 +154,33 @@ builder.Services.AddScoped<VietLab.Repositories.IStoreRepository, VietLab.Reposi
 // Add Services
 builder.Services.AddScoped<VietLab.Services.IClientHistoryService, VietLab.Services.ClientHistoryService>();
 
-// Add Authentication
-builder.Services.AddAuthentication(options =>
-{
-    options.DefaultAuthenticateScheme = "Bearer";
-    options.DefaultChallengeScheme = "Bearer";
-    options.DefaultScheme = "Bearer";
-})
-.AddScheme<AuthenticationSchemeOptions, TokenAuthenticationHandler>("Bearer", options => { });
+// Kiểm tra config để disable authentication (tạm thời cho test)
+var disableAuth = builder.Configuration.GetValue<bool>("DisableAuthentication", false);
 
-// Add Authorization
-builder.Services.AddAuthorization();
+if (!disableAuth)
+{
+    // Add Authentication
+    builder.Services.AddAuthentication(options =>
+    {
+        options.DefaultAuthenticateScheme = "Bearer";
+        options.DefaultChallengeScheme = "Bearer";
+        options.DefaultScheme = "Bearer";
+    })
+    .AddScheme<AuthenticationSchemeOptions, TokenAuthenticationHandler>("Bearer", options => { });
+
+    // Add Authorization
+    builder.Services.AddAuthorization();
+}
+else
+{
+    // Khi disable authentication, tạo policy cho phép tất cả
+    builder.Services.AddAuthorization(options =>
+    {
+        options.FallbackPolicy = options.DefaultPolicy = new Microsoft.AspNetCore.Authorization.AuthorizationPolicyBuilder()
+            .RequireAssertion(_ => true) // Luôn cho phép
+            .Build();
+    });
+}
 
 // Add CORS
 builder.Services.AddCors(options =>
@@ -277,8 +290,20 @@ app.UseHttpsRedirection();
 // app.UseMiddleware<CamelCaseODataMiddleware>();
 
 // Authentication & Authorization middleware
-app.UseAuthentication();
-app.UseAuthorization();
+// Chỉ enable nếu không disable trong config
+var isAuthDisabled = app.Configuration.GetValue<bool>("DisableAuthentication", false);
+if (!isAuthDisabled)
+{
+    app.UseAuthentication();
+    app.UseAuthorization();
+}
+else
+{
+    // Vẫn cần UseAuthorization để xử lý [Authorize] attributes nhưng với policy cho phép tất cả
+    app.UseAuthorization();
+    var logger = app.Services.GetRequiredService<ILogger<Program>>();
+    logger.LogWarning("⚠️  AUTHENTICATION IS DISABLED - All requests will be allowed! This should only be used for testing!");
+}
 
 app.MapControllers();
 
@@ -326,49 +351,4 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.Run();
-
-static IEdmModel GetEdmModel()
-{
-    var builder = new ODataConventionModelBuilder();
-    
-    // Core entities
-    builder.EntitySet<Client>("Clients");
-    builder.EntitySet<Contact>("Contacts");
-    builder.EntitySet<Employee>("Employees");
-    builder.EntitySet<Branch>("Branches");
-    builder.EntitySet<Department>("Departments");
-    builder.EntitySet<Account>("Accounts");
-    builder.EntitySet<Permission>("Permissions");
-    
-    // Sample and Analysis entities
-    builder.EntitySet<SampleMatrixGroup>("SampleMatrixGroups");
-    builder.EntitySet<SampleMatrix>("SampleMatrices");
-    builder.EntitySet<EquipmentType>("EquipmentTypes");
-    builder.EntitySet<AnalysisGroup>("AnalysisGroups");
-    builder.EntitySet<AnalysisItem>("AnalysisItems");
-    builder.EntitySet<AnalysisItemTat>("AnalysisItemTats");
-    
-    // Quotation entities
-    builder.EntitySet<Quotation>("Quotations");
-    builder.EntitySet<QuotationItem>("QuotationItems");
-    
-    // Package entities
-    builder.EntitySet<Package>("Packages");
-    builder.EntitySet<PackageAnalysisGroup>("PackageAnalysisGroups");
-    
-    // Client related entities
-    builder.EntitySet<ClientDebt>("ClientDebts");
-    builder.EntitySet<ClientForecast>("ClientForecasts");
-    builder.EntitySet<ClientHistory>("ClientHistories");
-    
-    // Location entities
-    builder.EntitySet<Country>("Countries");
-    builder.EntitySet<Province>("Provinces");
-    builder.EntitySet<Ward>("Wards");
-    
-    // Department capability
-    builder.EntitySet<DepartmentAnalysisCapability>("DepartmentAnalysisCapabilities");
-    
-    return builder.GetEdmModel();
-}
 

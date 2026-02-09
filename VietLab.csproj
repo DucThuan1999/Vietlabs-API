@@ -21,11 +21,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- Exclude script files from compilation, except ImportCsvData -->
-    <Compile Remove="Scripts\ValidateCsvDataProgram.cs" />
-    <Compile Remove="Scripts\ValidateCsvData.cs" />
-    <Content Include="Scripts\ValidateCsvDataProgram.cs" />
-    <Content Include="Scripts\ValidateCsvData.cs" />
+    <!-- Exclude Scripts folder from publish -->
+    <Content Remove="Scripts\**" />
+    <None Remove="Scripts\**" />
   </ItemGroup>
 
 </Project>

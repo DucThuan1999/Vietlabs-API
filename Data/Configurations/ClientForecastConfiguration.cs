@@ -13,6 +13,22 @@ public class ClientForecastConfiguration : IEntityTypeConfiguration<ClientForeca
 
         // Primary key
         builder.HasKey(cf => cf.ClientForecastId);
+
+        // Foreign key relationships
+        builder.HasOne(cf => cf.Client)
+            .WithMany()
+            .HasForeignKey(cf => cf.ClientId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasOne(cf => cf.CreatedByAccount)
+            .WithMany()
+            .HasForeignKey(cf => cf.CreatedBy)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(cf => cf.UpdatedByAccount)
+            .WithMany()
+            .HasForeignKey(cf => cf.UpdatedBy)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }
 

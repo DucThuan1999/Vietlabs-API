@@ -27,6 +27,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<DepartmentAnalysisCapability> DepartmentAnalysisCapabilities { get; set; }
     public DbSet<Quotation> Quotations { get; set; }
     public DbSet<QuotationItem> QuotationItems { get; set; }
+    public DbSet<QuotationAnalysisGroup> QuotationAnalysisGroups { get; set; }
     public DbSet<Package> Packages { get; set; }
     public DbSet<PackageAnalysisGroup> PackageAnalysisGroups { get; set; }
     public DbSet<ClientDebt> ClientDebts { get; set; }
@@ -53,6 +54,7 @@ public class ApplicationDbContext : DbContext
         modelBuilder.ApplyConfiguration(new RefreshTokenConfiguration());
         modelBuilder.ApplyConfiguration(new QuotationConfiguration());
         modelBuilder.ApplyConfiguration(new QuotationItemConfiguration());
+        modelBuilder.ApplyConfiguration(new QuotationAnalysisGroupConfiguration());
         modelBuilder.ApplyConfiguration(new ClientDebtConfiguration());
         modelBuilder.ApplyConfiguration(new ClientForecastConfiguration());
         modelBuilder.ApplyConfiguration(new AnalysisGroupConfiguration());
@@ -118,9 +120,13 @@ public class ApplicationDbContext : DbContext
             }
         }
 
-        // Precision cho DiscountRate để tránh truncate
+        // Precision cho DiscountRate và CommissionRate để tránh truncate
         modelBuilder.Entity<Client>()
             .Property(c => c.DiscountRate)
+            .HasPrecision(5, 2);
+        
+        modelBuilder.Entity<Client>()
+            .Property(c => c.CommissionRate)
             .HasPrecision(5, 2);
 
         // Quan hệ 1-n: Client - Contacts
@@ -128,6 +134,15 @@ public class ApplicationDbContext : DbContext
             .HasOne(c => c.Client)
             .WithMany(c => c.Contacts)
             .HasForeignKey(c => c.ClientId);
+
+        // Quan hệ self-referencing: Client - Client (khách hàng thuộc về đại lý)
+        // Client có CustomerType = 'Đại lý' có thể có nhiều khách hàng
+        // Sử dụng NoAction để tránh lỗi multiple cascade paths trong SQL Server
+        modelBuilder.Entity<Client>()
+            .HasOne(c => c.AgentClient)
+            .WithMany(a => a.AgentClients)
+            .HasForeignKey(c => c.AgentClientId)
+            .OnDelete(DeleteBehavior.NoAction);
 
         // Quan hệ 1-n: Branch - Departments
         modelBuilder.Entity<Department>()
@@ -636,12 +651,12 @@ public class ApplicationDbContext : DbContext
                 TaxCode = "0101234567",
                 BankAccountNumber = "1234567890",
                 Address = "123 Đường XYZ",
-                City = "Hà Nội",
+                Province = "Hà Nội",
                 Country = "Việt Nam",
                 Profession = "Công nghệ thông tin",
                 Scale = "200 nhân sự",
                 CustomerType = "Enterprise",
-                DiscountRate = 5,
+                CommissionRate = 5,
                 RepresentativeName = "Nguyễn Văn A",
                 RepresentativeEmail = "contact@abc.com",
                 RepresentativePhone = "0123456789",
@@ -664,12 +679,12 @@ public class ApplicationDbContext : DbContext
                 TaxCode = "0202345678",
                 BankAccountNumber = "2233445566",
                 Address = "456 Đường ABC",
-                City = "TP. Hồ Chí Minh",
+                Province = "TP. Hồ Chí Minh",
                 Country = "Việt Nam",
                 Profession = "Thương mại điện tử",
                 Scale = "120 nhân sự",
                 CustomerType = "SMB",
-                DiscountRate = 3,
+                CommissionRate = 3,
                 RepresentativeName = "Trần Thị B",
                 RepresentativeEmail = "info@xyz.com",
                 RepresentativePhone = "0987654321",
@@ -692,12 +707,12 @@ public class ApplicationDbContext : DbContext
                 TaxCode = "0303456789",
                 BankAccountNumber = "9988776655",
                 Address = "789 Đường DEF",
-                City = "Đà Nẵng",
+                Province = "Đà Nẵng",
                 Country = "Việt Nam",
                 Profession = "Sản xuất",
                 Scale = "80 nhân sự",
                 CustomerType = "Prospect",
-                DiscountRate = 0,
+                CommissionRate = 0,
                 RepresentativeName = "Lê Văn C",
                 RepresentativeEmail = "hello@def.com",
                 RepresentativePhone = "0912345678",
@@ -720,12 +735,12 @@ public class ApplicationDbContext : DbContext
                 TaxCode = "0404567890",
                 BankAccountNumber = "1122334455",
                 Address = "321 Đường GHI",
-                City = "Hà Nội",
+                Province = "Hà Nội",
                 Country = "Việt Nam",
                 Profession = "Tài chính - Ngân hàng",
                 Scale = "350 nhân sự",
                 CustomerType = "Enterprise",
-                DiscountRate = 7,
+                CommissionRate = 7,
                 RepresentativeName = "Phạm Văn D",
                 RepresentativeEmail = "contact@ghi.com",
                 RepresentativePhone = "0123456780",
@@ -748,12 +763,12 @@ public class ApplicationDbContext : DbContext
                 TaxCode = "0505678901",
                 BankAccountNumber = "5566778899",
                 Address = "654 Đường JKL",
-                City = "TP. Hồ Chí Minh",
+                Province = "TP. Hồ Chí Minh",
                 Country = "Việt Nam",
                 Profession = "Bán lẻ",
                 Scale = "150 nhân sự",
                 CustomerType = "SMB",
-                DiscountRate = 4,
+                CommissionRate = 4,
                 RepresentativeName = "Hoàng Thị E",
                 RepresentativeEmail = "info@jkl.com",
                 RepresentativePhone = "0987654320",
@@ -776,12 +791,12 @@ public class ApplicationDbContext : DbContext
                 TaxCode = "0606789012",
                 BankAccountNumber = "9988776655",
                 Address = "987 Đường MNO",
-                City = "Hải Phòng",
+                Province = "Hải Phòng",
                 Country = "Việt Nam",
                 Profession = "Logistics",
                 Scale = "90 nhân sự",
                 CustomerType = "SMB",
-                DiscountRate = 2,
+                CommissionRate = 2,
                 RepresentativeName = "Vũ Văn F",
                 RepresentativeEmail = "contact@mno.com",
                 RepresentativePhone = "0912345670",
@@ -804,12 +819,12 @@ public class ApplicationDbContext : DbContext
                 TaxCode = "0707890123",
                 BankAccountNumber = "3344556677",
                 Address = "147 Đường PQR",
-                City = "Đà Nẵng",
+                Province = "Đà Nẵng",
                 Country = "Việt Nam",
                 Profession = "Du lịch",
                 Scale = "60 nhân sự",
                 CustomerType = "Prospect",
-                DiscountRate = 0,
+                CommissionRate = 0,
                 RepresentativeName = "Đỗ Thị G",
                 RepresentativeEmail = "info@pqr.com",
                 RepresentativePhone = "0123456709",
@@ -832,12 +847,12 @@ public class ApplicationDbContext : DbContext
                 TaxCode = "0808901234",
                 BankAccountNumber = "7788990011",
                 Address = "258 Đường STU",
-                City = "Cần Thơ",
+                Province = "Cần Thơ",
                 Country = "Việt Nam",
                 Profession = "Nông nghiệp",
                 Scale = "100 nhân sự",
                 CustomerType = "SMB",
-                DiscountRate = 3,
+                CommissionRate = 3,
                 RepresentativeName = "Bùi Văn H",
                 RepresentativeEmail = "contact@stu.com",
                 RepresentativePhone = "0987654309",
@@ -860,12 +875,12 @@ public class ApplicationDbContext : DbContext
                 TaxCode = "0909012345",
                 BankAccountNumber = "2233445566",
                 Address = "369 Đường VWX",
-                City = "Hà Nội",
+                Province = "Hà Nội",
                 Country = "Việt Nam",
                 Profession = "Giáo dục",
                 Scale = "180 nhân sự",
                 CustomerType = "Enterprise",
-                DiscountRate = 6,
+                CommissionRate = 6,
                 RepresentativeName = "Lý Thị I",
                 RepresentativeEmail = "info@vwx.com",
                 RepresentativePhone = "0912345608",
@@ -888,12 +903,12 @@ public class ApplicationDbContext : DbContext
                 TaxCode = "1010123456",
                 BankAccountNumber = "4455667788",
                 Address = "741 Đường YZA",
-                City = "TP. Hồ Chí Minh",
+                Province = "TP. Hồ Chí Minh",
                 Country = "Việt Nam",
                 Profession = "Y tế",
                 Scale = "250 nhân sự",
                 CustomerType = "Enterprise",
-                DiscountRate = 8,
+                CommissionRate = 8,
                 RepresentativeName = "Ngô Văn J",
                 RepresentativeEmail = "contact@yza.com",
                 RepresentativePhone = "0123456708",
@@ -916,12 +931,12 @@ public class ApplicationDbContext : DbContext
                 TaxCode = "1111234567",
                 BankAccountNumber = "6677889900",
                 Address = "852 Đường BCD",
-                City = "Đà Nẵng",
+                Province = "Đà Nẵng",
                 Country = "Việt Nam",
                 Profession = "Xây dựng",
                 Scale = "110 nhân sự",
                 CustomerType = "SMB",
-                DiscountRate = 3,
+                CommissionRate = 3,
                 RepresentativeName = "Trương Thị K",
                 RepresentativeEmail = "info@bcd.com",
                 RepresentativePhone = "0987654308",
@@ -944,12 +959,12 @@ public class ApplicationDbContext : DbContext
                 TaxCode = "1212345678",
                 BankAccountNumber = "8899001122",
                 Address = "963 Đường EFG",
-                City = "Hà Nội",
+                Province = "Hà Nội",
                 Country = "Việt Nam",
                 Profession = "Truyền thông",
                 Scale = "70 nhân sự",
                 CustomerType = "Prospect",
-                DiscountRate = 0,
+                CommissionRate = 0,
                 RepresentativeName = "Đinh Văn L",
                 RepresentativeEmail = "contact@efg.com",
                 RepresentativePhone = "0912345607",
@@ -972,12 +987,12 @@ public class ApplicationDbContext : DbContext
                 TaxCode = "1313456789",
                 BankAccountNumber = "0011223344",
                 Address = "159 Đường HIJ",
-                City = "TP. Hồ Chí Minh",
+                Province = "TP. Hồ Chí Minh",
                 Country = "Việt Nam",
                 Profession = "Thực phẩm",
                 Scale = "140 nhân sự",
                 CustomerType = "SMB",
-                DiscountRate = 4,
+                CommissionRate = 4,
                 RepresentativeName = "Phan Thị M",
                 RepresentativeEmail = "info@hij.com",
                 RepresentativePhone = "0123456707",
@@ -1000,12 +1015,12 @@ public class ApplicationDbContext : DbContext
                 TaxCode = "1414567890",
                 BankAccountNumber = "2233445566",
                 Address = "357 Đường KLM",
-                City = "Cần Thơ",
+                Province = "Cần Thơ",
                 Country = "Việt Nam",
                 Profession = "Năng lượng",
                 Scale = "95 nhân sự",
                 CustomerType = "SMB",
-                DiscountRate = 2,
+                CommissionRate = 2,
                 RepresentativeName = "Võ Văn N",
                 RepresentativeEmail = "contact@klm.com",
                 RepresentativePhone = "0987654307",
@@ -1028,12 +1043,12 @@ public class ApplicationDbContext : DbContext
                 TaxCode = "1515678901",
                 BankAccountNumber = "5566778899",
                 Address = "753 Đường NOP",
-                City = "Hà Nội",
+                Province = "Hà Nội",
                 Country = "Việt Nam",
                 Profession = "Công nghệ thông tin",
                 Scale = "300 nhân sự",
                 CustomerType = "Enterprise",
-                DiscountRate = 10,
+                CommissionRate = 10,
                 RepresentativeName = "Lê Văn O",
                 RepresentativeEmail = "info@nop.com",
                 RepresentativePhone = "0912345606",

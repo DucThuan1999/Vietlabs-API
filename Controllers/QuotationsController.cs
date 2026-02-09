@@ -26,7 +26,8 @@ public class QuotationsController : ODataController
             .Include(q => q.Client)
             .Include(q => q.Employee)
             .Include(q => q.Contact)
-            .Include(q => q.QuotationItems));
+            .Include(q => q.QuotationItems)
+            .Include(q => q.QuotationAnalysisGroups));
     }
 
     [HttpGet("Quotations({key})")]
@@ -38,6 +39,7 @@ public class QuotationsController : ODataController
             .Include(q => q.Employee)
             .Include(q => q.Contact)
             .Include(q => q.QuotationItems)
+            .Include(q => q.QuotationAnalysisGroups)
             .FirstOrDefault(q => q.QuotationId == key);
         if (quotation == null)
         {
@@ -63,11 +65,57 @@ public class QuotationsController : ODataController
     }
 
     [HttpPut("Quotations({key})")]
-    public async Task<IActionResult> Put([FromRoute] Guid key, [FromBody] Quotation quotation)
+    public async Task<IActionResult> Put([FromRoute] Guid key, [FromBody] System.Text.Json.JsonElement body)
     {
+        Quotation? quotation = null;
+        
+        try
+        {
+            // Nếu có field "quotationDataToSave", lấy từ đó (frontend wrapper format)
+            if (body.TryGetProperty("quotationDataToSave", out var quotationDataElement))
+            {
+                quotation = System.Text.Json.JsonSerializer.Deserialize<Quotation>(
+                    quotationDataElement.GetRawText(),
+                    new System.Text.Json.JsonSerializerOptions 
+                    { 
+                        PropertyNameCaseInsensitive = true,
+                        PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase
+                    });
+            }
+            // Nếu không có wrapper, deserialize trực tiếp (OData standard format)
+            else
+            {
+                quotation = System.Text.Json.JsonSerializer.Deserialize<Quotation>(
+                    body.GetRawText(),
+                    new System.Text.Json.JsonSerializerOptions 
+                    { 
+                        PropertyNameCaseInsensitive = true,
+                        PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase
+                    });
+            }
+        }
+        catch (System.Text.Json.JsonException ex)
+        {
+            return BadRequest(new { 
+                error = "Invalid JSON format",
+                message = $"Failed to parse request body: {ex.Message}"
+            });
+        }
+
+        if (quotation == null)
+        {
+            return BadRequest(new { 
+                error = "A non-empty request body is required.",
+                message = "The quotation field is required."
+            });
+        }
+
         if (key != quotation.QuotationId)
         {
-            return BadRequest();
+            return BadRequest(new { 
+                error = "Key mismatch",
+                message = $"The key in URL ({key}) does not match QuotationId in body ({quotation.QuotationId})"
+            });
         }
 
         if (!ModelState.IsValid)
