@@ -3,6 +3,7 @@ namespace VietLab.Models;
 public class Province
 {
     public Guid ProvinceId { get; set; }
+    public string? ProvinceCode { get; set; }
     public int? SequenceNumber { get; set; } // STT
     public string Name { get; set; } = string.Empty; // Tỉnh/Thành phố
     public string? Type { get; set; } // Loại (Tỉnh, Thành phố, Thành phố trực thuộc TW)

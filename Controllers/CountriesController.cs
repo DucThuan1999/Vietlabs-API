@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.OData.Query;
 using Microsoft.AspNetCore.OData.Routing.Controllers;
 using Microsoft.EntityFrameworkCore;
 using VietLab.Data;
+using VietLab.Helpers;
 using VietLab.Models;
 
 namespace VietLab.Controllers;
@@ -56,6 +57,20 @@ public class CountriesController : ODataController
             return BadRequest(ModelState);
         }
 
+        // Validate Alpha2 length (must be exactly 2 characters if provided)
+        if (!string.IsNullOrEmpty(country.Alpha2) && country.Alpha2.Length > 2)
+        {
+            ModelState.AddModelError(nameof(country.Alpha2), "Alpha2 code must be exactly 2 characters.");
+            return BadRequest(ModelState);
+        }
+
+        // Validate Alpha3 length (must be exactly 3 characters if provided)
+        if (!string.IsNullOrEmpty(country.Alpha3) && country.Alpha3.Length > 3)
+        {
+            ModelState.AddModelError(nameof(country.Alpha3), "Alpha3 code must be exactly 3 characters.");
+            return BadRequest(ModelState);
+        }
+
         country.CountryId = country.CountryId == Guid.Empty ? Guid.NewGuid() : country.CountryId;
         if (string.IsNullOrEmpty(country.Status))
         {
@@ -63,7 +78,15 @@ public class CountriesController : ODataController
         }
 
         _context.Countries.Add(country);
-        await _context.SaveChangesAsync();
+        
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex)
+        {
+            return this.HandleDatabaseError(ex, _logger, "lưu quốc gia");
+        }
 
         return Created($"odata/Countries({country.CountryId})", country);
     }
@@ -81,6 +104,20 @@ public class CountriesController : ODataController
             return BadRequest(ModelState);
         }
 
+        // Validate Alpha2 length (must be exactly 2 characters if provided)
+        if (!string.IsNullOrEmpty(country.Alpha2) && country.Alpha2.Length > 2)
+        {
+            ModelState.AddModelError(nameof(country.Alpha2), "Alpha2 code must be exactly 2 characters.");
+            return BadRequest(ModelState);
+        }
+
+        // Validate Alpha3 length (must be exactly 3 characters if provided)
+        if (!string.IsNullOrEmpty(country.Alpha3) && country.Alpha3.Length > 3)
+        {
+            ModelState.AddModelError(nameof(country.Alpha3), "Alpha3 code must be exactly 3 characters.");
+            return BadRequest(ModelState);
+        }
+
         _context.Entry(country).State = EntityState.Modified;
 
         try
@@ -94,6 +131,10 @@ public class CountriesController : ODataController
                 return NotFound();
             }
             throw;
+        }
+        catch (DbUpdateException ex)
+        {
+            return this.HandleDatabaseError(ex, _logger, "cập nhật quốc gia");
         }
 
         return Updated(country);
@@ -116,7 +157,15 @@ public class CountriesController : ODataController
         }
 
         _context.Countries.Remove(country);
-        await _context.SaveChangesAsync();
+        
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex)
+        {
+            return this.HandleDatabaseError(ex, _logger, "xóa quốc gia");
+        }
 
         return NoContent();
     }

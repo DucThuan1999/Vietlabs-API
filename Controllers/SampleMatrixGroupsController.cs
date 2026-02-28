@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.OData.Query;
 using Microsoft.AspNetCore.OData.Routing.Controllers;
 using Microsoft.EntityFrameworkCore;
 using VietLab.Data;
+using VietLab.Helpers;
 using VietLab.Models;
 
 namespace VietLab.Controllers;
@@ -12,10 +13,12 @@ namespace VietLab.Controllers;
 public class SampleMatrixGroupsController : ODataController
 {
     private readonly ApplicationDbContext _context;
+    private readonly ILogger<SampleMatrixGroupsController> _logger;
 
-    public SampleMatrixGroupsController(ApplicationDbContext context)
+    public SampleMatrixGroupsController(ApplicationDbContext context, ILogger<SampleMatrixGroupsController> logger)
     {
         _context = context;
+        _logger = logger;
     }
 
     [HttpGet("SampleMatrixGroups")]
@@ -50,7 +53,15 @@ public class SampleMatrixGroupsController : ODataController
         group.SampleMatrixGroupId = group.SampleMatrixGroupId == Guid.Empty ? Guid.NewGuid() : group.SampleMatrixGroupId;
         group.CreatedAt = DateTime.UtcNow;
         _context.SampleMatrixGroups.Add(group);
-        await _context.SaveChangesAsync();
+        
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex)
+        {
+            return this.HandleDatabaseError(ex, _logger, "lưu nhóm mẫu vật");
+        }
 
         return Created($"odata/SampleMatrixGroups({group.SampleMatrixGroupId})", group);
     }
@@ -83,6 +94,10 @@ public class SampleMatrixGroupsController : ODataController
             }
             throw;
         }
+        catch (DbUpdateException ex)
+        {
+            return this.HandleDatabaseError(ex, _logger, "cập nhật nhóm mẫu vật");
+        }
 
         return Updated(group);
     }
@@ -97,7 +112,15 @@ public class SampleMatrixGroupsController : ODataController
         }
 
         _context.SampleMatrixGroups.Remove(group);
-        await _context.SaveChangesAsync();
+        
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex)
+        {
+            return this.HandleDatabaseError(ex, _logger, "xóa nhóm mẫu vật");
+        }
 
         return NoContent();
     }

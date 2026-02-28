@@ -153,22 +153,22 @@ builder.Services.AddScoped<VietLab.Repositories.IStoreRepository, VietLab.Reposi
 
 // Add Services
 builder.Services.AddScoped<VietLab.Services.IClientHistoryService, VietLab.Services.ClientHistoryService>();
+builder.Services.AddScoped<VietLab.Services.IQuotationHistoryService, VietLab.Services.QuotationHistoryService>();
+
+// Luôn đăng ký Authentication + scheme Bearer (tránh lỗi "No authentication handlers are registered" khi gọi [Authorize(AuthenticationSchemes = "Bearer")])
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = "Bearer";
+    options.DefaultChallengeScheme = "Bearer";
+    options.DefaultScheme = "Bearer";
+})
+.AddScheme<AuthenticationSchemeOptions, TokenAuthenticationHandler>("Bearer", options => { });
 
 // Kiểm tra config để disable authentication (tạm thời cho test)
 var disableAuth = builder.Configuration.GetValue<bool>("DisableAuthentication", false);
 
 if (!disableAuth)
 {
-    // Add Authentication
-    builder.Services.AddAuthentication(options =>
-    {
-        options.DefaultAuthenticateScheme = "Bearer";
-        options.DefaultChallengeScheme = "Bearer";
-        options.DefaultScheme = "Bearer";
-    })
-    .AddScheme<AuthenticationSchemeOptions, TokenAuthenticationHandler>("Bearer", options => { });
-
-    // Add Authorization
     builder.Services.AddAuthorization();
 }
 else
@@ -194,20 +194,72 @@ builder.Services.AddCors(options =>
     });
     
     // Policy cho Production - chỉ cho phép specific origins
+    // Lưu ý: Không dùng AllowCredentials() khi dùng WithOrigins() với http://localhost
+    // vì browser sẽ từ chối credentials từ non-https origins
     options.AddPolicy("AllowSpecificOrigins", policy =>
     {
         policy.WithOrigins(
                 "http://localhost:3000",
                 "http://localhost:5173",
+                "http://localhost:5174",
+                "http://localhost:5175",
+                "http://localhost:5176",
                 "http://localhost:4200",
                 "http://localhost:8080",
                 "https://localhost:3000",
                 "https://localhost:5173",
+                "https://localhost:5174",
+                "https://localhost:5175",
+                "https://localhost:5176",
                 "https://localhost:4200"
               )
               .AllowAnyMethod()
-              .AllowAnyHeader()
-              .AllowCredentials();
+              .AllowAnyHeader();
+              // Không dùng AllowCredentials() để tránh lỗi với http://localhost
+    });
+    
+    // Policy cho localhost development - luôn cho phép localhost trong mọi môi trường
+    // Và cũng cho phép các origins được cấu hình trong AllowSpecificOrigins
+    options.AddPolicy("AllowLocalhost", policy =>
+    {
+        policy.SetIsOriginAllowed(origin =>
+            {
+                try
+                {
+                    var uri = new Uri(origin);
+                    // Cho phép tất cả localhost với bất kỳ port nào
+                    if (uri.Host == "localhost" || uri.Host == "127.0.0.1")
+                    {
+                        return true;
+                    }
+                    
+                    // Cho phép các origins được cấu hình
+                    var allowedOrigins = new[]
+                    {
+                        "http://localhost:3000",
+                        "http://localhost:5173",
+                        "http://localhost:5174",
+                        "http://localhost:5175",
+                        "http://localhost:5176",
+                        "http://localhost:4200",
+                        "http://localhost:8080",
+                        "https://localhost:3000",
+                        "https://localhost:5173",
+                        "https://localhost:5174",
+                        "https://localhost:5175",
+                        "https://localhost:5176",
+                        "https://localhost:4200"
+                    };
+                    
+                    return allowedOrigins.Contains(origin);
+                }
+                catch
+                {
+                    return false;
+                }
+            })
+            .AllowAnyMethod()
+            .AllowAnyHeader();
     });
     
     // Policy mặc định - luôn enable cho tất cả môi trường
@@ -273,14 +325,36 @@ app.UseSwaggerUI(c =>
     c.DocExpansion(Swashbuckle.AspNetCore.SwaggerUI.DocExpansion.List);
 });
 // Enable CORS - phải đặt trước UseHttpsRedirection, UseAuthorization và MapControllers
-// Luôn enable CORS cho tất cả môi trường
+// Trong Development, luôn bật CORS để frontend có thể gọi API
+// Trong Production, luôn cho phép localhost để frontend development có thể test với production API
+var isAuthDisabled = app.Configuration.GetValue<bool>("DisableAuthentication", false);
 if (app.Environment.IsDevelopment())
 {
+    // Development: Luôn bật CORS để dễ dàng test
     app.UseCors("AllowAll");
+    if (isAuthDisabled)
+    {
+        var corsLogger = app.Services.GetRequiredService<ILogger<Program>>();
+        corsLogger.LogWarning("⚠️  AUTHENTICATION IS DISABLED - CORS is enabled for development");
+    }
 }
 else
 {
-    app.UseCors("AllowSpecificOrigins");
+    // Production: Luôn cho phép localhost để frontend development có thể test
+    // Sử dụng policy cho phép localhost và các origins được cấu hình
+    // Policy này sẽ tự động kiểm tra origin và cho phép nếu là localhost hoặc trong danh sách
+    app.UseCors("AllowLocalhost");
+    
+    if (isAuthDisabled)
+    {
+        var corsLogger = app.Services.GetRequiredService<ILogger<Program>>();
+        corsLogger.LogWarning("⚠️  AUTHENTICATION IS DISABLED - CORS is enabled for localhost");
+    }
+    else
+    {
+        var corsLogger = app.Services.GetRequiredService<ILogger<Program>>();
+        corsLogger.LogInformation("CORS enabled for localhost and configured origins");
+    }
 }
 
 app.UseHttpsRedirection();
@@ -291,7 +365,6 @@ app.UseHttpsRedirection();
 
 // Authentication & Authorization middleware
 // Chỉ enable nếu không disable trong config
-var isAuthDisabled = app.Configuration.GetValue<bool>("DisableAuthentication", false);
 if (!isAuthDisabled)
 {
     app.UseAuthentication();

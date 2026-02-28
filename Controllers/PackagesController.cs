@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.OData.Query;
 using Microsoft.AspNetCore.OData.Routing.Controllers;
 using Microsoft.EntityFrameworkCore;
 using VietLab.Data;
+using VietLab.Helpers;
 using VietLab.Models;
 
 namespace VietLab.Controllers;
@@ -12,10 +13,12 @@ namespace VietLab.Controllers;
 public class PackagesController : ODataController
 {
     private readonly ApplicationDbContext _context;
+    private readonly ILogger<PackagesController> _logger;
 
-    public PackagesController(ApplicationDbContext context)
+    public PackagesController(ApplicationDbContext context, ILogger<PackagesController> logger)
     {
         _context = context;
+        _logger = logger;
     }
 
     [HttpGet("Packages")]
@@ -55,7 +58,15 @@ public class PackagesController : ODataController
         package.PackageId = package.PackageId == Guid.Empty ? Guid.NewGuid() : package.PackageId;
         package.CreatedAt = DateTime.UtcNow;
         _context.Packages.Add(package);
-        await _context.SaveChangesAsync();
+        
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex)
+        {
+            return this.HandleDatabaseError(ex, _logger, "lưu gói phân tích");
+        }
 
         return Created($"odata/Packages({package.PackageId})", package);
     }
@@ -88,6 +99,10 @@ public class PackagesController : ODataController
             }
             throw;
         }
+        catch (DbUpdateException ex)
+        {
+            return this.HandleDatabaseError(ex, _logger, "cập nhật gói phân tích");
+        }
 
         return Updated(package);
     }
@@ -102,7 +117,15 @@ public class PackagesController : ODataController
         }
 
         _context.Packages.Remove(package);
-        await _context.SaveChangesAsync();
+        
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex)
+        {
+            return this.HandleDatabaseError(ex, _logger, "xóa gói phân tích");
+        }
 
         return NoContent();
     }

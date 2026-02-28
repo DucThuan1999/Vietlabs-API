@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.OData.Query;
 using Microsoft.AspNetCore.OData.Routing.Controllers;
 using Microsoft.EntityFrameworkCore;
 using VietLab.Data;
+using VietLab.Helpers;
 using VietLab.Models;
 
 namespace VietLab.Controllers;
@@ -12,10 +13,12 @@ namespace VietLab.Controllers;
 public class EquipmentTypesController : ODataController
 {
     private readonly ApplicationDbContext _context;
+    private readonly ILogger<EquipmentTypesController> _logger;
 
-    public EquipmentTypesController(ApplicationDbContext context)
+    public EquipmentTypesController(ApplicationDbContext context, ILogger<EquipmentTypesController> logger)
     {
         _context = context;
+        _logger = logger;
     }
 
     [HttpGet("EquipmentTypes")]
@@ -47,7 +50,15 @@ public class EquipmentTypesController : ODataController
 
         equipmentType.EquipmentTypeId = equipmentType.EquipmentTypeId == Guid.Empty ? Guid.NewGuid() : equipmentType.EquipmentTypeId;
         _context.EquipmentTypes.Add(equipmentType);
-        await _context.SaveChangesAsync();
+        
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex)
+        {
+            return this.HandleDatabaseError(ex, _logger, "lưu loại thiết bị");
+        }
 
         return Created($"odata/EquipmentTypes({equipmentType.EquipmentTypeId})", equipmentType);
     }
@@ -79,6 +90,10 @@ public class EquipmentTypesController : ODataController
             }
             throw;
         }
+        catch (DbUpdateException ex)
+        {
+            return this.HandleDatabaseError(ex, _logger, "cập nhật loại thiết bị");
+        }
 
         return Updated(equipmentType);
     }
@@ -93,7 +108,15 @@ public class EquipmentTypesController : ODataController
         }
 
         _context.EquipmentTypes.Remove(equipmentType);
-        await _context.SaveChangesAsync();
+        
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex)
+        {
+            return this.HandleDatabaseError(ex, _logger, "xóa loại thiết bị");
+        }
 
         return NoContent();
     }

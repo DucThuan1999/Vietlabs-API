@@ -15,7 +15,8 @@ public class Client
     public string? Country { get; set; }
     public string? Ward { get; set; } // Xã/Phường
 
-    public string? Profession { get; set; } // Ngành nghề
+    public Guid? ClientIndustryId { get; set; } // FK đến bảng ngành nghề
+    public string? Profession { get; set; } // Ngành nghề (giữ để tương thích / nhập tự do)
     public string? Scale { get; set; } // Quy mô
     public string? CustomerType { get; set; } // Loại khách hàng
     
@@ -65,5 +66,7 @@ public class Client
     public Client? AgentClient { get; set; }
     // Navigation: danh sách khách hàng thuộc đại lý này (nếu CustomerType = 'Đại lý')
     public ICollection<Client> AgentClients { get; set; } = new List<Client>();
+    // Navigation: ngành nghề khách hàng (danh mục)
+    public ClientIndustry? ClientIndustry { get; set; }
 }
 

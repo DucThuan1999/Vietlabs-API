@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.OData.Query;
 using Microsoft.AspNetCore.OData.Routing.Controllers;
 using Microsoft.EntityFrameworkCore;
 using VietLab.Data;
+using VietLab.Helpers;
 using VietLab.Models;
 
 namespace VietLab.Controllers;
@@ -12,10 +13,12 @@ namespace VietLab.Controllers;
 public class QuotationsController : ODataController
 {
     private readonly ApplicationDbContext _context;
+    private readonly ILogger<QuotationsController> _logger;
 
-    public QuotationsController(ApplicationDbContext context)
+    public QuotationsController(ApplicationDbContext context, ILogger<QuotationsController> logger)
     {
         _context = context;
+        _logger = logger;
     }
 
     [HttpGet("Quotations")]
@@ -59,7 +62,15 @@ public class QuotationsController : ODataController
         quotation.QuotationId = quotation.QuotationId == Guid.Empty ? Guid.NewGuid() : quotation.QuotationId;
         quotation.CreatedAt = DateTime.UtcNow;
         _context.Quotations.Add(quotation);
-        await _context.SaveChangesAsync();
+        
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex)
+        {
+            return this.HandleDatabaseError(ex, _logger, "lưu báo giá");
+        }
 
         return Created($"odata/Quotations({quotation.QuotationId})", quotation);
     }
@@ -138,6 +149,10 @@ public class QuotationsController : ODataController
             }
             throw;
         }
+        catch (DbUpdateException ex)
+        {
+            return this.HandleDatabaseError(ex, _logger, "cập nhật báo giá");
+        }
 
         return Updated(quotation);
     }
@@ -152,7 +167,15 @@ public class QuotationsController : ODataController
         }
 
         _context.Quotations.Remove(quotation);
-        await _context.SaveChangesAsync();
+        
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex)
+        {
+            return this.HandleDatabaseError(ex, _logger, "xóa báo giá");
+        }
 
         return NoContent();
     }

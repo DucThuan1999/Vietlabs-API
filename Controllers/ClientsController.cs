@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.OData.Routing.Controllers;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using VietLab.Data;
+using VietLab.Helpers;
 using VietLab.Models;
 using VietLab.Services;
 
@@ -44,7 +45,8 @@ public class ClientsController : ODataController
     {
         return Ok(_context.Clients
             .Include(c => c.Contacts)
-            .Include(c => c.AgentClient));
+            .Include(c => c.AgentClient)
+            .Include(c => c.ClientIndustry));
     }
 
     [HttpGet("Clients({key})")]
@@ -54,6 +56,7 @@ public class ClientsController : ODataController
         var client = _context.Clients
             .Include(c => c.Contacts)
             .Include(c => c.AgentClient)
+            .Include(c => c.ClientIndustry)
             .FirstOrDefault(c => c.ClientId == key);
         if (client == null)
         {
@@ -74,7 +77,15 @@ public class ClientsController : ODataController
         client.ClientId = client.ClientId == Guid.Empty ? Guid.NewGuid() : client.ClientId;
         client.CreatedDate = DateTime.UtcNow;
         _context.Clients.Add(client);
-        await _context.SaveChangesAsync();
+        
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex)
+        {
+            return this.HandleDatabaseError(ex, _logger, "lưu khách hàng");
+        }
 
         // Log client creation
         var accountId = GetCurrentAccountId();
@@ -156,6 +167,10 @@ public class ClientsController : ODataController
             }
             throw;
         }
+        catch (DbUpdateException ex)
+        {
+            return this.HandleDatabaseError(ex, _logger, "cập nhật khách hàng");
+        }
 
         return Updated(client);
     }
@@ -172,7 +187,15 @@ public class ClientsController : ODataController
 
         var companyName = client.CompanyName;
         _context.Clients.Remove(client);
-        await _context.SaveChangesAsync();
+        
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex)
+        {
+            return this.HandleDatabaseError(ex, _logger, "xóa khách hàng");
+        }
 
         // Log client deletion
         var accountId = GetCurrentAccountId();

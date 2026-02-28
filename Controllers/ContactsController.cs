@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.OData.Query;
 using Microsoft.AspNetCore.OData.Routing.Controllers;
 using Microsoft.EntityFrameworkCore;
 using VietLab.Data;
+using VietLab.Helpers;
 using VietLab.Models;
 
 namespace VietLab.Controllers;
@@ -12,10 +13,12 @@ namespace VietLab.Controllers;
 public class ContactsController : ODataController
 {
     private readonly ApplicationDbContext _context;
+    private readonly ILogger<ContactsController> _logger;
 
-    public ContactsController(ApplicationDbContext context)
+    public ContactsController(ApplicationDbContext context, ILogger<ContactsController> logger)
     {
         _context = context;
+        _logger = logger;
     }
 
     [HttpGet("Contacts")]
@@ -48,7 +51,15 @@ public class ContactsController : ODataController
         contact.ContactId = contact.ContactId == Guid.Empty ? Guid.NewGuid() : contact.ContactId;
 
         _context.Contacts.Add(contact);
-        await _context.SaveChangesAsync();
+        
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex)
+        {
+            return this.HandleDatabaseError(ex, _logger, "lưu liên hệ");
+        }
 
         return Created($"odata/Contacts({contact.ContactId})", contact);
     }
@@ -80,6 +91,10 @@ public class ContactsController : ODataController
             }
             throw;
         }
+        catch (DbUpdateException ex)
+        {
+            return this.HandleDatabaseError(ex, _logger, "cập nhật liên hệ");
+        }
 
         return Updated(contact);
     }
@@ -94,7 +109,15 @@ public class ContactsController : ODataController
         }
 
         _context.Contacts.Remove(contact);
-        await _context.SaveChangesAsync();
+        
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex)
+        {
+            return this.HandleDatabaseError(ex, _logger, "xóa liên hệ");
+        }
 
         return NoContent();
     }

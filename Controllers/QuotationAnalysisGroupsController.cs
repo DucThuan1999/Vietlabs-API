@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.OData.Query;
 using Microsoft.AspNetCore.OData.Routing.Controllers;
 using Microsoft.EntityFrameworkCore;
 using VietLab.Data;
+using VietLab.Helpers;
 using VietLab.Models;
 
 namespace VietLab.Controllers;
@@ -12,10 +13,12 @@ namespace VietLab.Controllers;
 public class QuotationAnalysisGroupsController : ODataController
 {
     private readonly ApplicationDbContext _context;
+    private readonly ILogger<QuotationAnalysisGroupsController> _logger;
 
-    public QuotationAnalysisGroupsController(ApplicationDbContext context)
+    public QuotationAnalysisGroupsController(ApplicationDbContext context, ILogger<QuotationAnalysisGroupsController> logger)
     {
         _context = context;
+        _logger = logger;
     }
 
     [HttpGet("QuotationAnalysisGroups")]
@@ -55,7 +58,15 @@ public class QuotationAnalysisGroupsController : ODataController
             : quotationAnalysisGroup.QuotationAnalysisGroupId;
         quotationAnalysisGroup.CreatedAt = DateTime.UtcNow;
         _context.QuotationAnalysisGroups.Add(quotationAnalysisGroup);
-        await _context.SaveChangesAsync();
+        
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex)
+        {
+            return this.HandleDatabaseError(ex, _logger, "lưu nhóm phân tích báo giá");
+        }
 
         return Created($"odata/QuotationAnalysisGroups({quotationAnalysisGroup.QuotationAnalysisGroupId})", quotationAnalysisGroup);
     }
@@ -88,6 +99,10 @@ public class QuotationAnalysisGroupsController : ODataController
             }
             throw;
         }
+        catch (DbUpdateException ex)
+        {
+            return this.HandleDatabaseError(ex, _logger, "cập nhật nhóm phân tích báo giá");
+        }
 
         return Updated(quotationAnalysisGroup);
     }
@@ -102,7 +117,15 @@ public class QuotationAnalysisGroupsController : ODataController
         }
 
         _context.QuotationAnalysisGroups.Remove(quotationAnalysisGroup);
-        await _context.SaveChangesAsync();
+        
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex)
+        {
+            return this.HandleDatabaseError(ex, _logger, "xóa nhóm phân tích báo giá");
+        }
 
         return NoContent();
     }

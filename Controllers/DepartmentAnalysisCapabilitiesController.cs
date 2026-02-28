@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.OData.Query;
 using Microsoft.AspNetCore.OData.Routing.Controllers;
 using Microsoft.EntityFrameworkCore;
 using VietLab.Data;
+using VietLab.Helpers;
 using VietLab.Models;
 
 namespace VietLab.Controllers;
@@ -12,10 +13,12 @@ namespace VietLab.Controllers;
 public class DepartmentAnalysisCapabilitiesController : ODataController
 {
     private readonly ApplicationDbContext _context;
+    private readonly ILogger<DepartmentAnalysisCapabilitiesController> _logger;
 
-    public DepartmentAnalysisCapabilitiesController(ApplicationDbContext context)
+    public DepartmentAnalysisCapabilitiesController(ApplicationDbContext context, ILogger<DepartmentAnalysisCapabilitiesController> logger)
     {
         _context = context;
+        _logger = logger;
     }
 
     [HttpGet("DepartmentAnalysisCapabilities")]
@@ -56,7 +59,15 @@ public class DepartmentAnalysisCapabilitiesController : ODataController
             : departmentAnalysisCapability.DepartmentAnalysisCapabilityId;
         departmentAnalysisCapability.CreatedAt = DateTime.UtcNow;
         _context.DepartmentAnalysisCapabilities.Add(departmentAnalysisCapability);
-        await _context.SaveChangesAsync();
+        
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex)
+        {
+            return this.HandleDatabaseError(ex, _logger, "lưu năng lực phân tích phòng ban");
+        }
 
         return Created($"odata/DepartmentAnalysisCapabilities({departmentAnalysisCapability.DepartmentAnalysisCapabilityId})", 
             departmentAnalysisCapability);
@@ -90,6 +101,10 @@ public class DepartmentAnalysisCapabilitiesController : ODataController
             }
             throw;
         }
+        catch (DbUpdateException ex)
+        {
+            return this.HandleDatabaseError(ex, _logger, "cập nhật năng lực phân tích phòng ban");
+        }
 
         return Updated(departmentAnalysisCapability);
     }
@@ -104,7 +119,15 @@ public class DepartmentAnalysisCapabilitiesController : ODataController
         }
 
         _context.DepartmentAnalysisCapabilities.Remove(departmentAnalysisCapability);
-        await _context.SaveChangesAsync();
+        
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex)
+        {
+            return this.HandleDatabaseError(ex, _logger, "xóa năng lực phân tích phòng ban");
+        }
 
         return NoContent();
     }

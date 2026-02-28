@@ -1,8 +1,10 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OData.Query;
 using Microsoft.AspNetCore.OData.Routing.Controllers;
 using Microsoft.EntityFrameworkCore;
 using VietLab.Data;
+using VietLab.Helpers;
 using VietLab.Models;
 
 namespace VietLab.Controllers;
@@ -12,24 +14,32 @@ namespace VietLab.Controllers;
 public class BranchesController : ODataController
 {
     private readonly ApplicationDbContext _context;
+    private readonly ILogger<BranchesController> _logger;
 
-    public BranchesController(ApplicationDbContext context)
+    public BranchesController(ApplicationDbContext context, ILogger<BranchesController> logger)
     {
         _context = context;
+        _logger = logger;
+    }
+
+    private Guid? GetCurrentAccountId()
+    {
+        var accountIdClaim = User.FindFirst("AccountId")?.Value;
+        return Guid.TryParse(accountIdClaim, out var accountId) ? accountId : null;
     }
 
     [HttpGet("Branches")]
     [EnableQuery]
     public IActionResult Get()
     {
-        return Ok(_context.Branches);
+        return Ok(_context.Branches.Include(b => b.UpdatedByAccount));
     }
 
     [HttpGet("Branches({key})")]
     [EnableQuery]
     public IActionResult Get([FromRoute] Guid key)
     {
-        var branch = _context.Branches.FirstOrDefault(b => b.BranchId == key);
+        var branch = _context.Branches.Include(b => b.UpdatedByAccount).FirstOrDefault(b => b.BranchId == key);
         if (branch == null)
         {
             return NotFound();
@@ -47,7 +57,15 @@ public class BranchesController : ODataController
 
         branch.BranchId = branch.BranchId == Guid.Empty ? Guid.NewGuid() : branch.BranchId;
         _context.Branches.Add(branch);
-        await _context.SaveChangesAsync();
+        
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex)
+        {
+            return this.HandleDatabaseError(ex, _logger, "lưu chi nhánh");
+        }
 
         return Created($"odata/Branches({branch.BranchId})", branch);
     }
@@ -65,6 +83,8 @@ public class BranchesController : ODataController
             return BadRequest(ModelState);
         }
 
+        branch.UpdatedAt = DateTime.UtcNow;
+        branch.UpdatedBy = GetCurrentAccountId();
         _context.Entry(branch).State = EntityState.Modified;
 
         try
@@ -78,6 +98,10 @@ public class BranchesController : ODataController
                 return NotFound();
             }
             throw;
+        }
+        catch (DbUpdateException ex)
+        {
+            return this.HandleDatabaseError(ex, _logger, "cập nhật chi nhánh");
         }
 
         return Updated(branch);
@@ -93,7 +117,15 @@ public class BranchesController : ODataController
         }
 
         _context.Branches.Remove(branch);
-        await _context.SaveChangesAsync();
+        
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex)
+        {
+            return this.HandleDatabaseError(ex, _logger, "xóa chi nhánh");
+        }
 
         return NoContent();
     }

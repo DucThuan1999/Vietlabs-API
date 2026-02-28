@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.OData.Routing.Controllers;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using VietLab.Data;
+using VietLab.Helpers;
 using VietLab.Models;
 using VietLab.Services;
 
@@ -101,7 +102,15 @@ public class ClientHistoriesController : ODataController
         }
 
         _context.ClientHistories.Add(clientHistory);
-        await _context.SaveChangesAsync();
+        
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex)
+        {
+            return this.HandleDatabaseError(ex, _logger, "lưu lịch sử khách hàng");
+        }
 
         // Reload với đầy đủ navigation properties
         var createdHistory = await _context.ClientHistories
@@ -161,6 +170,10 @@ public class ClientHistoriesController : ODataController
             }
             throw;
         }
+        catch (DbUpdateException ex)
+        {
+            return this.HandleDatabaseError(ex, _logger, "cập nhật lịch sử khách hàng");
+        }
 
         // Reload với đầy đủ navigation properties
         var updatedHistory = await _context.ClientHistories
@@ -182,7 +195,15 @@ public class ClientHistoriesController : ODataController
         }
 
         _context.ClientHistories.Remove(clientHistory);
-        await _context.SaveChangesAsync();
+        
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex)
+        {
+            return this.HandleDatabaseError(ex, _logger, "xóa lịch sử khách hàng");
+        }
 
         return NoContent();
     }

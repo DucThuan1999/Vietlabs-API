@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.OData.Query;
 using Microsoft.AspNetCore.OData.Routing.Controllers;
 using Microsoft.EntityFrameworkCore;
 using VietLab.Data;
+using VietLab.Helpers;
 using VietLab.Models;
 
 namespace VietLab.Controllers;
@@ -12,10 +13,12 @@ namespace VietLab.Controllers;
 public class AnalysisGroupsController : ODataController
 {
     private readonly ApplicationDbContext _context;
+    private readonly ILogger<AnalysisGroupsController> _logger;
 
-    public AnalysisGroupsController(ApplicationDbContext context)
+    public AnalysisGroupsController(ApplicationDbContext context, ILogger<AnalysisGroupsController> logger)
     {
         _context = context;
+        _logger = logger;
     }
 
     [HttpGet("AnalysisGroups")]
@@ -50,7 +53,15 @@ public class AnalysisGroupsController : ODataController
         group.AnalysisGroupId = group.AnalysisGroupId == Guid.Empty ? Guid.NewGuid() : group.AnalysisGroupId;
         group.CreatedAt = DateTime.UtcNow;
         _context.AnalysisGroups.Add(group);
-        await _context.SaveChangesAsync();
+        
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex)
+        {
+            return this.HandleDatabaseError(ex, _logger, "lưu nhóm phân tích");
+        }
 
         return Created($"odata/AnalysisGroups({group.AnalysisGroupId})", group);
     }
@@ -83,6 +94,10 @@ public class AnalysisGroupsController : ODataController
             }
             throw;
         }
+        catch (DbUpdateException ex)
+        {
+            return this.HandleDatabaseError(ex, _logger, "cập nhật nhóm phân tích");
+        }
 
         return Updated(group);
     }
@@ -97,7 +112,15 @@ public class AnalysisGroupsController : ODataController
         }
 
         _context.AnalysisGroups.Remove(group);
-        await _context.SaveChangesAsync();
+        
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex)
+        {
+            return this.HandleDatabaseError(ex, _logger, "xóa nhóm phân tích");
+        }
 
         return NoContent();
     }

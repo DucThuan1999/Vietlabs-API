@@ -16,14 +16,16 @@ public static class ODataEdmModel
         // Core entities
         builder.EntitySet<Client>("Clients");
         builder.EntitySet<Contact>("Contacts");
-        builder.EntitySet<Employee>("Employees");
+        var employeeEntitySet = builder.EntitySet<Employee>("Employees");
+        employeeEntitySet.EntityType.HasOptional(e => e.Department).AutoExpand = true;
         builder.EntitySet<Branch>("Branches");
         builder.EntitySet<Department>("Departments");
         
-        // Account với AutoExpand cho Employee
+        // Account với AutoExpand cho Employee và Permission
         var accountEntitySet = builder.EntitySet<Account>("Accounts");
         var accountEntityType = accountEntitySet.EntityType;
         accountEntityType.HasOptional(a => a.Employee).AutoExpand = true;
+        accountEntityType.HasRequired(a => a.Permission).AutoExpand = true;
         
         builder.EntitySet<Permission>("Permissions");
         
@@ -39,6 +41,12 @@ public static class ODataEdmModel
         builder.EntitySet<Quotation>("Quotations");
         builder.EntitySet<QuotationItem>("QuotationItems");
         builder.EntitySet<QuotationAnalysisGroup>("QuotationAnalysisGroups");
+        builder.EntitySet<QuotationApprovalThreshold>("QuotationApprovalThresholds");
+        
+        // QuotationHistory với AutoExpand cho navigation properties
+        var quotationHistoryEntitySet = builder.EntitySet<QuotationHistory>("QuotationHistories");
+        var quotationHistoryEntityType = quotationHistoryEntitySet.EntityType;
+        quotationHistoryEntityType.HasRequired(qh => qh.ChangedByAccount).AutoExpand = true;
         
         // Package entities
         builder.EntitySet<Package>("Packages");
@@ -62,7 +70,17 @@ public static class ODataEdmModel
         builder.EntitySet<Country>("Countries");
         builder.EntitySet<Province>("Provinces");
         builder.EntitySet<Ward>("Wards");
-        
+
+        // Danh mục ngành nghề khách hàng
+        builder.EntitySet<ClientIndustry>("ClientIndustries");
+
+        // Danh mục chức vụ nhân viên
+        builder.EntitySet<EmployeeTitle>("EmployeeTitles");
+
+        // Nhà thầu phụ
+        builder.EntitySet<Subcontractor>("Subcontractors");
+        builder.EntitySet<SubcontractorCapability>("SubcontractorCapabilities");
+
         // Department capability
         builder.EntitySet<DepartmentAnalysisCapability>("DepartmentAnalysisCapabilities");
         

@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.OData.Query;
 using Microsoft.AspNetCore.OData.Routing.Controllers;
 using Microsoft.EntityFrameworkCore;
 using VietLab.Data;
+using VietLab.Helpers;
 using VietLab.Models;
 
 namespace VietLab.Controllers;
@@ -85,7 +86,15 @@ public class ProvincesController : ODataController
         }
 
         _context.Provinces.Add(province);
-        await _context.SaveChangesAsync();
+        
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex)
+        {
+            return this.HandleDatabaseError(ex, _logger, "lưu tỉnh/thành phố");
+        }
 
         return Created($"odata/Provinces({province.ProvinceId})", province);
     }
@@ -124,6 +133,10 @@ public class ProvincesController : ODataController
             }
             throw;
         }
+        catch (DbUpdateException ex)
+        {
+            return this.HandleDatabaseError(ex, _logger, "cập nhật tỉnh/thành phố");
+        }
 
         return Updated(province);
     }
@@ -145,7 +158,15 @@ public class ProvincesController : ODataController
         }
 
         _context.Provinces.Remove(province);
-        await _context.SaveChangesAsync();
+        
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex)
+        {
+            return this.HandleDatabaseError(ex, _logger, "xóa tỉnh/thành phố");
+        }
 
         return NoContent();
     }

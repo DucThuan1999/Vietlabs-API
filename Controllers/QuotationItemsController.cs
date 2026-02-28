@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.OData.Query;
 using Microsoft.AspNetCore.OData.Routing.Controllers;
 using Microsoft.EntityFrameworkCore;
 using VietLab.Data;
+using VietLab.Helpers;
 using VietLab.Models;
 
 namespace VietLab.Controllers;
@@ -12,10 +13,12 @@ namespace VietLab.Controllers;
 public class QuotationItemsController : ODataController
 {
     private readonly ApplicationDbContext _context;
+    private readonly ILogger<QuotationItemsController> _logger;
 
-    public QuotationItemsController(ApplicationDbContext context)
+    public QuotationItemsController(ApplicationDbContext context, ILogger<QuotationItemsController> logger)
     {
         _context = context;
+        _logger = logger;
     }
 
     [HttpGet("QuotationItems")]
@@ -189,15 +192,7 @@ public class QuotationItemsController : ODataController
         }
         catch (DbUpdateException ex)
         {
-            // Xử lý lỗi constraint violation
-            if (ex.InnerException is Microsoft.Data.SqlClient.SqlException sqlEx && sqlEx.Number == 547)
-            {
-                return BadRequest(new { 
-                    error = "Constraint violation",
-                    message = "The quotation item violates database constraints. Please ensure only one foreign key (AnalysisItemId, AnalysisGroupId, or PackageId) is set based on ItemType."
-                });
-            }
-            throw;
+            return this.HandleDatabaseError(ex, _logger, "lưu mục báo giá");
         }
 
         return Created($"odata/QuotationItems({quotationItem.QuotationItemId})", quotationItem);
@@ -308,15 +303,7 @@ public class QuotationItemsController : ODataController
         }
         catch (DbUpdateException ex)
         {
-            // Xử lý lỗi constraint violation
-            if (ex.InnerException is Microsoft.Data.SqlClient.SqlException sqlEx && sqlEx.Number == 547)
-            {
-                return BadRequest(new { 
-                    error = "Constraint violation",
-                    message = "The quotation item violates database constraints. Please ensure only one foreign key (AnalysisItemId, AnalysisGroupId, or PackageId) is set based on ItemType."
-                });
-            }
-            throw;
+            return this.HandleDatabaseError(ex, _logger, "cập nhật mục báo giá");
         }
 
         return Updated(quotationItem);
@@ -332,7 +319,15 @@ public class QuotationItemsController : ODataController
         }
 
         _context.QuotationItems.Remove(quotationItem);
-        await _context.SaveChangesAsync();
+        
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex)
+        {
+            return this.HandleDatabaseError(ex, _logger, "xóa mục báo giá");
+        }
 
         return NoContent();
     }

@@ -13,6 +13,14 @@ public class BranchConfiguration : IEntityTypeConfiguration<Branch>
 
         // Primary key
         builder.HasKey(b => b.BranchId);
+
+        builder.Property(b => b.UpdatedAt).HasColumnName("updated_at");
+        builder.Property(b => b.UpdatedBy).HasColumnName("updated_by");
+
+        builder.HasOne(b => b.UpdatedByAccount)
+            .WithMany()
+            .HasForeignKey(b => b.UpdatedBy)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }
 

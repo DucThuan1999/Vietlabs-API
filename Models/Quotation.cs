@@ -57,11 +57,24 @@ public class Quotation
     public Guid? CreatedBy { get; set; } // AccountId của người tạo
     public Guid? UpdatedBy { get; set; } // AccountId của người cập nhật
 
+    // PHÊ DUYỆT BÁO GIÁ
+    public Guid? ApproverLevel1Id { get; set; } // Người phê duyệt cấp 1 (Manager của Employee)
+    public Guid? ApproverLevel2Id { get; set; } // Người phê duyệt cấp 2 (Người chỉ định)
+    public DateTime? ApprovedLevel1At { get; set; } // Thời gian phê duyệt cấp 1
+    public DateTime? ApprovedLevel2At { get; set; } // Thời gian phê duyệt cấp 2
+    public string? ApprovalLevel1Status { get; set; } // Pending, Approved, Rejected
+    public string? ApprovalLevel2Status { get; set; } // Pending, Approved, Rejected
+    public string? ApprovalLevel1Comment { get; set; } // Ghi chú phê duyệt cấp 1
+    public string? ApprovalLevel2Comment { get; set; } // Ghi chú phê duyệt cấp 2
+
     // Navigation Properties
     public Employee? Employee { get; set; }
+    public Employee? ApproverLevel1 { get; set; } // Navigation đến Employee (Manager)
+    public Employee? ApproverLevel2 { get; set; } // Navigation đến Employee (Người chỉ định)
     public Client? Client { get; set; }
     public Contact? Contact { get; set; }
     public ICollection<QuotationItem> QuotationItems { get; set; } = new List<QuotationItem>();
     public ICollection<QuotationAnalysisGroup> QuotationAnalysisGroups { get; set; } = new List<QuotationAnalysisGroup>();
+    public ICollection<QuotationHistory> QuotationHistories { get; set; } = new List<QuotationHistory>();
 }
 

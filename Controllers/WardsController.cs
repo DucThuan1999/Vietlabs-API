@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.OData.Query;
 using Microsoft.AspNetCore.OData.Routing.Controllers;
 using Microsoft.EntityFrameworkCore;
 using VietLab.Data;
+using VietLab.Helpers;
 using VietLab.Models;
 
 namespace VietLab.Controllers;
@@ -112,7 +113,15 @@ public class WardsController : ODataController
         }
 
         _context.Wards.Add(ward);
-        await _context.SaveChangesAsync();
+        
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex)
+        {
+            return this.HandleDatabaseError(ex, _logger, "lưu phường/xã");
+        }
 
         return Created($"odata/Wards({ward.WardId})", ward);
     }
@@ -165,6 +174,10 @@ public class WardsController : ODataController
             }
             throw;
         }
+        catch (DbUpdateException ex)
+        {
+            return this.HandleDatabaseError(ex, _logger, "cập nhật phường/xã");
+        }
 
         return Updated(ward);
     }
@@ -179,7 +192,15 @@ public class WardsController : ODataController
         }
 
         _context.Wards.Remove(ward);
-        await _context.SaveChangesAsync();
+        
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex)
+        {
+            return this.HandleDatabaseError(ex, _logger, "xóa phường/xã");
+        }
 
         return NoContent();
     }

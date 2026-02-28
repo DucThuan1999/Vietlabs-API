@@ -10,6 +10,11 @@ public class Branch
     public string? Notes { get; set; }      // Mô tả/Ghi chú
     public string Status { get; set; } = "Active";         // Trạng thái
 
+    public DateTime? UpdatedAt { get; set; }
+    public Guid? UpdatedBy { get; set; }    // AccountId người cập nhật
+
+    public Account? UpdatedByAccount { get; set; }
+
     // Navigation: 1 Branch có nhiều Department
     public ICollection<Department> Departments { get; set; } = new List<Department>();
 }

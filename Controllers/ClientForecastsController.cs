@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.OData.Query;
 using Microsoft.AspNetCore.OData.Routing.Controllers;
 using Microsoft.EntityFrameworkCore;
 using VietLab.Data;
+using VietLab.Helpers;
 using VietLab.Models;
 
 namespace VietLab.Controllers;
@@ -12,10 +13,12 @@ namespace VietLab.Controllers;
 public class ClientForecastsController : ODataController
 {
     private readonly ApplicationDbContext _context;
+    private readonly ILogger<ClientForecastsController> _logger;
 
-    public ClientForecastsController(ApplicationDbContext context)
+    public ClientForecastsController(ApplicationDbContext context, ILogger<ClientForecastsController> logger)
     {
         _context = context;
+        _logger = logger;
     }
 
     [HttpGet("ClientForecasts")]
@@ -57,7 +60,15 @@ public class ClientForecastsController : ODataController
             : clientForecast.ClientForecastId;
         clientForecast.CreatedAt = DateTime.UtcNow;
         _context.ClientForecasts.Add(clientForecast);
-        await _context.SaveChangesAsync();
+        
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex)
+        {
+            return this.HandleDatabaseError(ex, _logger, "lưu dự báo khách hàng");
+        }
 
         // Reload với đầy đủ navigation properties
         var createdForecast = await _context.ClientForecasts
@@ -97,6 +108,10 @@ public class ClientForecastsController : ODataController
             }
             throw;
         }
+        catch (DbUpdateException ex)
+        {
+            return this.HandleDatabaseError(ex, _logger, "cập nhật dự báo khách hàng");
+        }
 
         // Reload với đầy đủ navigation properties
         var updatedForecast = await _context.ClientForecasts
@@ -118,7 +133,15 @@ public class ClientForecastsController : ODataController
         }
 
         _context.ClientForecasts.Remove(clientForecast);
-        await _context.SaveChangesAsync();
+        
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex)
+        {
+            return this.HandleDatabaseError(ex, _logger, "xóa dự báo khách hàng");
+        }
 
         return NoContent();
     }

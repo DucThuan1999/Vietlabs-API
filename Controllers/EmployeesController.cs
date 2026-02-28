@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.OData.Query;
 using Microsoft.AspNetCore.OData.Routing.Controllers;
 using Microsoft.EntityFrameworkCore;
 using VietLab.Data;
+using VietLab.Helpers;
 using VietLab.Models;
 
 namespace VietLab.Controllers;
@@ -12,24 +13,33 @@ namespace VietLab.Controllers;
 public class EmployeesController : ODataController
 {
     private readonly ApplicationDbContext _context;
+    private readonly ILogger<EmployeesController> _logger;
 
-    public EmployeesController(ApplicationDbContext context)
+    public EmployeesController(ApplicationDbContext context, ILogger<EmployeesController> logger)
     {
         _context = context;
+        _logger = logger;
     }
 
     [HttpGet("Employees")]
     [EnableQuery]
     public IActionResult Get()
     {
-        return Ok(_context.Employees);
+        return Ok(_context.Employees
+            .Include(e => e.Department)
+            .Include(e => e.EmployeeTitle)
+            .Include(e => e.Account).ThenInclude(a => a!.Permission));
     }
 
     [HttpGet("Employees({key})")]
     [EnableQuery]
     public IActionResult Get([FromRoute] Guid key)
     {
-        var employee = _context.Employees.FirstOrDefault(e => e.EmployeeId == key);
+        var employee = _context.Employees
+            .Include(e => e.Department)
+            .Include(e => e.EmployeeTitle)
+            .Include(e => e.Account).ThenInclude(a => a!.Permission)
+            .FirstOrDefault(e => e.EmployeeId == key);
         if (employee == null)
         {
             return NotFound();
@@ -47,7 +57,15 @@ public class EmployeesController : ODataController
 
         employee.EmployeeId = employee.EmployeeId == Guid.Empty ? Guid.NewGuid() : employee.EmployeeId;
         _context.Employees.Add(employee);
-        await _context.SaveChangesAsync();
+        
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex)
+        {
+            return this.HandleDatabaseError(ex, _logger, "lưu nhân viên");
+        }
 
         return Created($"odata/Employees({employee.EmployeeId})", employee);
     }
@@ -65,7 +83,24 @@ public class EmployeesController : ODataController
             return BadRequest(ModelState);
         }
 
-        _context.Entry(employee).State = EntityState.Modified;
+        var existing = await _context.Employees.FindAsync(key);
+        if (existing == null)
+        {
+            return NotFound();
+        }
+
+        // Cập nhật chỉ các thuộc tính scalar/FK, tránh attach entity từ body (gây lỗi tracking trùng key)
+        existing.EmployeeCode = employee.EmployeeCode;
+        existing.DepartmentId = employee.DepartmentId;
+        existing.Role = employee.Role;
+        existing.FullName = employee.FullName;
+        existing.EmployeeTitleId = employee.EmployeeTitleId;
+        existing.Title = employee.Title;
+        existing.Email = employee.Email;
+        existing.Mobile = employee.Mobile;
+        existing.Notes = employee.Notes;
+        existing.Status = employee.Status;
+        existing.ManagerId = employee.ManagerId;
 
         try
         {
@@ -79,8 +114,12 @@ public class EmployeesController : ODataController
             }
             throw;
         }
+        catch (DbUpdateException ex)
+        {
+            return this.HandleDatabaseError(ex, _logger, "cập nhật nhân viên");
+        }
 
-        return Updated(employee);
+        return Updated(existing);
     }
 
     [HttpDelete("Employees({key})")]
@@ -93,7 +132,15 @@ public class EmployeesController : ODataController
         }
 
         _context.Employees.Remove(employee);
-        await _context.SaveChangesAsync();
+        
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex)
+        {
+            return this.HandleDatabaseError(ex, _logger, "xóa nhân viên");
+        }
 
         return NoContent();
     }

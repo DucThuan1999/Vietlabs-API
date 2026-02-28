@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.OData.Query;
 using Microsoft.AspNetCore.OData.Routing.Controllers;
 using Microsoft.EntityFrameworkCore;
 using VietLab.Data;
+using VietLab.Helpers;
 using VietLab.Models;
 
 namespace VietLab.Controllers;
@@ -12,10 +13,12 @@ namespace VietLab.Controllers;
 public class SampleMatricesController : ODataController
 {
     private readonly ApplicationDbContext _context;
+    private readonly ILogger<SampleMatricesController> _logger;
 
-    public SampleMatricesController(ApplicationDbContext context)
+    public SampleMatricesController(ApplicationDbContext context, ILogger<SampleMatricesController> logger)
     {
         _context = context;
+        _logger = logger;
     }
 
     [HttpGet("SampleMatrices")]
@@ -50,7 +53,15 @@ public class SampleMatricesController : ODataController
         matrix.SampleMatrixId = matrix.SampleMatrixId == Guid.Empty ? Guid.NewGuid() : matrix.SampleMatrixId;
         matrix.CreatedAt = DateTime.UtcNow;
         _context.SampleMatrices.Add(matrix);
-        await _context.SaveChangesAsync();
+        
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex)
+        {
+            return this.HandleDatabaseError(ex, _logger, "lưu mẫu vật");
+        }
 
         return Created($"odata/SampleMatrices({matrix.SampleMatrixId})", matrix);
     }
@@ -83,6 +94,10 @@ public class SampleMatricesController : ODataController
             }
             throw;
         }
+        catch (DbUpdateException ex)
+        {
+            return this.HandleDatabaseError(ex, _logger, "cập nhật mẫu vật");
+        }
 
         return Updated(matrix);
     }
@@ -97,7 +112,15 @@ public class SampleMatricesController : ODataController
         }
 
         _context.SampleMatrices.Remove(matrix);
-        await _context.SaveChangesAsync();
+        
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex)
+        {
+            return this.HandleDatabaseError(ex, _logger, "xóa mẫu vật");
+        }
 
         return NoContent();
     }

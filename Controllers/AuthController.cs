@@ -46,7 +46,7 @@ public class AuthController : ControllerBase
             {
                 // Tìm account đầu tiên có status Active, hoặc tìm theo username nếu có
                 var adminAccount = await _context.Accounts
-                    .Include(a => a.Employee)
+                    .Include(a => a.Employee).ThenInclude(e => e!.Department)
                     .Include(a => a.Permission)
                     .FirstOrDefaultAsync(a => 
                         (string.IsNullOrEmpty(request.UserName) || a.UserName == request.UserName) 
@@ -56,7 +56,7 @@ public class AuthController : ControllerBase
                 {
                     // Nếu không tìm thấy account, tìm account đầu tiên có status Active
                     adminAccount = await _context.Accounts
-                        .Include(a => a.Employee)
+                        .Include(a => a.Employee).ThenInclude(e => e!.Department)
                         .Include(a => a.Permission)
                         .FirstOrDefaultAsync(a => a.Status == "Active");
                     
@@ -87,7 +87,7 @@ public class AuthController : ControllerBase
                         UserName = adminAccount.UserName,
                         FullName = adminAccount.Employee?.FullName ?? "Admin User",
                         Email = adminAccount.Employee?.Email ?? "admin@viet-labs.com",
-                        Department = adminAccount.Employee?.Department ?? "IT",
+                        Department = adminAccount.Employee?.Department?.NameVi ?? "IT",
                         Role = adminAccount.Employee?.Role ?? "Admin",
                         Title = adminAccount.Employee?.Title ?? "Administrator",
                         PermissionId = adminAccount.PermissionId,
@@ -107,7 +107,7 @@ public class AuthController : ControllerBase
 
             // Tìm account theo username
             var account = await _context.Accounts
-                .Include(a => a.Employee)
+                .Include(a => a.Employee).ThenInclude(e => e!.Department)
                 .Include(a => a.Permission)
                 .FirstOrDefaultAsync(a => a.UserName == request.UserName && a.Status == "Active");
 
@@ -163,7 +163,7 @@ public class AuthController : ControllerBase
                         UserName = account.UserName,
                         FullName = account.Employee.FullName,
                         Email = account.Employee.Email ?? "",
-                        Department = account.Employee.Department ?? "",
+                        Department = account.Employee.Department?.NameVi ?? "",
                         Role = account.Employee.Role ?? "",
                         Title = account.Employee.Title ?? "",
                         PermissionId = account.PermissionId,
@@ -390,6 +390,64 @@ public class AuthController : ControllerBase
                 Success = false,
                 Message = "Đã xảy ra lỗi khi làm mới token"
             });
+        }
+    }
+
+    /// <summary>
+    /// Đổi mật khẩu (yêu cầu đăng nhập)
+    /// </summary>
+    /// <param name="request">CurrentPassword và NewPassword</param>
+    /// <returns>Thành công hoặc lỗi</returns>
+    [HttpPost("change-password")]
+    [Authorize(AuthenticationSchemes = "Bearer")]
+    public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
+    {
+        if (string.IsNullOrWhiteSpace(request.CurrentPassword) || string.IsNullOrWhiteSpace(request.NewPassword))
+        {
+            return BadRequest(new { success = false, message = "Mật khẩu hiện tại và mật khẩu mới không được để trống." });
+        }
+
+        // Validate độ dài mật khẩu mới (tùy chọn)
+        if (request.NewPassword.Length < 6)
+        {
+            return BadRequest(new { success = false, message = "Mật khẩu mới phải có ít nhất 6 ký tự." });
+        }
+
+        var accountIdStr = User.FindFirst("AccountId")?.Value;
+        var userName = User.Identity?.Name;
+        if (string.IsNullOrEmpty(accountIdStr) || !Guid.TryParse(accountIdStr, out var accountId))
+        {
+            _logger.LogWarning("ChangePassword: Invalid or missing AccountId in token");
+            return Unauthorized(new { success = false, message = "Token không hợp lệ." });
+        }
+
+        try
+        {
+            var account = await _context.Accounts
+                .FirstOrDefaultAsync(a => a.AccountId == accountId && a.Status == "Active");
+
+            if (account == null)
+            {
+                _logger.LogWarning("ChangePassword: Account not found or inactive - {AccountId}", accountId);
+                return Unauthorized(new { success = false, message = "Tài khoản không tồn tại hoặc đã bị vô hiệu hóa." });
+            }
+
+            if (!VerifyPassword(request.CurrentPassword, account.PasswordHash, account.UserName))
+            {
+                _logger.LogWarning("ChangePassword: Current password incorrect for user - {UserName}", account.UserName);
+                return BadRequest(new { success = false, message = "Mật khẩu hiện tại không đúng." });
+            }
+
+            account.PasswordHash = HashPassword(request.NewPassword);
+            await _context.SaveChangesAsync();
+
+            _logger.LogInformation("Password changed successfully for user: {UserName}", account.UserName);
+            return Ok(new { success = true, message = "Đổi mật khẩu thành công." });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error changing password for account: {AccountId}", accountId);
+            return StatusCode(500, new { success = false, message = "Đã xảy ra lỗi khi đổi mật khẩu." });
         }
     }
 

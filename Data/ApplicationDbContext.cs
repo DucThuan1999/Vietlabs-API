@@ -38,6 +38,13 @@ public class ApplicationDbContext : DbContext
     public DbSet<Country> Countries { get; set; }
     public DbSet<Province> Provinces { get; set; }
     public DbSet<Ward> Wards { get; set; }
+    public DbSet<QuotationApprovalThreshold> QuotationApprovalThresholds { get; set; }
+    public DbSet<QuotationHistory> QuotationHistories { get; set; }
+    public DbSet<ModuleApprover> ModuleApprovers { get; set; }
+    public DbSet<ClientIndustry> ClientIndustries { get; set; }
+    public DbSet<EmployeeTitle> EmployeeTitles { get; set; }
+    public DbSet<Subcontractor> Subcontractors { get; set; }
+    public DbSet<SubcontractorCapability> SubcontractorCapabilities { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -71,6 +78,13 @@ public class ApplicationDbContext : DbContext
         modelBuilder.ApplyConfiguration(new CountryConfiguration());
         modelBuilder.ApplyConfiguration(new ProvinceConfiguration());
         modelBuilder.ApplyConfiguration(new WardConfiguration());
+        modelBuilder.ApplyConfiguration(new QuotationApprovalThresholdConfiguration());
+        modelBuilder.ApplyConfiguration(new QuotationHistoryConfiguration());
+        modelBuilder.ApplyConfiguration(new ModuleApproverConfiguration());
+        modelBuilder.ApplyConfiguration(new ClientIndustryConfiguration());
+        modelBuilder.ApplyConfiguration(new EmployeeTitleConfiguration());
+        modelBuilder.ApplyConfiguration(new SubcontractorConfiguration());
+        modelBuilder.ApplyConfiguration(new SubcontractorCapabilityConfiguration());
 
         // Tất cả tên bảng đã được set trong Configuration classes
         // Chỉ cần convert tên cột sang snake_case
@@ -144,6 +158,20 @@ public class ApplicationDbContext : DbContext
             .HasForeignKey(c => c.AgentClientId)
             .OnDelete(DeleteBehavior.NoAction);
 
+        // Quan hệ n-1: Client - ClientIndustry (ngành nghề khách hàng)
+        modelBuilder.Entity<Client>()
+            .HasOne(c => c.ClientIndustry)
+            .WithMany(i => i.Clients)
+            .HasForeignKey(c => c.ClientIndustryId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        // Quan hệ n-1: Employee - EmployeeTitle (chức vụ)
+        modelBuilder.Entity<Employee>()
+            .HasOne(e => e.EmployeeTitle)
+            .WithMany(t => t.Employees)
+            .HasForeignKey(e => e.EmployeeTitleId)
+            .OnDelete(DeleteBehavior.SetNull);
+
         // Quan hệ 1-n: Branch - Departments
         modelBuilder.Entity<Department>()
             .HasOne(d => d.Branch)
@@ -187,6 +215,28 @@ public class ApplicationDbContext : DbContext
             .HasOne(q => q.Contact)
             .WithMany()
             .HasForeignKey(q => q.ContactId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        // Quan hệ self-referencing: Employee - Employee (Manager)
+        // Sử dụng NoAction để tránh lỗi multiple cascade paths trong SQL Server
+        modelBuilder.Entity<Employee>()
+            .HasOne(e => e.Manager)
+            .WithMany(m => m.Subordinates)
+            .HasForeignKey(e => e.ManagerId)
+            .OnDelete(DeleteBehavior.NoAction);
+
+        // Quan hệ n-1: Quotation - Employee (Người phê duyệt cấp 1 - Manager)
+        modelBuilder.Entity<Quotation>()
+            .HasOne(q => q.ApproverLevel1)
+            .WithMany()
+            .HasForeignKey(q => q.ApproverLevel1Id)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        // Quan hệ n-1: Quotation - Employee (Người phê duyệt cấp 2 - Người chỉ định)
+        modelBuilder.Entity<Quotation>()
+            .HasOne(q => q.ApproverLevel2)
+            .WithMany()
+            .HasForeignKey(q => q.ApproverLevel2Id)
             .OnDelete(DeleteBehavior.SetNull);
 
         // Quan hệ 1-1: Client - ClientDebt (mỗi client có 1 công nợ latest)
@@ -274,12 +324,33 @@ public class ApplicationDbContext : DbContext
         var acc7Id = Guid.Parse("17171717-1717-1717-1717-171717171717");
         var acc8Id = Guid.Parse("28282828-2828-2828-2828-282828282828");
 
+        // Seed EmployeeTitles (chức vụ)
+        var et1Id = Guid.Parse("f1111111-0001-0001-0001-000000000001");
+        var et2Id = Guid.Parse("f1111111-0002-0002-0002-000000000002");
+        var et3Id = Guid.Parse("f1111111-0003-0003-0003-000000000003");
+        var et4Id = Guid.Parse("f1111111-0004-0004-0004-000000000004");
+        var et5Id = Guid.Parse("f1111111-0005-0005-0005-000000000005");
+        var et6Id = Guid.Parse("f1111111-0006-0006-0006-000000000006");
+        var et7Id = Guid.Parse("f1111111-0007-0007-0007-000000000007");
+        var et8Id = Guid.Parse("f1111111-0008-0008-0008-000000000008");
+
+        modelBuilder.Entity<EmployeeTitle>().HasData(
+            new EmployeeTitle { EmployeeTitleId = et1Id, SequenceNumber = 1, TitleCode = "GDKD", NameVi = "Giám đốc Kinh doanh", NameEn = "Sales Director", Status = "Active" },
+            new EmployeeTitle { EmployeeTitleId = et2Id, SequenceNumber = 2, TitleCode = "TPKT", NameVi = "Trưởng phòng Kỹ thuật", NameEn = "Technical Manager", Status = "Active" },
+            new EmployeeTitle { EmployeeTitleId = et3Id, SequenceNumber = 3, TitleCode = "CVKD", NameVi = "Chuyên viên Kinh doanh", NameEn = "Sales Executive", Status = "Active" },
+            new EmployeeTitle { EmployeeTitleId = et4Id, SequenceNumber = 4, TitleCode = "KSPM", NameVi = "Kỹ sư phần mềm", NameEn = "Software Engineer", Status = "Active" },
+            new EmployeeTitle { EmployeeTitleId = et5Id, SequenceNumber = 5, TitleCode = "TPNS", NameVi = "Trưởng phòng Nhân sự", NameEn = "HR Manager", Status = "Active" },
+            new EmployeeTitle { EmployeeTitleId = et6Id, SequenceNumber = 6, TitleCode = "TPTC", NameVi = "Trưởng phòng Tài chính", NameEn = "Finance Manager", Status = "Active" },
+            new EmployeeTitle { EmployeeTitleId = et7Id, SequenceNumber = 7, TitleCode = "CVMT", NameVi = "Chuyên viên Marketing", NameEn = "Marketing Specialist", Status = "Active" },
+            new EmployeeTitle { EmployeeTitleId = et8Id, SequenceNumber = 8, TitleCode = "PGD", NameVi = "Phó giám đốc", NameEn = "Deputy Director", Status = "Active" }
+        );
+
         modelBuilder.Entity<Employee>().HasData(
             new Employee
             {
                 EmployeeId = emp1Id,
                 EmployeeCode = "EMP-001",
-                Department = "Kinh doanh",
+                DepartmentId = null,
                 Role = "Sales Manager",
                 FullName = "Nguyễn Văn An",
                 Title = "Giám đốc Kinh doanh",
@@ -291,7 +362,7 @@ public class ApplicationDbContext : DbContext
             {
                 EmployeeId = emp2Id,
                 EmployeeCode = "EMP-002",
-                Department = "Kỹ thuật",
+                DepartmentId = null,
                 Role = "Tech Lead",
                 FullName = "Lê Thị Hương",
                 Title = "Trưởng phòng Kỹ thuật",
@@ -303,7 +374,7 @@ public class ApplicationDbContext : DbContext
             {
                 EmployeeId = emp3Id,
                 EmployeeCode = "EMP-003",
-                Department = "Kinh doanh",
+                DepartmentId = null,
                 Role = "Sales Executive",
                 FullName = "Trần Văn Bình",
                 Title = "Chuyên viên Kinh doanh",
@@ -315,7 +386,7 @@ public class ApplicationDbContext : DbContext
             {
                 EmployeeId = emp4Id,
                 EmployeeCode = "EMP-004",
-                Department = "Kinh doanh",
+                DepartmentId = null,
                 Role = "Sales Executive",
                 FullName = "Phạm Thị Mai",
                 Title = "Chuyên viên Kinh doanh",
@@ -327,7 +398,7 @@ public class ApplicationDbContext : DbContext
             {
                 EmployeeId = emp5Id,
                 EmployeeCode = "EMP-005",
-                Department = "Kỹ thuật",
+                DepartmentId = null,
                 Role = "Senior Developer",
                 FullName = "Hoàng Văn Đức",
                 Title = "Kỹ sư phần mềm",
@@ -339,7 +410,7 @@ public class ApplicationDbContext : DbContext
             {
                 EmployeeId = emp6Id,
                 EmployeeCode = "EMP-006",
-                Department = "Hành chính",
+                DepartmentId = null,
                 Role = "HR Manager",
                 FullName = "Vũ Thị Lan",
                 Title = "Trưởng phòng Nhân sự",
@@ -351,7 +422,7 @@ public class ApplicationDbContext : DbContext
             {
                 EmployeeId = emp7Id,
                 EmployeeCode = "EMP-007",
-                Department = "Tài chính",
+                DepartmentId = null,
                 Role = "Finance Manager",
                 FullName = "Đỗ Văn Hùng",
                 Title = "Trưởng phòng Tài chính",
@@ -363,7 +434,7 @@ public class ApplicationDbContext : DbContext
             {
                 EmployeeId = emp8Id,
                 EmployeeCode = "EMP-008",
-                Department = "Marketing",
+                DepartmentId = null,
                 Role = "Marketing Specialist",
                 FullName = "Bùi Thị Hoa",
                 Title = "Chuyên viên Marketing",
@@ -1162,7 +1233,7 @@ public class ApplicationDbContext : DbContext
                 FullName = "Lý Thị I",
                 Email = "i.ly@vwx.com",
                 Phone = "0912345608",
-                Department = "Điều hành",
+                Department = "Hành chính",
                 Title = "Hiệu trưởng",
                 IsPrimary = true
             },
@@ -1173,7 +1244,7 @@ public class ApplicationDbContext : DbContext
                 FullName = "Trần Văn J",
                 Email = "j.tran@vwx.com",
                 Phone = "0912345609",
-                Department = "Hành chính",
+                Department = "Điều hành",
                 Title = "Phó hiệu trưởng",
                 IsPrimary = false
             },
@@ -1232,6 +1303,31 @@ public class ApplicationDbContext : DbContext
                 Title = "Giám đốc Kinh doanh",
                 IsPrimary = false
             }
+        );
+
+        // Seed ClientIndustries (ngành nghề khách hàng)
+        var ind1Id = Guid.Parse("e1111111-0001-0001-0001-000000000001");
+        var ind2Id = Guid.Parse("e1111111-0002-0002-0002-000000000002");
+        var ind3Id = Guid.Parse("e1111111-0003-0003-0003-000000000003");
+        var ind4Id = Guid.Parse("e1111111-0004-0004-0004-000000000004");
+        var ind5Id = Guid.Parse("e1111111-0005-0005-0005-000000000005");
+        var ind6Id = Guid.Parse("e1111111-0006-0006-0006-000000000006");
+        var ind7Id = Guid.Parse("e1111111-0007-0007-0007-000000000007");
+        var ind8Id = Guid.Parse("e1111111-0008-0008-0008-000000000008");
+        var ind9Id = Guid.Parse("e1111111-0009-0009-0009-000000000009");
+        var ind10Id = Guid.Parse("e1111111-0010-0010-0010-000000000010");
+
+        modelBuilder.Entity<ClientIndustry>().HasData(
+            new ClientIndustry { ClientIndustryId = ind1Id, SequenceNumber = 1, IndustryCode = "IT", NameVi = "Công nghệ thông tin", NameEn = "Information Technology", Status = "Active" },
+            new ClientIndustry { ClientIndustryId = ind2Id, SequenceNumber = 2, IndustryCode = "ECOM", NameVi = "Thương mại điện tử", NameEn = "E-commerce", Status = "Active" },
+            new ClientIndustry { ClientIndustryId = ind3Id, SequenceNumber = 3, IndustryCode = "MFG", NameVi = "Sản xuất", NameEn = "Manufacturing", Status = "Active" },
+            new ClientIndustry { ClientIndustryId = ind4Id, SequenceNumber = 4, IndustryCode = "BANK", NameVi = "Tài chính - Ngân hàng", NameEn = "Finance - Banking", Status = "Active" },
+            new ClientIndustry { ClientIndustryId = ind5Id, SequenceNumber = 5, IndustryCode = "RETAIL", NameVi = "Bán lẻ", NameEn = "Retail", Status = "Active" },
+            new ClientIndustry { ClientIndustryId = ind6Id, SequenceNumber = 6, IndustryCode = "LOG", NameVi = "Logistics", NameEn = "Logistics", Status = "Active" },
+            new ClientIndustry { ClientIndustryId = ind7Id, SequenceNumber = 7, IndustryCode = "TOUR", NameVi = "Du lịch", NameEn = "Tourism", Status = "Active" },
+            new ClientIndustry { ClientIndustryId = ind8Id, SequenceNumber = 8, IndustryCode = "AGRI", NameVi = "Nông nghiệp", NameEn = "Agriculture", Status = "Active" },
+            new ClientIndustry { ClientIndustryId = ind9Id, SequenceNumber = 9, IndustryCode = "EDU", NameVi = "Giáo dục", NameEn = "Education", Status = "Active" },
+            new ClientIndustry { ClientIndustryId = ind10Id, SequenceNumber = 10, IndustryCode = "HEALTH", NameVi = "Y tế", NameEn = "Healthcare", Status = "Active" }
         );
 
         // Seed AnalysisGroups (Guid cố định)

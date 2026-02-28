@@ -13,6 +13,13 @@ public class EmployeeConfiguration : IEntityTypeConfiguration<Employee>
 
         // Primary key
         builder.HasKey(e => e.EmployeeId);
+
+        builder.Property(e => e.DepartmentId).HasColumnName("department_id");
+
+        builder.HasOne(e => e.Department)
+            .WithMany()
+            .HasForeignKey(e => e.DepartmentId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }
 

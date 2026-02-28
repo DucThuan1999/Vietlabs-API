@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.OData.Query;
 using Microsoft.AspNetCore.OData.Routing.Controllers;
 using Microsoft.EntityFrameworkCore;
 using VietLab.Data;
+using VietLab.Helpers;
 using VietLab.Models;
 
 namespace VietLab.Controllers;
@@ -107,7 +108,15 @@ public class AnalysisItemTatsController : ODataController
         }
 
         _context.AnalysisItemTats.Add(analysisItemTat);
-        await _context.SaveChangesAsync();
+        
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex)
+        {
+            return this.HandleDatabaseError(ex, _logger, "lưu TAT chỉ tiêu phân tích");
+        }
 
         return Created($"odata/AnalysisItemTats({analysisItemTat.AnalysisItemTatId})", analysisItemTat);
     }
@@ -185,6 +194,10 @@ public class AnalysisItemTatsController : ODataController
             }
             throw;
         }
+        catch (DbUpdateException ex)
+        {
+            return this.HandleDatabaseError(ex, _logger, "cập nhật TAT chỉ tiêu phân tích");
+        }
 
         return Updated(analysisItemTat);
     }
@@ -199,7 +212,15 @@ public class AnalysisItemTatsController : ODataController
         }
 
         _context.AnalysisItemTats.Remove(analysisItemTat);
-        await _context.SaveChangesAsync();
+        
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex)
+        {
+            return this.HandleDatabaseError(ex, _logger, "xóa TAT chỉ tiêu phân tích");
+        }
 
         return NoContent();
     }

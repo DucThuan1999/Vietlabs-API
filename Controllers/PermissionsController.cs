@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.OData.Query;
 using Microsoft.AspNetCore.OData.Routing.Controllers;
 using Microsoft.EntityFrameworkCore;
 using VietLab.Data;
+using VietLab.Helpers;
 using VietLab.Models;
 
 namespace VietLab.Controllers;
@@ -12,10 +13,12 @@ namespace VietLab.Controllers;
 public class PermissionsController : ODataController
 {
     private readonly ApplicationDbContext _context;
+    private readonly ILogger<PermissionsController> _logger;
 
-    public PermissionsController(ApplicationDbContext context)
+    public PermissionsController(ApplicationDbContext context, ILogger<PermissionsController> logger)
     {
         _context = context;
+        _logger = logger;
     }
 
     [HttpGet("Permissions")]
@@ -47,7 +50,15 @@ public class PermissionsController : ODataController
 
         permission.PermissionId = permission.PermissionId == Guid.Empty ? Guid.NewGuid() : permission.PermissionId;
         _context.Permissions.Add(permission);
-        await _context.SaveChangesAsync();
+        
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex)
+        {
+            return this.HandleDatabaseError(ex, _logger, "lưu quyền");
+        }
 
         return Created($"odata/Permissions({permission.PermissionId})", permission);
     }
@@ -79,6 +90,10 @@ public class PermissionsController : ODataController
             }
             throw;
         }
+        catch (DbUpdateException ex)
+        {
+            return this.HandleDatabaseError(ex, _logger, "cập nhật quyền");
+        }
 
         return Updated(permission);
     }
@@ -93,7 +108,15 @@ public class PermissionsController : ODataController
         }
 
         _context.Permissions.Remove(permission);
-        await _context.SaveChangesAsync();
+        
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex)
+        {
+            return this.HandleDatabaseError(ex, _logger, "xóa quyền");
+        }
 
         return NoContent();
     }

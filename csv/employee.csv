@@ -1,0 +1,110 @@
+﻿STT;Mã Nhân Viên;Tên Nhân Viên;Email;SĐT;Phòng Ban;Chức Vụ;Quản lý trực tiếp
+1;NV066;NGUYỄN QUỐC TOÀN;toan.nguyen@viet-labs.com;0939773328;Ban Giám Đốc;Tổng Giám Đốc;
+2;NV193 ;THẠCH SƠN; niengu0211@gmail.com ;0965235432;Hành chính nhân sự;Bảo vệ;HUỲNH THỊ NGỌC KIỀU
+3;NV227;NGUYỄN THỊ THU THUỶ; thuthuy30071401@gmail.com ;0384658735;Hành chính nhân sự;Điều phối mẫu;HUỲNH THỊ NGỌC KIỀU
+4;NV196 ;TRẦN HUY DŨNG;muahang@viet-labs.com;0986731251;Hành chính nhân sự;Hành chính Mua hàng;HUỲNH THỊ NGỌC KIỀU
+5;NV108;HỒNG ĐỨC MINH; minhmeo2007357@gmail.com ;0788652748;Hành Chính Nhân Sự;Lấy mẫu;HUỲNH THỊ NGỌC KIỀU
+6;NV194 ;CHÂU THANH SỬ; chauthanhsu6991@gmail.com ;0914327358;Hành Chính Nhân Sự;Lấy mẫu;HUỲNH THỊ NGỌC KIỀU
+7;NV197 ;ĐẶNG VĂN TRANG; dangvantrang2207@gmail.com ;0862648897;Hành chính nhân sự;Lấy Mẫu;HUỲNH THỊ NGỌC KIỀU
+8;NV116;TRẦN THỊ HUẾ;hc-ns@viet-labs.com;0372858550;Hành Chính Nhân Sự;Nhân sự;HUỲNH THỊ NGỌC KIỀU
+9;NV144;LÊ THU HIỀN; Lethuhien21284@gmail.com ;0989939809;Hành Chính Nhân Sự;Tạp Vụ;HUỲNH THỊ NGỌC KIỀU
+10;NV137;ĐÀO THỊ MỘNG ĐIỆP; niengu0211@gmail.com ;0974556416;Hành Chính Nhân Sự;Tạp Vụ;HUỲNH THỊ NGỌC KIỀU
+11;NV049;HUỲNH THỊ NGỌC KIỀU;kieu.huynh@viet-labs.com;0963523787;Hành Chính Nhân Sự;Trưởng Phòng;NGUYỄN QUỐC TOÀN
+12;NV283;TRỊNH XUÂN HOÀNG; hoanglacahoaca@gmail.com ;0383183625;Hành chính nhân sự;Kỹ thuật Điện;HUỲNH THỊ NGỌC KIỀU
+13;NV109;LÊ THỊ DIỄM MY;diemmy.le@viet-labs.com;0909350893;Kinh doanh;Giám Đốc;NGUYỄN QUỐC TOÀN
+14;NV224;HUỲNH LƯƠNG ANH KHOA;khoa.huynh@viet-labs.com;0989717343;Kinh Doanh;Giám Đốc kinh doanh khu vực miền tây;NGUYỄN QUỐC TOÀN
+15;NV024;NGUYỄN THỊ MỸ TIÊN;tien.nguyen@viet-labs.com;0939176997;Kinh Doanh;NVKD;HUỲNH LƯƠNG ANH KHOA
+16;NV080;NGUYỄN THỊ THU ANH;thuanh.nguyen@viet-labs.com;0909134386;Kinh doanh;NVKD;LÊ THỊ DIỄM MY
+17;NV200;NGÔ THẢO LY;thaoly.ngo@viet-labs.com;0363286068;Kinh doanh;NVKD;LÊ THỊ DIỄM MY
+18;NV005;PHẠM HUỲNH NHƯ;" phnhu8811@gmail.com
+ ";0838194124;Tài Chính - Kế Toán;Giám sát viên;NGUYỄN QUỐC TOÀN
+19;NV248;NGUYỄN THỊ MAI VY; ntmvy552003@gmail.com ;0387817509;Tài Chính - Kế Toán;Kế toán Viên;NGUYỄN QUỐC TOÀN
+20;NV266;DƯƠNG THÁI THẢO; Thaithao.k35ueh@gmail.com ;0987379348;Tài Chính - Kế Toán;Kế toán Viên;NGUYỄN QUỐC TOÀN
+22;NV230;PHẠM NGUYỄN THU HẰNG;                                                                                    -  ;0706365591;Cộng tác Viên;QA cum R&D;NGUYỄN QUỐC TOÀN
+23;NV201;CAO NGUYỄN TRÚC ANH; anhcao95vn@gmail.com ;0985777133;QA;Quản lý chất lượng;NGUYỄN QUỐC TOÀN
+24;NV148;TỪ NGỌC KIM GIANG; tungockimgiang1509@gmail.com ;0853270624;Sắc ký;Kiểm nghiệm viên;PHẠM LÊ TIẾN KHÁNH
+25;NV171;NGUYỄN HẢI PHƯƠNG; nguyenhaiphuongcv@gmail.com ;0399268624;Sắc Ký;Kiểm nghiệm viên;PHẠM LÊ TIẾN KHÁNH
+26;NV180;NGUYỄN THỊ THUỲ HÂN; nthuyhan.work@gmail.com ;0766806692;Sắc ký;Kiểm nghiệm viên;PHẠM LÊ TIẾN KHÁNH
+27; NV190 ; ĐỖ THỊ TỐ TRÂN ; totran123.dttt@gmail.com ;0847832032;Sắc ký;Kiểm nghiệm viên;PHẠM LÊ TIẾN KHÁNH
+28;NV206;NGUYỄN HẢI ĐĂNG ; nhdang1401@gmail.com  ;0328999752;Sắc ký;Kiểm nghiệm viên;PHẠM LÊ TIẾN KHÁNH
+29;NV247;ĐỖ BÍCH THỦY; dobichthuy0905@gmail.com ;0359354151;Sắc Ký;Kiểm nghiệm viên;PHẠM LÊ TIẾN KHÁNH
+30;NV273;LÊ THANH HUY; thanhhuy40920082003@gmail.com ;0932010627;Sắc Ký;Kiểm nghiệm viên;PHẠM LÊ TIẾN KHÁNH
+31;NV243;NGUYỄN HUỲNH KIM NGÂN; nhkngan94@gmail.com ;0859154675;Sắc Ký;Nhân viên đào tạo - R&D;PHẠM LÊ TIẾN KHÁNH
+32;NV232;LÊ THỊ TUYẾT LAN; Tuyetlan191201@gmail.com ;0786946119;Sắc Ký;Nhân viên xử lí mẫu;PHẠM LÊ TIẾN KHÁNH
+33;NV223;PHẠM LÊ TIẾN KHÁNH;khanh.pham@viet-labs.com;9008819544;Sắc Ký;Trưởng phòng;PHẠM LÊ TIẾN KHÁNH
+34;NV279;NGUYỄN VŨ MINH THUÝ; nguyenvuminhthuy250203@gmail.com ;777593998;Sắc Ký;Kiểm nghiệm viên;PHẠM LÊ TIẾN KHÁNH
+35;NV280;NGUYỄN HUỲNH LINH NHI; nguyenhuynhlinhnhi303@gmail.com ;0346916833;Sắc ký;Kiểm nghiệm viên;PHẠM LÊ TIẾN KHÁNH
+36;NV276;TRẦN THỊ DIỄM MY; my.tranthidiem2003@gmail.com  ;0914896294;Sắc ký;Kiểm nghiệm viên;PHẠM LÊ TIẾN KHÁNH
+37;NV153;VÕ THỊ CẨM NHUNG; vtcnhungg@gmail.com ;0368133489;Hóa cổ điển- Quang Phổ;Kiểm nghiệm viên;PHAN TẤN LẬP+NGUYỄN NGỌC HÂN
+38;NV154;PHAN BẢO KIM XUÂN; xuanbt06112001@gmail.com ;0949280094;Hóa cổ điển- Quang Phổ;Kiểm nghiệm viên;PHAN TẤN LẬP+NGUYỄN NGỌC HÂN
+39;NV155;NGUYỄN NHẬT AN; nhatan73@gmail.com ;0708955406;Hóa cổ điển- Quang Phổ;Kiểm nghiệm viên;PHAN TẤN LẬP+NGUYỄN NGỌC HÂN
+40;NV202;NGUYỄN THẾ TOÀN; thetoan15032017@gmail.com ;0395649364;Hóa cổ điển- Quang Phổ;Kiểm nghiệm viên;PHAN TẤN LẬP+NGUYỄN NGỌC HÂN
+41;NV220;QUẢNG THỊ THANH TRÚC; trucquang00@gmail.com ;0348489949;Hóa cổ điển- Quang phổ;Kiểm nghiệm viên;PHAN TẤN LẬP+NGUYỄN NGỌC HÂN
+42;NV222;LÊ NGỌC THANH THẢO; lnthanhthao0812@gmail.com ;0932759206;Hóa cổ điển- Quang phổ;Kiểm Nghiệm Viên;PHAN TẤN LẬP+NGUYỄN NGỌC HÂN
+43;NV260;PHẠM THỊ KIM HỒNG; kimhonghkht@gmail.com ;0372803474;Hóa cổ điển- Quang phổ;Kiểm Nghiệm Viên;PHAN TẤN LẬP+NGUYỄN NGỌC HÂN
+44;NV262;ĐẶNG HUY BẢO CHÂU; chaudang2703@gmail.com  ;0828963760;Hóa cổ điển- Quang phổ;Kiểm nghiệm viên;PHAN TẤN LẬP+NGUYỄN NGỌC HÂN
+45;NV263;ĐỖ THỊ THUỲ TRANG; Dtttrang1502@gmail.com ;0774664810;Hóa cổ điển- Quang phổ;Kiểm nghiệm viên;PHAN TẤN LẬP+NGUYỄN NGỌC HÂN
+46;NV264;TỪ VĨ ĐẠT; tvdat99@gmail.com ;0843546428;Hóa cổ điển- Quang phổ;Kiểm nghiệm viên;PHAN TẤN LẬP+NGUYỄN NGỌC HÂN
+47;NV277;ĐÀO HOÀNG BÁCH HỶ; daohoangbachhy821@gmail.com ;0348072821;Hóa cổ điển- Quang phổ;Kiểm nghiệm viên;PHAN TẤN LẬP+NGUYỄN NGỌC HÂN
+48;NV270;HUỲNH THỊ KIM HUỲNH; huynhkimhuynh2106@gmail.com ;0949920206;Hóa cổ điển- Quang phổ;Kiểm nghiệm viên;PHAN TẤN LẬP+NGUYỄN NGỌC HÂN
+49;NV012;NGUYỄN NGỌC HÂN;han.nguyen@viet-labs.com;0943033225;Hóa cổ điển- Quang Phổ;Phó Phòng;PHẠM LÊ TIẾN KHÁNH
+50;NV275;PHAN TẤN LẬP;lap.phan@viet-labs.com;0373673911;Hóa cổ điển- Quang phổ;Phó phòng;PHẠM LÊ TIẾN KHÁNH
+51;NV258;HUỲNH NGUYỄN ANH THI; anhthinguyen201@gmail.com ;0798920103;Hóa cổ điển- Quang phổ;Xử lý mẫu;PHAN TẤN LẬP+NGUYỄN NGỌC HÂN
+52;NV282;THẠCH HOÀI NHÂN; thnhan20022808@gmail.com ;0857223577;Hóa cổ điển- Quang phổ;Kiểm nghiệm viên;PHAN TẤN LẬP+NGUYỄN NGỌC HÂN
+53;NV284;NGUYỄN THỊ BẢO NGỌC; nguyenngoc050302@gmail.com ;0866129204;Hóa cổ điển- Quang phổ;Kiểm nghiệm viên;PHAN TẤN LẬP+NGUYỄN NGỌC HÂN
+54;NV120;NGUYỄN THỊ THU THUỶ; nguyenttthuy197320@gmail.com ;0773063368;Vi sinh;Kiểm nghiệm viên;TRƯƠNG TÔ HẢI ĐĂNG
+55;NV152;LÊ HẢI DƯƠNG; lehaiduong1904@gmail.com ;0378202481;Vi sinh;Kiểm nghiệm viên;TRƯƠNG TÔ HẢI ĐĂNG
+56; NV165 ; NGUYỄN KIỀU MY ; Kieumynguyen1609@gmail.com ;0375349706;Vi sinh;Kiểm nghiệm viên;TRƯƠNG TÔ HẢI ĐĂNG
+57;NV217;TIẾT THỊ DIỄM MY; Diemm4355@gmail.com ;0337759036;Vi Sinh;Kiểm nghiệm viên;TRƯƠNG TÔ HẢI ĐĂNG
+58;NV233;PHAN TRÚC QUÂN; Quan180520@gmail.com ;0909566726;Vi Sinh;Kiểm Nghiệm Viên ;TRƯƠNG TÔ HẢI ĐĂNG
+59;NV271;DƯƠNG THỊ KIM DỊ; Duongkimdi220724@gmail.com ;0337818723;Vi Sinh;Kiểm Nghiệm Viên ;TRƯƠNG TÔ HẢI ĐĂNG
+60;NV244;TRƯƠNG TÔ HẢI ĐĂNG;dang.truong@viet-labs.com;0907355649;Vi Sinh;Phó phòng;PHẠM LÊ TIẾN KHÁNH
+61; NV192 ;NGUYỄN TÚ THANH ;thanh.nguyen@viet-labs.com;0918552789;Dịch Vụ Khách Hàng;Admin;NGUYỄN QUỐC TOÀN
+62;NV215;NGUYỄN THỊ NHƯNG; nhungnttlcc@gmail.com ;0915290898;Dịch Vụ Khách Hàng;Admin;NGUYỄN QUỐC TOÀN
+63;NV241;NGUYỄN THỊ ANH THƯ; nguyenthianhthu6530@gmail.com ;0931016530;Dịch Vụ Khách Hàng;Admin;NGUYỄN QUỐC TOÀN
+64;NV214;VƯƠNG MỸ KHANH;cs_01@viet-labs.com;0703024534;Dịch Vụ Khách Hàng;Chăm sóc khách hàng;NGUYỄN THỊ HỒNG VÂN
+65;NV286;LÊ THỊ MỸ DUYÊN;CS_04@viet-labs.com;0941087039;Dịch Vụ Khách Hàng;Chăm sóc khách hàng;NGUYỄN THỊ HỒNG VÂN
+66;NV177;NGUYỄN THỊ HỒNG VÂN;van.nguyen@viet-labs.com;0973956023;Dịch Vụ Khách Hàng;Trưởng phòng;NGUYỄN QUỐC TOÀN
+68;NV261;NGUYỄN NGỌC QUỲNH MAI;cs_02@viet-labs.com;0326736632;Dịch Vụ Khách Hàng;Chăm Sóc Khách Hàng;NGUYỄN THỊ HỒNG VÂN
+69;NV038;NGUYỄN THỊ KIM ANH;anh.nguyen@viet-labs.com;0385727213;Dịch Vụ Khách Hàng;Giám sát viên;NGUYỄN THỊ HỒNG VÂN
+70;NV204;TRẦN NGUYỄN YẾN NHI; tranyennhimk@gmail.com ;0902963351;Dịch Vụ Khách Hàng;Nhận mẫu;NGUYỄN THỊ KIM ANH
+71;NV216;LƯƠNG NỮ HUYỀN DIỆU; huyendieu5320@gmail.com ;0342386140;Dịch Vụ Khách Hàng;Nhận mẫu;NGUYỄN THỊ KIM ANH
+72;NV221;LƯU PHƯƠNG THUÝ; lpthuyluu2020@gmail.com ;0969423814;Dịch Vụ Khách Hàng;Nhận mẫu;NGUYỄN THỊ KIM ANH
+73;NV225;NGUYỄN THỊ CẨM TIÊN; ntcamtien0703@gmail.com ;0772801769;Dịch Vụ Khách Hàng;Nhận mẫu;NGUYỄN THỊ KIM ANH
+74;NV084;LÊ NGỌC NGÂN;ngan.le@viet-labs.com;0919433112;Dịch Vụ Khách Hàng;Chăm sóc khách hàng; PHAN THỊ BÍCH PHƯỢNG 
+75; NV183 ;NGUYỄN VIẾT QUỲNH THY;thy.nguyen@viet-labs.com;0932967656;Dịch Vụ Khách Hàng;Chăm sóc khách hàng; PHAN THỊ BÍCH PHƯỢNG 
+76;NV281;NGUYỄN THỊ HẢI YẾN; Haiyen.5700@gmail.com ;0939835107;Dịch Vụ Khách Hàng;Nhận mẫu- Trả kết quả; PHAN THỊ BÍCH PHƯỢNG 
+77; NV189 ; PHAN THỊ BÍCH PHƯỢNG ;phuong.phan@viet-labs.com;0932866817;Dịch Vụ Khách Hàng;Trưởng phòng ;NGUYỄN QUỐC TOÀN
+78;NV267;TRẦN THỊ NAM; namtran136@gmail.com ;0975768044;Trả kết quả;Giám sát viên trả kết quả;NGUYỄN QUỐC TOÀN
+79;NV158;ĐỖ THỊ KIM HUỆ; Dothikimhue11052000@gmail.com ;0964672775;Trả kết quả;Trả kết quả;TRẦN THỊ NAM
+80;NV199;NGUYỄN THANH TRANG; ngthtrang1988@gmail.com ;0909177154;Trả kết quả;Trả kết quả;TRẦN THỊ NAM
+81;NV250;PHAN MỸ NGỌC; pmngoc1114@gmail.com ;0848454544;Trả kết quả;Trả kết quả;TRẦN THỊ NAM
+82;NV274;HỒ THỊ HỒNG THƯƠNG; hongthuong261199@gmail.com ;0963206898;Trả kết quả;Trả kết quả;TRẦN THỊ NAM
+83;NV028;NGUYỄN NGỌC LINH; linhngocnguyen14052000@gmail.com ; 0353137558;CN Bạc Liêu ;Kiểm nghiệm viên;ĐẶNG PHƯỚC THI
+84;NV057;NGUYỄN VĂN THÀNH;" 
+Nguyenvanthanh15102002@gmail.com ";0378254154;CN Bạc Liêu ;Kiểm nghiệm viên;ĐẶNG PHƯỚC THI
+85;NV064;TĂNG THÀNH LỘC; ttloc356@gmail.com ;0949 931 401;CN Bạc Liêu ;Kiểm nghiệm viên;ĐẶNG PHƯỚC THI
+86;NV142;ĐÁI THỊ HUỲNH NHƯ; daithihuynhnhu18@gmail.com ;0939522200;CN Bạc Liêu ;Kiểm nghiệm viên;ĐẶNG PHƯỚC THI
+87;NV218;NGUYỄN VĂN BỮU; nguyenvanbuu11.2@gmail.com ;0376890058;CN Bạc Liêu ;Kiểm nghiệm viên;ĐẶNG PHƯỚC THI
+88;NV207;HUỲNH ANH TUẤN ; 2001huynhanhtuan@gmail.com ;0854888330;CN Bạc Liêu ;Lấy mẫu;ĐẶNG PHƯỚC THI
+89;NV022;HỨA THỊ NHƯ NGUYỆT; nguyethuavl@gmail.com ;0917208232;CN Bạc Liêu ;Nhận mẫu;ĐẶNG PHƯỚC THI
+90;NV052;TRẦN TRỌNG HỒ; hotran11111@gmail.com ;0386383191;CN Bạc Liêu ;Phó phòng;ĐẶNG PHƯỚC THI
+91;NV212;LÊ THỊ LƯƠNG ; lethiluong200997@gmail.com ;0945002946;CN Bạc Liêu ;Tạp Vụ;ĐẶNG PHƯỚC THI
+92;NV053;ĐẶNG PHƯỚC THI; dpthi.vietlab@gmail.com ;0901228953;CN Bạc Liêu ;Trưởng Phòng;NGUYỄN QUỐC TOÀN
+93;NV285;TRẦN CHÍ NGOAN ; tranchingoan21@gmail.com  ;0382098292;CN Bạc Liêu ;Lấy mẫu;ĐẶNG PHƯỚC THI
+94;NV249;PHẠM THU TRANG; Thutrangbaclieu123@gmail.com ;0946223125;CN Cà Mau;Hành chính;TĂNG THỊ NGỌC HÂN
+95;NV059;HUỲNH KHOA ĐÃNH; khoadanh266.hkd@gmail.com ;0949878951;CN Cà Mau;Kiểm nghiệm viên;TĂNG THỊ NGỌC HÂN
+96;NV133;LÊ HOÀI NAM; lehoainam2016cm@gmail.com ;0835394794;CN Cà Mau;Kiểm nghiệm viên;TĂNG THỊ NGỌC HÂN
+97;NV138;LÊ VĂN TẠO; Letao928@gmail.com ;0942002854;CN Cà Mau;Kiểm nghiệm viên;TĂNG THỊ NGỌC HÂN
+98;NV208;NGUYỄN HOÀI LINH; hoailinh19170175@gmail.com ;0832811446;CN Cà Mau;Kiểm nghiệm viên;TĂNG THỊ NGỌC HÂN
+99;NV143;NGUYỄN THÀNH TÀI; tainguyencm1998@gmail.com ;0947644955;CN Cà Mau;Lấy mẫu;TĂNG THỊ NGỌC HÂN
+100;NV253;TĂNG THỊ NGỌC HÂN; ngochan04101999@gmail.com ;0948368652;CN Cà Mau;Phó phòng;NGUYỄN QUỐC TOÀN
+101;NV124;TRẦN THỊ HỒNG AN; antran13233@gmail.com ;0376008026;CN Cần Thơ ;Kiểm nghiệm viên;VÕ THỊ HỒNG TƯƠI
+102;NV128;TRANG HOÀNG HẢI LÂN; hailanph12326@gmail.com ;0948241998;CN Cần Thơ ;Kiểm nghiệm viên;VÕ THỊ HỒNG TƯƠI
+103;NV246;TRẦN AN BÌNH; tabinh0509@gmail.com ;0388045750;CN Cần Thơ ;Kiểm Nghiệm Viên ;VÕ THỊ HỒNG TƯƠI
+104;NV161;NGUYỄN VIỆT TÂN; nnvvtt899@gmail.com  ;0377839341;CN Cần Thơ ;Lấy mẫu; PHAN THỊ BÍCH PHƯỢNG 
+105;NV269;LÊ CHÍ CƯỜNG; lechicuongtv84@gmail.com ;0356089390;CN Cần Thơ ;Lấy mẫu; PHAN THỊ BÍCH PHƯỢNG 
+106;NV087;VÕ THỊ HỒNG TƯƠI; vthtuoi212@gmail.com ;0986824214;CN Cần Thơ ;Giám sát viên;NGUYỄN QUỐC TOÀN
+107;NV086;NGUYỄN THỊ THANH THANH; nguyenthithanht802@gmail.com ;0927117593;CN Cần Thơ ;Kiểm nghiệm viên;VÕ THỊ HỒNG TƯƠI
+108;NV110;LÊ MINH VƯƠNG; vuong31898@gmail.com ;0799507454;CN Cần Thơ ;Kiểm nghiệm viên;VÕ THỊ HỒNG TƯƠI
+109;NV112;LÂM CHẤN DŨ; lamchanvu2022ct@gmail.com ;0983773328;CN Cần Thơ ;Kiểm nghiệm viên;VÕ THỊ HỒNG TƯƠI

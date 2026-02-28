@@ -1,0 +1,35 @@
+namespace VietLab.Models;
+
+/// <summary>
+/// Nhà thầu phụ
+/// </summary>
+public class Subcontractor
+{
+    public Guid SubcontractorId { get; set; }
+    /// <summary>Mã nhà thầu</summary>
+    public string Code { get; set; } = string.Empty;
+    /// <summary>Tên nhà thầu</summary>
+    public string Name { get; set; } = string.Empty;
+    /// <summary>Người liên hệ</summary>
+    public string? ContactPerson { get; set; }
+    /// <summary>Số điện thoại</summary>
+    public string? Phone { get; set; }
+    /// <summary>Email</summary>
+    public string? Email { get; set; }
+    /// <summary>Địa chỉ</summary>
+    public string? Address { get; set; }
+    /// <summary>Phòng ban phụ trách (FK)</summary>
+    public Guid? DepartmentId { get; set; }
+    /// <summary>Mô tả / Ghi chú</summary>
+    public string? Notes { get; set; }
+    /// <summary>Trạng thái (Active, Inactive, ...)</summary>
+    public string Status { get; set; } = "Active";
+
+    public DateTime? CreatedAt { get; set; }
+    public DateTime? UpdatedAt { get; set; }
+
+    public Department? Department { get; set; }
+
+    /// <summary>Năng lực: danh sách chỉ tiêu nhà thầu phụ có thể thực hiện</summary>
+    public ICollection<SubcontractorCapability> SubcontractorCapabilities { get; set; } = new List<SubcontractorCapability>();
+}

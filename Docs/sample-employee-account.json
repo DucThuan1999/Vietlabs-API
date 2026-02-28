@@ -1,0 +1,113 @@
+{
+  "description": "Mẫu JSON cho frontend - Nhân viên và Account (API trả về camelCase)",
+  "endpoints": {
+    "danhSachNhanVien": "GET /odata/Employees",
+    "chiTietNhanVien": "GET /odata/Employees({employeeId})",
+    "taiKhoanCoNhanVien": "GET /odata/Accounts({accountId})  // AutoExpand Employee"
+  },
+  "sampleEmployee": {
+    "employeeId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+    "employeeCode": "NV001",
+    "department": "Kinh doanh",
+    "role": "Sales Executive",
+    "fullName": "Nguyễn Văn A",
+    "employeeTitleId": "f1111111-0003-0003-0003-000000000003",
+    "title": "Chuyên viên Kinh doanh",
+    "email": "a.nguyen@viet-labs.com",
+    "mobile": "0901234567",
+    "notes": "",
+    "status": "Active",
+    "managerId": "3fa85f64-5717-4562-b3fc-2c963f66afa7",
+    "account": {
+      "accountId": "a1a1a1a1-a1a1-a1a1-a1a1-a1a1a1a1a1a1",
+      "employeeId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+      "permissionId": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+      "userName": "a.nguyen@viet-labs.com",
+      "passwordHash": "...",
+      "status": "Active",
+      "permission": {
+        "permissionId": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+        "permissionCode": "PERM-USER",
+        "name": "Người dùng",
+        "notes": "Quyền người dùng tiêu chuẩn",
+        "status": "Active"
+      }
+    },
+    "employeeTitle": {
+      "employeeTitleId": "f1111111-0003-0003-0003-000000000003",
+      "sequenceNumber": 3,
+      "titleCode": "CVKD",
+      "nameVi": "Chuyên viên Kinh doanh",
+      "nameEn": "Sales Executive",
+      "status": "Active",
+      "notes": null
+    },
+    "manager": null,
+    "subordinates": [],
+    "quotations": []
+  },
+  "sampleAccount": {
+    "accountId": "a1a1a1a1-a1a1-a1a1-a1a1-a1a1a1a1a1a1",
+    "employeeId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+    "permissionId": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+    "userName": "a.nguyen@viet-labs.com",
+    "passwordHash": "...",
+    "status": "Active",
+    "employee": {
+      "employeeId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+      "employeeCode": "NV001",
+      "department": "Kinh doanh",
+      "role": "Sales Executive",
+      "fullName": "Nguyễn Văn A",
+      "employeeTitleId": "f1111111-0003-0003-0003-000000000003",
+      "title": "Chuyên viên Kinh doanh",
+      "email": "a.nguyen@viet-labs.com",
+      "mobile": "0901234567",
+      "notes": "",
+      "status": "Active",
+      "managerId": "3fa85f64-5717-4562-b3fc-2c963f66afa7",
+      "employeeTitle": {
+        "employeeTitleId": "f1111111-0003-0003-0003-000000000003",
+        "sequenceNumber": 3,
+        "titleCode": "CVKD",
+        "nameVi": "Chuyên viên Kinh doanh",
+        "nameEn": "Sales Executive",
+        "status": "Active"
+      }
+    },
+    "permission": {
+      "permissionId": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+      "permissionCode": "PERM-USER",
+      "name": "Người dùng",
+      "notes": "Quyền người dùng tiêu chuẩn",
+      "status": "Active"
+    }
+  },
+  "odataListResponse": {
+    "@odata.context": "https://localhost:5001/odata/$metadata#Employees",
+    "value": [
+      {
+        "employeeId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+        "employeeCode": "NV001",
+        "fullName": "Nguyễn Văn A",
+        "email": "a.nguyen@viet-labs.com",
+        "mobile": "0901234567",
+        "department": "Kinh doanh",
+        "status": "Active",
+        "account": {
+          "accountId": "a1a1a1a1-a1a1-a1a1-a1a1-a1a1a1a1a1a1",
+          "userName": "a.nguyen@viet-labs.com",
+          "status": "Active",
+          "permission": {
+            "permissionCode": "PERM-USER",
+            "name": "Người dùng"
+          }
+        },
+        "employeeTitle": {
+          "titleCode": "CVKD",
+          "nameVi": "Chuyên viên Kinh doanh"
+        }
+      }
+    ]
+  }
+}

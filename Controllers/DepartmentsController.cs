@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.OData.Query;
 using Microsoft.AspNetCore.OData.Routing.Controllers;
 using Microsoft.EntityFrameworkCore;
 using VietLab.Data;
+using VietLab.Helpers;
 using VietLab.Models;
 
 namespace VietLab.Controllers;
@@ -12,10 +13,12 @@ namespace VietLab.Controllers;
 public class DepartmentsController : ODataController
 {
     private readonly ApplicationDbContext _context;
+    private readonly ILogger<DepartmentsController> _logger;
 
-    public DepartmentsController(ApplicationDbContext context)
+    public DepartmentsController(ApplicationDbContext context, ILogger<DepartmentsController> logger)
     {
         _context = context;
+        _logger = logger;
     }
 
     [HttpGet("Departments")]
@@ -47,7 +50,15 @@ public class DepartmentsController : ODataController
 
         dept.DepartmentId = dept.DepartmentId == Guid.Empty ? Guid.NewGuid() : dept.DepartmentId;
         _context.Departments.Add(dept);
-        await _context.SaveChangesAsync();
+        
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex)
+        {
+            return this.HandleDatabaseError(ex, _logger, "lưu phòng ban");
+        }
 
         return Created($"odata/Departments({dept.DepartmentId})", dept);
     }
@@ -79,6 +90,10 @@ public class DepartmentsController : ODataController
             }
             throw;
         }
+        catch (DbUpdateException ex)
+        {
+            return this.HandleDatabaseError(ex, _logger, "cập nhật phòng ban");
+        }
 
         return Updated(dept);
     }
@@ -93,7 +108,15 @@ public class DepartmentsController : ODataController
         }
 
         _context.Departments.Remove(dept);
-        await _context.SaveChangesAsync();
+        
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex)
+        {
+            return this.HandleDatabaseError(ex, _logger, "xóa phòng ban");
+        }
 
         return NoContent();
     }

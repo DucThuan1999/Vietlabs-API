@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.OData.Query;
 using Microsoft.AspNetCore.OData.Routing.Controllers;
 using Microsoft.EntityFrameworkCore;
 using VietLab.Data;
+using VietLab.Helpers;
 using VietLab.Models;
 
 namespace VietLab.Controllers;
@@ -12,10 +13,12 @@ namespace VietLab.Controllers;
 public class ClientDebtsController : ODataController
 {
     private readonly ApplicationDbContext _context;
+    private readonly ILogger<ClientDebtsController> _logger;
 
-    public ClientDebtsController(ApplicationDbContext context)
+    public ClientDebtsController(ApplicationDbContext context, ILogger<ClientDebtsController> logger)
     {
         _context = context;
+        _logger = logger;
     }
 
     [HttpGet("ClientDebts")]
@@ -51,7 +54,15 @@ public class ClientDebtsController : ODataController
         clientDebt.ClientDebtId = clientDebt.ClientDebtId == Guid.Empty ? Guid.NewGuid() : clientDebt.ClientDebtId;
         clientDebt.CreatedAt = DateTime.UtcNow;
         _context.ClientDebts.Add(clientDebt);
-        await _context.SaveChangesAsync();
+        
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex)
+        {
+            return this.HandleDatabaseError(ex, _logger, "lưu công nợ khách hàng");
+        }
 
         return Created($"odata/ClientDebts({clientDebt.ClientDebtId})", clientDebt);
     }
@@ -84,6 +95,10 @@ public class ClientDebtsController : ODataController
             }
             throw;
         }
+        catch (DbUpdateException ex)
+        {
+            return this.HandleDatabaseError(ex, _logger, "cập nhật công nợ khách hàng");
+        }
 
         return Updated(clientDebt);
     }
@@ -98,7 +113,15 @@ public class ClientDebtsController : ODataController
         }
 
         _context.ClientDebts.Remove(clientDebt);
-        await _context.SaveChangesAsync();
+        
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex)
+        {
+            return this.HandleDatabaseError(ex, _logger, "xóa công nợ khách hàng");
+        }
 
         return NoContent();
     }
