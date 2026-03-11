@@ -14,8 +14,10 @@ public class ClientConfiguration : IEntityTypeConfiguration<Client>
         // Primary key
         builder.HasKey(c => c.ClientId);
 
-        // Column mappings sẽ được tự động convert sang snake_case
-        // Chỉ cần set những cột đặc biệt nếu cần
+        builder.HasOne(c => c.UpdatedByAccount)
+            .WithMany()
+            .HasForeignKey(c => c.UpdatedBy)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }
 

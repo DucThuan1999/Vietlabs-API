@@ -61,6 +61,12 @@ public class SubcontractorConfiguration : IEntityTypeConfiguration<Subcontractor
 
         builder.Property(s => s.CreatedAt).HasColumnName("created_at");
         builder.Property(s => s.UpdatedAt).HasColumnName("updated_at");
+        builder.Property(s => s.UpdatedBy).HasColumnName("updated_by");
+
+        builder.HasOne(s => s.UpdatedByAccount)
+            .WithMany()
+            .HasForeignKey(s => s.UpdatedBy)
+            .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasIndex(s => s.Code);
         builder.HasIndex(s => s.Status);

@@ -20,9 +20,11 @@ public class QuotationAnalysisGroup
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }
+    public Guid? UpdatedBy { get; set; }  // AccountId người cập nhật
 
     // Navigation Properties
     public Quotation? Quotation { get; set; }
     public AnalysisGroup? AnalysisGroup { get; set; }
+    public Account? UpdatedByAccount { get; set; }
 }
 

@@ -55,10 +55,18 @@ public class AnalysisGroupConfiguration : IEntityTypeConfiguration<AnalysisGroup
         builder.Property(ag => ag.UpdatedAt)
             .HasColumnName("updated_at");
 
+        builder.Property(ag => ag.UpdatedBy)
+            .HasColumnName("updated_by");
+
         // Navigation: 1 AnalysisGroup có nhiều AnalysisItem
         builder.HasMany(ag => ag.AnalysisItems)
             .WithOne(ai => ai.AnalysisGroup)
             .HasForeignKey(ai => ai.AnalysisGroupId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(ag => ag.UpdatedByAccount)
+            .WithMany()
+            .HasForeignKey(ag => ag.UpdatedBy)
             .OnDelete(DeleteBehavior.Restrict);
     }
 }

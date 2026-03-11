@@ -37,4 +37,10 @@ ELSE
     PRINT N'FK_branch_updated_by đã tồn tại.';
 GO
 
+-- Gán giá trị mặc định cho bản ghi hiện có
+UPDATE [dbo].[branch]
+SET [updated_by] = '94eab415-1624-49de-85a6-a80916db3ab2',
+    [updated_at] = SYSUTCDATETIME()
+WHERE [updated_by] IS NULL OR [updated_at] IS NULL;
+
 PRINT N'Hoàn tất thêm người cập nhật cho branch.';

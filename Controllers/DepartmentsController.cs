@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OData.Query;
 using Microsoft.AspNetCore.OData.Routing.Controllers;
@@ -21,18 +22,24 @@ public class DepartmentsController : ODataController
         _logger = logger;
     }
 
+    private Guid? GetCurrentAccountId()
+    {
+        var accountIdClaim = User.FindFirst("AccountId")?.Value;
+        return Guid.TryParse(accountIdClaim, out var accountId) ? accountId : null;
+    }
+
     [HttpGet("Departments")]
     [EnableQuery]
     public IActionResult Get()
     {
-        return Ok(_context.Departments);
+        return Ok(_context.Departments.Include(d => d.UpdatedByAccount));
     }
 
     [HttpGet("Departments({key})")]
     [EnableQuery]
     public IActionResult Get([FromRoute] Guid key)
     {
-        var dept = _context.Departments.FirstOrDefault(d => d.DepartmentId == key);
+        var dept = _context.Departments.Include(d => d.UpdatedByAccount).FirstOrDefault(d => d.DepartmentId == key);
         if (dept == null)
         {
             return NotFound();
@@ -76,7 +83,20 @@ public class DepartmentsController : ODataController
             return BadRequest(ModelState);
         }
 
-        _context.Entry(dept).State = EntityState.Modified;
+        var existing = await _context.Departments.FindAsync(key);
+        if (existing == null)
+        {
+            return NotFound();
+        }
+
+        existing.DepartmentCode = dept.DepartmentCode;
+        existing.BranchId = dept.BranchId;
+        existing.NameVi = dept.NameVi;
+        existing.NameEn = dept.NameEn;
+        existing.Notes = dept.Notes;
+        existing.Status = dept.Status;
+        existing.UpdatedAt = DateTime.UtcNow;
+        existing.UpdatedBy = GetCurrentAccountId();
 
         try
         {
@@ -95,7 +115,8 @@ public class DepartmentsController : ODataController
             return this.HandleDatabaseError(ex, _logger, "cập nhật phòng ban");
         }
 
-        return Updated(dept);
+        var updated = await _context.Departments.Include(d => d.UpdatedByAccount).FirstOrDefaultAsync(d => d.DepartmentId == key);
+        return Updated(updated ?? existing);
     }
 
     [HttpDelete("Departments({key})")]

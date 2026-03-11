@@ -120,6 +120,7 @@ public class ClientIndustriesController : ODataController
             return this.HandleDatabaseError(ex, _logger, "cập nhật ngành nghề khách hàng");
         }
 
+        await _context.Entry(industry).Reference(c => c.UpdatedByAccount).LoadAsync();
         return Updated(industry);
     }
 
@@ -145,6 +146,7 @@ public class ClientIndustriesController : ODataController
             return this.HandleDatabaseError(ex, _logger, "cập nhật ngành nghề khách hàng");
         }
 
+        await _context.Entry(industry).Reference(c => c.UpdatedByAccount).LoadAsync();
         return Updated(industry);
     }
 

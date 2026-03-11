@@ -10,6 +10,9 @@ public class SampleMatrixGroup
     public string? Notes { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }
+    public Guid? UpdatedBy { get; set; }    // AccountId người cập nhật
+
+    public Account? UpdatedByAccount { get; set; }
 
     // Navigation: 1 SampleMatrixGroup có nhiều SampleMatrix
     public ICollection<SampleMatrix> SampleMatrices { get; set; } = new List<SampleMatrix>();

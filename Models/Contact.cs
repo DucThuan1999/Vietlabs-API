@@ -18,8 +18,13 @@ public class Contact
     public bool IsResultReceiver { get; set; } // Người nhận kết quả
     public bool IsPayer { get; set; } // Người thanh toán
 
+    public DateTime? CreatedAt { get; set; }
+    public DateTime? UpdatedAt { get; set; }
+    public Guid? UpdatedBy { get; set; }  // AccountId người cập nhật
+
     // Navigation
     public Client? Client { get; set; }
+    public Account? UpdatedByAccount { get; set; }
 }
 
 

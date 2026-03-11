@@ -104,7 +104,8 @@ public class BranchesController : ODataController
             return this.HandleDatabaseError(ex, _logger, "cập nhật chi nhánh");
         }
 
-        return Updated(branch);
+        var updated = await _context.Branches.Include(b => b.UpdatedByAccount).FirstOrDefaultAsync(b => b.BranchId == key);
+        return Updated(updated ?? branch);
     }
 
     [HttpDelete("Branches({key})")]

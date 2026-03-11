@@ -26,8 +26,8 @@ public class PackagesController : ODataController
     public IActionResult Get()
     {
         return Ok(_context.Packages
-            .Include(p => p.PackageAnalysisGroups)
-                .ThenInclude(pag => pag.AnalysisGroup)
+            .Include(p => p.PackageAnalysisItems)
+                .ThenInclude(pai => pai.AnalysisItem)
             .Include(p => p.SampleMatrix));
     }
 
@@ -36,8 +36,8 @@ public class PackagesController : ODataController
     public IActionResult Get([FromRoute] Guid key)
     {
         var package = _context.Packages
-            .Include(p => p.PackageAnalysisGroups)
-                .ThenInclude(pag => pag.AnalysisGroup)
+            .Include(p => p.PackageAnalysisItems)
+                .ThenInclude(pai => pai.AnalysisItem)
             .Include(p => p.SampleMatrix)
             .FirstOrDefault(p => p.PackageId == key);
         if (package == null)

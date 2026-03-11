@@ -25,11 +25,12 @@ public class ApplicationDbContext : DbContext
     public DbSet<AnalysisGroup> AnalysisGroups { get; set; }
     public DbSet<AnalysisItem> AnalysisItems { get; set; }
     public DbSet<DepartmentAnalysisCapability> DepartmentAnalysisCapabilities { get; set; }
+    public DbSet<DepartmentAnalysisCapabilityDesignation> DepartmentAnalysisCapabilityDesignations { get; set; }
     public DbSet<Quotation> Quotations { get; set; }
     public DbSet<QuotationItem> QuotationItems { get; set; }
     public DbSet<QuotationAnalysisGroup> QuotationAnalysisGroups { get; set; }
     public DbSet<Package> Packages { get; set; }
-    public DbSet<PackageAnalysisGroup> PackageAnalysisGroups { get; set; }
+    public DbSet<PackageAnalysisItem> PackageAnalysisItems { get; set; }
     public DbSet<ClientDebt> ClientDebts { get; set; }
     public DbSet<ClientForecast> ClientForecasts { get; set; }
     public DbSet<StoreRecord> StoreRecords { get; set; }
@@ -45,6 +46,13 @@ public class ApplicationDbContext : DbContext
     public DbSet<EmployeeTitle> EmployeeTitles { get; set; }
     public DbSet<Subcontractor> Subcontractors { get; set; }
     public DbSet<SubcontractorCapability> SubcontractorCapabilities { get; set; }
+    public DbSet<Designation> Designations { get; set; }
+    public DbSet<AnalysisItemDesignation> AnalysisItemDesignations { get; set; }
+    public DbSet<EmployeeAnalysisCapability> EmployeeAnalysisCapabilities { get; set; }
+    public DbSet<SubcontractorCapabilityDesignation> SubcontractorCapabilityDesignations { get; set; }
+    public DbSet<Standard> Standards { get; set; }
+    public DbSet<ReferenceMethod> ReferenceMethods { get; set; }
+    public DbSet<UnitOfMeasure> UnitOfMeasures { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -67,8 +75,9 @@ public class ApplicationDbContext : DbContext
         modelBuilder.ApplyConfiguration(new AnalysisGroupConfiguration());
         modelBuilder.ApplyConfiguration(new AnalysisItemConfiguration());
         modelBuilder.ApplyConfiguration(new DepartmentAnalysisCapabilityConfiguration());
+        modelBuilder.ApplyConfiguration(new DepartmentAnalysisCapabilityDesignationConfiguration());
         modelBuilder.ApplyConfiguration(new PackageConfiguration());
-        modelBuilder.ApplyConfiguration(new PackageAnalysisGroupConfiguration());
+        modelBuilder.ApplyConfiguration(new PackageAnalysisItemConfiguration());
         modelBuilder.ApplyConfiguration(new EquipmentTypeConfiguration());
         modelBuilder.ApplyConfiguration(new SampleMatrixConfiguration());
         modelBuilder.ApplyConfiguration(new SampleMatrixGroupConfiguration());
@@ -85,6 +94,13 @@ public class ApplicationDbContext : DbContext
         modelBuilder.ApplyConfiguration(new EmployeeTitleConfiguration());
         modelBuilder.ApplyConfiguration(new SubcontractorConfiguration());
         modelBuilder.ApplyConfiguration(new SubcontractorCapabilityConfiguration());
+        modelBuilder.ApplyConfiguration(new DesignationConfiguration());
+        modelBuilder.ApplyConfiguration(new AnalysisItemDesignationConfiguration());
+        modelBuilder.ApplyConfiguration(new EmployeeAnalysisCapabilityConfiguration());
+        modelBuilder.ApplyConfiguration(new SubcontractorCapabilityDesignationConfiguration());
+        modelBuilder.ApplyConfiguration(new StandardConfiguration());
+        modelBuilder.ApplyConfiguration(new ReferenceMethodConfiguration());
+        modelBuilder.ApplyConfiguration(new UnitOfMeasureConfiguration());
 
         // Tất cả tên bảng đã được set trong Configuration classes
         // Chỉ cần convert tên cột sang snake_case
@@ -102,9 +118,17 @@ public class ApplicationDbContext : DbContext
                     var isManuallySet = entityType.ClrType.Name == "AnalysisGroup" ||
                                        entityType.ClrType.Name == "AnalysisItem" ||
                                        entityType.ClrType.Name == "DepartmentAnalysisCapability" ||
+                                       entityType.ClrType.Name == "DepartmentAnalysisCapabilityDesignation" ||
                                        entityType.ClrType.Name == "SampleMatrix" ||
                                        entityType.ClrType.Name == "SampleMatrixGroup" ||
-                                       entityType.ClrType.Name == "EquipmentType";
+                                       entityType.ClrType.Name == "EquipmentType" ||
+                                       entityType.ClrType.Name == "Designation" ||
+                                       entityType.ClrType.Name == "AnalysisItemDesignation" ||
+                                       entityType.ClrType.Name == "EmployeeAnalysisCapability" ||
+                                       entityType.ClrType.Name == "SubcontractorCapabilityDesignation" ||
+                                       entityType.ClrType.Name == "Standard" ||
+                                       entityType.ClrType.Name == "ReferenceMethod" ||
+                                       entityType.ClrType.Name == "UnitOfMeasure";
                     
                     if (!isManuallySet)
                     {
@@ -280,22 +304,6 @@ public class ApplicationDbContext : DbContext
             .WithMany()
             .HasForeignKey(qi => qi.PackageId)
             .OnDelete(DeleteBehavior.SetNull);
-
-        // Quan hệ many-to-many: Package - AnalysisGroup (qua PackageAnalysisGroup)
-        modelBuilder.Entity<PackageAnalysisGroup>()
-            .HasKey(pag => pag.PackageAnalysisGroupId);
-
-        modelBuilder.Entity<PackageAnalysisGroup>()
-            .HasOne(pag => pag.Package)
-            .WithMany(p => p.PackageAnalysisGroups)
-            .HasForeignKey(pag => pag.PackageId)
-            .OnDelete(DeleteBehavior.Cascade);
-
-        modelBuilder.Entity<PackageAnalysisGroup>()
-            .HasOne(pag => pag.AnalysisGroup)
-            .WithMany()
-            .HasForeignKey(pag => pag.AnalysisGroupId)
-            .OnDelete(DeleteBehavior.Restrict);
 
         // Check constraint: Đảm bảo chỉ một trong 3 foreign keys có giá trị
         // (sẽ được thêm trong SQL script vì EF Core không hỗ trợ check constraint trực tiếp)
@@ -1481,214 +1489,7 @@ public class ApplicationDbContext : DbContext
             }
         );
 
-        // Seed PackageAnalysisGroups
-        modelBuilder.Entity<PackageAnalysisGroup>().HasData(
-            // Package 1: Gói tổng quát (Huyết học, Sinh hóa, Nước tiểu)
-            new PackageAnalysisGroup
-            {
-                PackageAnalysisGroupId = Guid.Parse("cccccccc-0001-0001-0001-000000000001"),
-                PackageId = pkg1Id,
-                AnalysisGroupId = ag1Id,
-                DisplayOrder = 1,
-                IsRequired = true,
-                Notes = "Nhóm chỉ tiêu bắt buộc",
-                CreatedAt = DateTime.UtcNow
-            },
-            new PackageAnalysisGroup
-            {
-                PackageAnalysisGroupId = Guid.Parse("cccccccc-0001-0002-0002-000000000002"),
-                PackageId = pkg1Id,
-                AnalysisGroupId = ag2Id,
-                DisplayOrder = 2,
-                IsRequired = true,
-                Notes = "Nhóm chỉ tiêu bắt buộc",
-                CreatedAt = DateTime.UtcNow
-            },
-            new PackageAnalysisGroup
-            {
-                PackageAnalysisGroupId = Guid.Parse("cccccccc-0001-0003-0003-000000000003"),
-                PackageId = pkg1Id,
-                AnalysisGroupId = ag5Id,
-                DisplayOrder = 3,
-                IsRequired = true,
-                Notes = "Nhóm chỉ tiêu bắt buộc",
-                CreatedAt = DateTime.UtcNow
-            },
-            // Package 2: Gói nâng cao (Tất cả các nhóm)
-            new PackageAnalysisGroup
-            {
-                PackageAnalysisGroupId = Guid.Parse("cccccccc-0002-0001-0001-000000000001"),
-                PackageId = pkg2Id,
-                AnalysisGroupId = ag1Id,
-                DisplayOrder = 1,
-                IsRequired = true,
-                Notes = "Nhóm chỉ tiêu bắt buộc",
-                CreatedAt = DateTime.UtcNow
-            },
-            new PackageAnalysisGroup
-            {
-                PackageAnalysisGroupId = Guid.Parse("cccccccc-0002-0002-0002-000000000002"),
-                PackageId = pkg2Id,
-                AnalysisGroupId = ag2Id,
-                DisplayOrder = 2,
-                IsRequired = true,
-                Notes = "Nhóm chỉ tiêu bắt buộc",
-                CreatedAt = DateTime.UtcNow
-            },
-            new PackageAnalysisGroup
-            {
-                PackageAnalysisGroupId = Guid.Parse("cccccccc-0002-0003-0003-000000000003"),
-                PackageId = pkg2Id,
-                AnalysisGroupId = ag3Id,
-                DisplayOrder = 3,
-                IsRequired = true,
-                Notes = "Nhóm chỉ tiêu bắt buộc",
-                CreatedAt = DateTime.UtcNow
-            },
-            new PackageAnalysisGroup
-            {
-                PackageAnalysisGroupId = Guid.Parse("cccccccc-0002-0004-0004-000000000004"),
-                PackageId = pkg2Id,
-                AnalysisGroupId = ag4Id,
-                DisplayOrder = 4,
-                IsRequired = true,
-                Notes = "Nhóm chỉ tiêu bắt buộc",
-                CreatedAt = DateTime.UtcNow
-            },
-            new PackageAnalysisGroup
-            {
-                PackageAnalysisGroupId = Guid.Parse("cccccccc-0002-0005-0005-000000000005"),
-                PackageId = pkg2Id,
-                AnalysisGroupId = ag5Id,
-                DisplayOrder = 5,
-                IsRequired = true,
-                Notes = "Nhóm chỉ tiêu bắt buộc",
-                CreatedAt = DateTime.UtcNow
-            },
-            new PackageAnalysisGroup
-            {
-                PackageAnalysisGroupId = Guid.Parse("cccccccc-0002-0006-0006-000000000006"),
-                PackageId = pkg2Id,
-                AnalysisGroupId = ag6Id,
-                DisplayOrder = 6,
-                IsRequired = true,
-                Notes = "Nhóm chỉ tiêu bắt buộc",
-                CreatedAt = DateTime.UtcNow
-            },
-            // Package 3: Gói cơ bản (Chỉ Huyết học và Sinh hóa)
-            new PackageAnalysisGroup
-            {
-                PackageAnalysisGroupId = Guid.Parse("cccccccc-0003-0001-0001-000000000001"),
-                PackageId = pkg3Id,
-                AnalysisGroupId = ag1Id,
-                DisplayOrder = 1,
-                IsRequired = true,
-                Notes = "Nhóm chỉ tiêu bắt buộc",
-                CreatedAt = DateTime.UtcNow
-            },
-            new PackageAnalysisGroup
-            {
-                PackageAnalysisGroupId = Guid.Parse("cccccccc-0003-0002-0002-000000000002"),
-                PackageId = pkg3Id,
-                AnalysisGroupId = ag2Id,
-                DisplayOrder = 2,
-                IsRequired = true,
-                Notes = "Nhóm chỉ tiêu bắt buộc",
-                CreatedAt = DateTime.UtcNow
-            },
-            // Package 4: Gói vi sinh (Vi sinh và Miễn dịch)
-            new PackageAnalysisGroup
-            {
-                PackageAnalysisGroupId = Guid.Parse("cccccccc-0004-0001-0001-000000000001"),
-                PackageId = pkg4Id,
-                AnalysisGroupId = ag3Id,
-                DisplayOrder = 1,
-                IsRequired = true,
-                Notes = "Nhóm chỉ tiêu bắt buộc",
-                CreatedAt = DateTime.UtcNow
-            },
-            new PackageAnalysisGroup
-            {
-                PackageAnalysisGroupId = Guid.Parse("cccccccc-0004-0002-0002-000000000002"),
-                PackageId = pkg4Id,
-                AnalysisGroupId = ag4Id,
-                DisplayOrder = 2,
-                IsRequired = true,
-                Notes = "Nhóm chỉ tiêu bắt buộc",
-                CreatedAt = DateTime.UtcNow
-            },
-            new PackageAnalysisGroup
-            {
-                PackageAnalysisGroupId = Guid.Parse("cccccccc-0004-0003-0003-000000000003"),
-                PackageId = pkg4Id,
-                AnalysisGroupId = ag6Id,
-                DisplayOrder = 3,
-                IsRequired = false,
-                Notes = "Nhóm chỉ tiêu tùy chọn",
-                CreatedAt = DateTime.UtcNow
-            },
-            // Package 5: Gói chuyên sâu (Tất cả các nhóm, một số tùy chọn)
-            new PackageAnalysisGroup
-            {
-                PackageAnalysisGroupId = Guid.Parse("cccccccc-0005-0001-0001-000000000001"),
-                PackageId = pkg5Id,
-                AnalysisGroupId = ag1Id,
-                DisplayOrder = 1,
-                IsRequired = true,
-                Notes = "Nhóm chỉ tiêu bắt buộc",
-                CreatedAt = DateTime.UtcNow
-            },
-            new PackageAnalysisGroup
-            {
-                PackageAnalysisGroupId = Guid.Parse("cccccccc-0005-0002-0002-000000000002"),
-                PackageId = pkg5Id,
-                AnalysisGroupId = ag2Id,
-                DisplayOrder = 2,
-                IsRequired = true,
-                Notes = "Nhóm chỉ tiêu bắt buộc",
-                CreatedAt = DateTime.UtcNow
-            },
-            new PackageAnalysisGroup
-            {
-                PackageAnalysisGroupId = Guid.Parse("cccccccc-0005-0003-0003-000000000003"),
-                PackageId = pkg5Id,
-                AnalysisGroupId = ag3Id,
-                DisplayOrder = 3,
-                IsRequired = true,
-                Notes = "Nhóm chỉ tiêu bắt buộc",
-                CreatedAt = DateTime.UtcNow
-            },
-            new PackageAnalysisGroup
-            {
-                PackageAnalysisGroupId = Guid.Parse("cccccccc-0005-0004-0004-000000000004"),
-                PackageId = pkg5Id,
-                AnalysisGroupId = ag4Id,
-                DisplayOrder = 4,
-                IsRequired = true,
-                Notes = "Nhóm chỉ tiêu bắt buộc",
-                CreatedAt = DateTime.UtcNow
-            },
-            new PackageAnalysisGroup
-            {
-                PackageAnalysisGroupId = Guid.Parse("cccccccc-0005-0005-0005-000000000005"),
-                PackageId = pkg5Id,
-                AnalysisGroupId = ag5Id,
-                DisplayOrder = 5,
-                IsRequired = true,
-                Notes = "Nhóm chỉ tiêu bắt buộc",
-                CreatedAt = DateTime.UtcNow
-            },
-            new PackageAnalysisGroup
-            {
-                PackageAnalysisGroupId = Guid.Parse("cccccccc-0005-0006-0006-000000000006"),
-                PackageId = pkg5Id,
-                AnalysisGroupId = ag6Id,
-                DisplayOrder = 6,
-                IsRequired = false,
-                Notes = "Nhóm chỉ tiêu tùy chọn - có thể bỏ qua",
-                CreatedAt = DateTime.UtcNow
-            }
-        );
+        // PackageAnalysisItems: không seed mặc định (gắn chỉ tiêu vào gói qua API hoặc migration dữ liệu)
     }
 
     /// <summary>

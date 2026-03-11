@@ -12,6 +12,9 @@ public class SampleMatrix
     public string? Notes { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }
+    public Guid? UpdatedBy { get; set; }    // AccountId người cập nhật
+
+    public Account? UpdatedByAccount { get; set; }
 
     // Navigation
     public SampleMatrixGroup? SampleMatrixGroup { get; set; }

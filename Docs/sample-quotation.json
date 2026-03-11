@@ -1,0 +1,152 @@
+{
+  "description": "Mẫu JSON Quotation mà backend trả về (GET odata/Quotations hoặc GET odata/Quotations(key)). Property names dạng camelCase.",
+  "quotation": {
+    "quotationId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+    "quotationCode": "BG-2025-001",
+
+    "employeeId": "7fa85f64-5717-4562-b3fc-2c963f66afa7",
+    "salesPersonName": "Nguyễn Văn A",
+    "salesPersonEmail": "nva@vietlabs.vn",
+    "salesPersonPhone": "0901234567",
+
+    "clientId": "8fa85f64-5717-4562-b3fc-2c963f66afa8",
+    "agentName": null,
+    "companyName": "Công ty TNHH ABC",
+    "contactId": "9fa85f64-5717-4562-b3fc-2c963f66afa9",
+    "contactName": "Trần Thị B",
+    "taxCode": "0123456789",
+    "contactEmail": "contact@abc.vn",
+    "forecast": 500000000,
+    "contactPhone": "0912345678",
+    "revenue": 300000000,
+    "address": "123 Đường XYZ, Quận 1, TP.HCM",
+
+    "debtContactName": "Phòng Kế toán",
+    "debtContactPhone": "0281234567",
+    "debtContactEmail": "accounting@abc.vn",
+    "paymentMethod": "Chuyển khoản",
+
+    "validFrom": "2025-01-01T00:00:00Z",
+    "validTo": "2025-12-31T23:59:59Z",
+
+    "discountPercent": 5,
+
+    "subTotal": 10000000,
+    "totalDiscountPercent": 5,
+    "totalDiscount": 500000,
+    "vatPercent": 8,
+    "vatAmount": 760000,
+    "totalAmount": 10260000,
+
+    "quotationDiscountPercent": 3,
+    "clientDiscountPercent": 2,
+
+    "status": "Draft",
+    "notes": "Ghi chú báo giá",
+    "createdAt": "2025-03-01T08:00:00Z",
+    "updatedAt": "2025-03-02T10:00:00Z",
+    "createdBy": "a1a85f64-5717-4562-b3fc-2c963f66afa1",
+    "updatedBy": "a2a85f64-5717-4562-b3fc-2c963f66afa2",
+
+    "approverLevel1Id": "b1a85f64-5717-4562-b3fc-2c963f66afb1",
+    "approverLevel2Id": "b2a85f64-5717-4562-b3fc-2c963f66afb2",
+    "approvedLevel1At": null,
+    "approvedLevel2At": null,
+    "approvalLevel1Status": "Pending",
+    "approvalLevel2Status": "Pending",
+    "approvalLevel1Comment": null,
+    "approvalLevel2Comment": null,
+
+    "client": {
+      "clientId": "8fa85f64-5717-4562-b3fc-2c963f66afa8",
+      "companyName": "Công ty TNHH ABC",
+      "companyNameEn": "ABC Co., Ltd",
+      "internalCode": "KH001",
+      "taxCode": "0123456789",
+      "address": "123 Đường XYZ, Quận 1, TP.HCM",
+      "forecast": 500000000,
+      "revenue": 300000000,
+      "discountRate": 2,
+      "isBlacklisted": false
+    },
+    "employee": {
+      "employeeId": "7fa85f64-5717-4562-b3fc-2c963f66afa7",
+      "employeeCode": "NV001",
+      "fullName": "Nguyễn Văn A",
+      "email": "nva@vietlabs.vn",
+      "mobile": "0901234567",
+      "status": "Active"
+    },
+    "contact": {
+      "contactId": "9fa85f64-5717-4562-b3fc-2c963f66afa9",
+      "clientId": "8fa85f64-5717-4562-b3fc-2c963f66afa8",
+      "fullName": "Trần Thị B",
+      "email": "contact@abc.vn",
+      "phone": "0912345678",
+      "isPrimary": true
+    },
+    "quotationItems": [
+      {
+        "quotationItemId": "c1a85f64-5717-4562-b3fc-2c963f66afc1",
+        "quotationId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+        "itemType": "AnalysisItem",
+        "analysisItemId": "d1a85f64-5717-4562-b3fc-2c963f66afd1",
+        "analysisGroupId": null,
+        "packageId": null,
+        "isStandalone": true,
+        "itemCode": "CT-001",
+        "itemNameVi": "Độ ẩm",
+        "itemNameEn": "Moisture",
+        "description": null,
+        "sampleMatrixName": "Đất",
+        "publishedGroupCode": "TCVN",
+        "unit": "%",
+        "lod": null,
+        "loq": null,
+        "tat": "3-5 ngày",
+        "quantity": 1,
+        "defaultPrice": 150000,
+        "unitPrice": 150000,
+        "discountPercent": null,
+        "discountAmount": null,
+        "subTotal": 150000,
+        "displayOrder": 1,
+        "notes": null,
+        "createdAt": "2025-03-01T08:00:00Z",
+        "updatedAt": null
+      },
+      {
+        "quotationItemId": "c2a85f64-5717-4562-b3fc-2c963f66afc2",
+        "quotationId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+        "itemType": "AnalysisGroup",
+        "analysisItemId": null,
+        "analysisGroupId": "d2a85f64-5717-4562-b3fc-2c963f66afd2",
+        "packageId": null,
+        "isStandalone": null,
+        "itemCode": "NHOM-001",
+        "itemNameVi": "Nhóm kim loại nặng",
+        "itemNameEn": "Heavy metals group",
+        "quantity": 1,
+        "defaultPrice": 500000,
+        "unitPrice": 500000,
+        "subTotal": 500000,
+        "displayOrder": 2,
+        "createdAt": "2025-03-01T08:00:00Z",
+        "updatedAt": null
+      }
+    ],
+    "quotationAnalysisGroups": [
+      {
+        "quotationAnalysisGroupId": "e1a85f64-5717-4562-b3fc-2c963f66afe1",
+        "quotationId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+        "analysisGroupId": "d2a85f64-5717-4562-b3fc-2c963f66afd2",
+        "stepPrice": 50000,
+        "groupSalePrice": 500000,
+        "discountRate": 5,
+        "notes": null,
+        "createdAt": "2025-03-01T08:00:00Z",
+        "updatedAt": null
+      }
+    ]
+  }
+}

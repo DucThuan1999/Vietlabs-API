@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OData.Query;
 using Microsoft.AspNetCore.OData.Routing.Controllers;
@@ -21,11 +22,19 @@ public class SampleMatrixGroupsController : ODataController
         _logger = logger;
     }
 
+    private Guid? GetCurrentAccountId()
+    {
+        var accountIdClaim = User.FindFirst("AccountId")?.Value;
+        return Guid.TryParse(accountIdClaim, out var accountId) ? accountId : null;
+    }
+
     [HttpGet("SampleMatrixGroups")]
     [EnableQuery]
     public IActionResult Get()
     {
-        return Ok(_context.SampleMatrixGroups.Include(smg => smg.SampleMatrices));
+        return Ok(_context.SampleMatrixGroups
+            .Include(smg => smg.UpdatedByAccount)
+            .Include(smg => smg.SampleMatrices));
     }
 
     [HttpGet("SampleMatrixGroups({key})")]
@@ -33,6 +42,7 @@ public class SampleMatrixGroupsController : ODataController
     public IActionResult Get([FromRoute] Guid key)
     {
         var group = _context.SampleMatrixGroups
+            .Include(smg => smg.UpdatedByAccount)
             .Include(smg => smg.SampleMatrices)
             .FirstOrDefault(smg => smg.SampleMatrixGroupId == key);
         if (group == null)
@@ -79,8 +89,19 @@ public class SampleMatrixGroupsController : ODataController
             return BadRequest(ModelState);
         }
 
-        group.UpdatedAt = DateTime.UtcNow;
-        _context.Entry(group).State = EntityState.Modified;
+        var existing = await _context.SampleMatrixGroups.FindAsync(key);
+        if (existing == null)
+        {
+            return NotFound();
+        }
+
+        existing.SampleMatrixGroupCode = group.SampleMatrixGroupCode;
+        existing.NameVi = group.NameVi;
+        existing.NameEn = group.NameEn;
+        existing.Status = group.Status;
+        existing.Notes = group.Notes;
+        existing.UpdatedAt = DateTime.UtcNow;
+        existing.UpdatedBy = GetCurrentAccountId();
 
         try
         {
@@ -99,7 +120,8 @@ public class SampleMatrixGroupsController : ODataController
             return this.HandleDatabaseError(ex, _logger, "cập nhật nhóm mẫu vật");
         }
 
-        return Updated(group);
+        await _context.Entry(existing).Reference(smg => smg.UpdatedByAccount).LoadAsync();
+        return Updated(existing);
     }
 
     [HttpDelete("SampleMatrixGroups({key})")]

@@ -10,8 +10,12 @@ public class Department
     public string? Notes { get; set; }          // Mô tả/Ghi chú
     public string Status { get; set; } = "Active";             // Trạng thái
 
+    public DateTime? UpdatedAt { get; set; }
+    public Guid? UpdatedBy { get; set; }    // AccountId người cập nhật
+
     // Navigation
     public Branch? Branch { get; set; }
+    public Account? UpdatedByAccount { get; set; }
 }
 
 

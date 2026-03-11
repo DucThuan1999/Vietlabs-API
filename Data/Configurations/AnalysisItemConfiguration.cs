@@ -30,6 +30,10 @@ public class AnalysisItemConfiguration : IEntityTypeConfiguration<AnalysisItem>
             .HasColumnName("name_en")
             .HasMaxLength(500);
 
+        builder.Property(ai => ai.ShortName)
+            .HasColumnName("short_name")
+            .HasMaxLength(255);
+
         builder.Property(ai => ai.Organization)
             .HasColumnName("organization")
             .HasMaxLength(500);
@@ -51,6 +55,15 @@ public class AnalysisItemConfiguration : IEntityTypeConfiguration<AnalysisItem>
             .HasColumnName("sample_matrix_group_id")
             .IsRequired();
 
+        builder.Property(ai => ai.ReferenceMethodId)
+            .HasColumnName("reference_method_id");
+
+        builder.Property(ai => ai.StandardId)
+            .HasColumnName("standard_id");
+
+        builder.Property(ai => ai.UnitOfMeasureId)
+            .HasColumnName("unit_of_measure_id");
+
         builder.Property(ai => ai.PublishedGroupCode)
             .HasColumnName("published_group_code")
             .HasMaxLength(255);
@@ -69,41 +82,6 @@ public class AnalysisItemConfiguration : IEntityTypeConfiguration<AnalysisItem>
             .IsRequired()
             .HasDefaultValue(0);
 
-        builder.Property(ai => ai.Unit)
-            .HasColumnName("unit")
-            .HasMaxLength(50);
-
-        // Boolean flags
-        builder.Property(ai => ai.Nd107)
-            .HasColumnName("nd_107")
-            .IsRequired()
-            .HasDefaultValue(false);
-
-        builder.Property(ai => ai.Iso)
-            .HasColumnName("iso")
-            .IsRequired()
-            .HasDefaultValue(false);
-
-        builder.Property(ai => ai.CucBvtv)
-            .HasColumnName("cuc_bvtv")
-            .IsRequired()
-            .HasDefaultValue(false);
-
-        builder.Property(ai => ai.BoCongThuong)
-            .HasColumnName("bo_cong_thuong")
-            .IsRequired()
-            .HasDefaultValue(false);
-
-        builder.Property(ai => ai.Nafi)
-            .HasColumnName("nafi")
-            .IsRequired()
-            .HasDefaultValue(false);
-
-        builder.Property(ai => ai.CucChanNuoi)
-            .HasColumnName("cuc_chan_nuoi")
-            .IsRequired()
-            .HasDefaultValue(false);
-
         builder.Property(ai => ai.Status)
             .HasColumnName("status")
             .HasMaxLength(50)
@@ -120,6 +98,9 @@ public class AnalysisItemConfiguration : IEntityTypeConfiguration<AnalysisItem>
 
         builder.Property(ai => ai.UpdatedAt)
             .HasColumnName("updated_at");
+
+        builder.Property(ai => ai.UpdatedBy)
+            .HasColumnName("updated_by");
 
         // Navigation Properties & Foreign Key Relationships
         builder.HasOne(ai => ai.EquipmentType)
@@ -140,6 +121,26 @@ public class AnalysisItemConfiguration : IEntityTypeConfiguration<AnalysisItem>
         builder.HasOne(ai => ai.SampleMatrixGroup)
             .WithMany()
             .HasForeignKey(ai => ai.SampleMatrixGroupId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(ai => ai.ReferenceMethod)
+            .WithMany(rm => rm.AnalysisItems)
+            .HasForeignKey(ai => ai.ReferenceMethodId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(ai => ai.Standard)
+            .WithMany(s => s.AnalysisItems)
+            .HasForeignKey(ai => ai.StandardId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(ai => ai.UnitOfMeasure)
+            .WithMany(u => u.AnalysisItems)
+            .HasForeignKey(ai => ai.UnitOfMeasureId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(ai => ai.UpdatedByAccount)
+            .WithMany()
+            .HasForeignKey(ai => ai.UpdatedBy)
             .OnDelete(DeleteBehavior.Restrict);
     }
 }

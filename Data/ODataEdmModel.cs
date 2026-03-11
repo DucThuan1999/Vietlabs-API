@@ -14,12 +14,17 @@ public static class ODataEdmModel
         var builder = new ODataConventionModelBuilder();
         
         // Core entities
-        builder.EntitySet<Client>("Clients");
-        builder.EntitySet<Contact>("Contacts");
+        var clientEntitySet = builder.EntitySet<Client>("Clients");
+        clientEntitySet.EntityType.HasOptional(c => c.UpdatedByAccount).AutoExpand = true;
+        var contactEntitySet = builder.EntitySet<Contact>("Contacts");
+        contactEntitySet.EntityType.HasOptional(c => c.UpdatedByAccount).AutoExpand = true;
         var employeeEntitySet = builder.EntitySet<Employee>("Employees");
         employeeEntitySet.EntityType.HasOptional(e => e.Department).AutoExpand = true;
-        builder.EntitySet<Branch>("Branches");
-        builder.EntitySet<Department>("Departments");
+        employeeEntitySet.EntityType.HasOptional(e => e.UpdatedByAccount).AutoExpand = true;
+        var branchEntitySet = builder.EntitySet<Branch>("Branches");
+        branchEntitySet.EntityType.HasOptional(b => b.UpdatedByAccount).AutoExpand = true;
+        var departmentEntitySet = builder.EntitySet<Department>("Departments");
+        departmentEntitySet.EntityType.HasOptional(d => d.UpdatedByAccount).AutoExpand = true;
         
         // Account với AutoExpand cho Employee và Permission
         var accountEntitySet = builder.EntitySet<Account>("Accounts");
@@ -30,17 +35,28 @@ public static class ODataEdmModel
         builder.EntitySet<Permission>("Permissions");
         
         // Sample and Analysis entities
-        builder.EntitySet<SampleMatrixGroup>("SampleMatrixGroups");
-        builder.EntitySet<SampleMatrix>("SampleMatrices");
-        builder.EntitySet<EquipmentType>("EquipmentTypes");
-        builder.EntitySet<AnalysisGroup>("AnalysisGroups");
-        builder.EntitySet<AnalysisItem>("AnalysisItems");
-        builder.EntitySet<AnalysisItemTat>("AnalysisItemTats");
-        
+        var sampleMatrixGroupEntitySet = builder.EntitySet<SampleMatrixGroup>("SampleMatrixGroups");
+        sampleMatrixGroupEntitySet.EntityType.HasOptional(smg => smg.UpdatedByAccount).AutoExpand = true;
+        var sampleMatrixEntitySet = builder.EntitySet<SampleMatrix>("SampleMatrices");
+        sampleMatrixEntitySet.EntityType.HasOptional(sm => sm.UpdatedByAccount).AutoExpand = true;
+        var equipmentTypeEntitySet = builder.EntitySet<EquipmentType>("EquipmentTypes");
+        equipmentTypeEntitySet.EntityType.HasOptional(e => e.UpdatedByAccount).AutoExpand = true;
+        var analysisGroupEntitySet = builder.EntitySet<AnalysisGroup>("AnalysisGroups");
+        analysisGroupEntitySet.EntityType.HasOptional(ag => ag.UpdatedByAccount).AutoExpand = true;
+        var analysisItemEntitySet = builder.EntitySet<AnalysisItem>("AnalysisItems");
+        analysisItemEntitySet.EntityType.HasOptional(ai => ai.ReferenceMethod).AutoExpand = true;
+        analysisItemEntitySet.EntityType.HasOptional(ai => ai.Standard).AutoExpand = true;
+        analysisItemEntitySet.EntityType.HasOptional(ai => ai.UnitOfMeasure).AutoExpand = true;
+        analysisItemEntitySet.EntityType.HasOptional(ai => ai.UpdatedByAccount).AutoExpand = true;
+        var analysisItemTatEntitySet = builder.EntitySet<AnalysisItemTat>("AnalysisItemTats");
+        analysisItemTatEntitySet.EntityType.HasOptional(tat => tat.UpdatedByAccount).AutoExpand = true;
+
         // Quotation entities
         builder.EntitySet<Quotation>("Quotations");
-        builder.EntitySet<QuotationItem>("QuotationItems");
-        builder.EntitySet<QuotationAnalysisGroup>("QuotationAnalysisGroups");
+        var quotationItemEntitySet = builder.EntitySet<QuotationItem>("QuotationItems");
+        quotationItemEntitySet.EntityType.HasOptional(qi => qi.UpdatedByAccount).AutoExpand = true;
+        var quotationAnalysisGroupEntitySet = builder.EntitySet<QuotationAnalysisGroup>("QuotationAnalysisGroups");
+        quotationAnalysisGroupEntitySet.EntityType.HasOptional(qag => qag.UpdatedByAccount).AutoExpand = true;
         builder.EntitySet<QuotationApprovalThreshold>("QuotationApprovalThresholds");
         
         // QuotationHistory với AutoExpand cho navigation properties
@@ -49,11 +65,14 @@ public static class ODataEdmModel
         quotationHistoryEntityType.HasRequired(qh => qh.ChangedByAccount).AutoExpand = true;
         
         // Package entities
-        builder.EntitySet<Package>("Packages");
-        builder.EntitySet<PackageAnalysisGroup>("PackageAnalysisGroups");
-        
+        var packageEntitySet = builder.EntitySet<Package>("Packages");
+        packageEntitySet.EntityType.HasOptional(p => p.UpdatedByAccount).AutoExpand = true;
+        var packageAnalysisItemEntitySet = builder.EntitySet<PackageAnalysisItem>("PackageAnalysisItems");
+        packageAnalysisItemEntitySet.EntityType.HasOptional(pai => pai.UpdatedByAccount).AutoExpand = true;
+
         // Client related entities
-        builder.EntitySet<ClientDebt>("ClientDebts");
+        var clientDebtEntitySet = builder.EntitySet<ClientDebt>("ClientDebts");
+        clientDebtEntitySet.EntityType.HasOptional(cd => cd.UpdatedByAccount).AutoExpand = true;
         
         // ClientForecast với AutoExpand cho navigation properties
         var clientForecastEntitySet = builder.EntitySet<ClientForecast>("ClientForecasts");
@@ -72,17 +91,56 @@ public static class ODataEdmModel
         builder.EntitySet<Ward>("Wards");
 
         // Danh mục ngành nghề khách hàng
-        builder.EntitySet<ClientIndustry>("ClientIndustries");
+        var clientIndustryEntitySet = builder.EntitySet<ClientIndustry>("ClientIndustries");
+        clientIndustryEntitySet.EntityType.HasOptional(ci => ci.UpdatedByAccount).AutoExpand = true;
 
         // Danh mục chức vụ nhân viên
-        builder.EntitySet<EmployeeTitle>("EmployeeTitles");
+        var employeeTitleEntitySet = builder.EntitySet<EmployeeTitle>("EmployeeTitles");
+        employeeTitleEntitySet.EntityType.HasOptional(et => et.UpdatedByAccount).AutoExpand = true;
 
         // Nhà thầu phụ
-        builder.EntitySet<Subcontractor>("Subcontractors");
-        builder.EntitySet<SubcontractorCapability>("SubcontractorCapabilities");
+        var subcontractorEntitySet = builder.EntitySet<Subcontractor>("Subcontractors");
+        subcontractorEntitySet.EntityType.HasOptional(s => s.UpdatedByAccount).AutoExpand = true;
+        var subcontractorCapabilityEntitySet = builder.EntitySet<SubcontractorCapability>("SubcontractorCapabilities");
+        subcontractorCapabilityEntitySet.EntityType.HasRequired(sc => sc.AnalysisItem).AutoExpand = true;
+        subcontractorCapabilityEntitySet.EntityType.HasRequired(sc => sc.Subcontractor).AutoExpand = true;
+        subcontractorCapabilityEntitySet.EntityType.HasOptional(sc => sc.UpdatedByAccount).AutoExpand = true;
 
         // Department capability
-        builder.EntitySet<DepartmentAnalysisCapability>("DepartmentAnalysisCapabilities");
+        var departmentAnalysisCapabilityEntitySet = builder.EntitySet<DepartmentAnalysisCapability>("DepartmentAnalysisCapabilities");
+        departmentAnalysisCapabilityEntitySet.EntityType.HasRequired(dac => dac.AnalysisItem).AutoExpand = true;
+        departmentAnalysisCapabilityEntitySet.EntityType.HasRequired(dac => dac.Department).AutoExpand = true;
+        departmentAnalysisCapabilityEntitySet.EntityType.HasOptional(dac => dac.UpdatedByAccount).AutoExpand = true;
+
+        // Năng lực phòng ban - Chỉ định (có ngày hết hạn)
+        builder.EntitySet<DepartmentAnalysisCapabilityDesignation>("DepartmentAnalysisCapabilityDesignations");
+
+        // Danh mục Chỉ định
+        var designationEntitySet = builder.EntitySet<Designation>("Designations");
+        designationEntitySet.EntityType.HasOptional(d => d.UpdatedByAccount).AutoExpand = true;
+
+        // Chỉ tiêu - Chỉ định (có ngày hết hạn)
+        builder.EntitySet<AnalysisItemDesignation>("AnalysisItemDesignations");
+
+        // Năng lực nhân viên (chỉ tiêu - nhân viên thực hiện)
+        var employeeAnalysisCapabilityEntitySet = builder.EntitySet<EmployeeAnalysisCapability>("EmployeeAnalysisCapabilities");
+        employeeAnalysisCapabilityEntitySet.EntityType.HasRequired(eac => eac.Employee).AutoExpand = true;
+        employeeAnalysisCapabilityEntitySet.EntityType.HasRequired(eac => eac.AnalysisItem).AutoExpand = true;
+
+        // Năng lực nhà thầu phụ - Chỉ định (có ngày hết hạn)
+        builder.EntitySet<SubcontractorCapabilityDesignation>("SubcontractorCapabilityDesignations");
+
+        // Danh mục Tiêu chuẩn/Qui chuẩn
+        var standardEntitySet = builder.EntitySet<Standard>("Standards");
+        standardEntitySet.EntityType.HasOptional(s => s.UpdatedByAccount).AutoExpand = true;
+
+        // Danh mục Phương pháp tham chiếu (Reference Method)
+        var referenceMethodEntitySet = builder.EntitySet<ReferenceMethod>("ReferenceMethods");
+        referenceMethodEntitySet.EntityType.HasOptional(rm => rm.UpdatedByAccount).AutoExpand = true;
+
+        // Danh mục Đơn vị tính (Unit of Measure)
+        var unitOfMeasureEntitySet = builder.EntitySet<UnitOfMeasure>("UnitOfMeasures");
+        unitOfMeasureEntitySet.EntityType.HasOptional(u => u.UpdatedByAccount).AutoExpand = true;
         
         return builder.GetEdmModel();
     }

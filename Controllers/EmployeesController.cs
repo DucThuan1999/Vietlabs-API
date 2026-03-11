@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OData.Query;
 using Microsoft.AspNetCore.OData.Routing.Controllers;
@@ -21,6 +22,12 @@ public class EmployeesController : ODataController
         _logger = logger;
     }
 
+    private Guid? GetCurrentAccountId()
+    {
+        var accountIdClaim = User.FindFirst("AccountId")?.Value;
+        return Guid.TryParse(accountIdClaim, out var accountId) ? accountId : null;
+    }
+
     [HttpGet("Employees")]
     [EnableQuery]
     public IActionResult Get()
@@ -28,6 +35,7 @@ public class EmployeesController : ODataController
         return Ok(_context.Employees
             .Include(e => e.Department)
             .Include(e => e.EmployeeTitle)
+            .Include(e => e.UpdatedByAccount)
             .Include(e => e.Account).ThenInclude(a => a!.Permission));
     }
 
@@ -38,6 +46,7 @@ public class EmployeesController : ODataController
         var employee = _context.Employees
             .Include(e => e.Department)
             .Include(e => e.EmployeeTitle)
+            .Include(e => e.UpdatedByAccount)
             .Include(e => e.Account).ThenInclude(a => a!.Permission)
             .FirstOrDefault(e => e.EmployeeId == key);
         if (employee == null)
@@ -89,7 +98,6 @@ public class EmployeesController : ODataController
             return NotFound();
         }
 
-        // Cập nhật chỉ các thuộc tính scalar/FK, tránh attach entity từ body (gây lỗi tracking trùng key)
         existing.EmployeeCode = employee.EmployeeCode;
         existing.DepartmentId = employee.DepartmentId;
         existing.Role = employee.Role;
@@ -101,6 +109,8 @@ public class EmployeesController : ODataController
         existing.Notes = employee.Notes;
         existing.Status = employee.Status;
         existing.ManagerId = employee.ManagerId;
+        existing.UpdatedAt = DateTime.UtcNow;
+        existing.UpdatedBy = GetCurrentAccountId();
 
         try
         {
@@ -119,7 +129,13 @@ public class EmployeesController : ODataController
             return this.HandleDatabaseError(ex, _logger, "cập nhật nhân viên");
         }
 
-        return Updated(existing);
+        var updated = await _context.Employees
+            .Include(e => e.Department)
+            .Include(e => e.EmployeeTitle)
+            .Include(e => e.UpdatedByAccount)
+            .Include(e => e.Account).ThenInclude(a => a!.Permission)
+            .FirstOrDefaultAsync(e => e.EmployeeId == key);
+        return Updated(updated ?? existing);
     }
 
     [HttpDelete("Employees({key})")]

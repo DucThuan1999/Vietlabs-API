@@ -60,10 +60,13 @@ public class PackageConfiguration : IEntityTypeConfiguration<Package>
         builder.Property(p => p.UpdatedAt)
             .HasColumnName("updated_at");
 
-        // Navigation: 1 Package có nhiều PackageAnalysisGroup
-        builder.HasMany(p => p.PackageAnalysisGroups)
-            .WithOne(pag => pag.Package)
-            .HasForeignKey(pag => pag.PackageId)
+        builder.Property(p => p.UpdatedBy)
+            .HasColumnName("updated_by");
+
+        // Navigation: 1 Package có nhiều PackageAnalysisItem
+        builder.HasMany(p => p.PackageAnalysisItems)
+            .WithOne(pai => pai.Package)
+            .HasForeignKey(pai => pai.PackageId)
             .OnDelete(DeleteBehavior.Cascade);
 
         // Navigation: Package - SampleMatrix (optional)
@@ -71,6 +74,11 @@ public class PackageConfiguration : IEntityTypeConfiguration<Package>
             .WithMany()
             .HasForeignKey(p => p.SampleMatrixId)
             .OnDelete(DeleteBehavior.SetNull);
+
+        builder.HasOne(p => p.UpdatedByAccount)
+            .WithMany()
+            .HasForeignKey(p => p.UpdatedBy)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }
 

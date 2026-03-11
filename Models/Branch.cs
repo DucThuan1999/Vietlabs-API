@@ -6,6 +6,7 @@ public class Branch
     public string? BranchCode { get; set; } // Code chi nhánh
     public string? NameVi { get; set; }     // Tên chi nhánh (VIE)
     public string? NameEn { get; set; }     // Tên chi nhánh (ENG)
+    public string? Address { get; set; }     // Địa chỉ
     public string? License { get; set; }    // Chứng nhận hoạt động
     public string? Notes { get; set; }      // Mô tả/Ghi chú
     public string Status { get; set; } = "Active";         // Trạng thái

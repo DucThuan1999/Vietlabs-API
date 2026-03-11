@@ -50,6 +50,8 @@ public class Client
 
     public DateTime CreatedDate { get; set; }
     public DateTime? LastContactDate { get; set; }
+    public DateTime? UpdatedAt { get; set; }
+    public Guid? UpdatedBy { get; set; }  // AccountId người cập nhật
     public string Status { get; set; } = "Active"; // Active, Inactive, Prospect
     public string? Notes { get; set; }
     public string? IssueInvoice { get; set; }
@@ -68,5 +70,6 @@ public class Client
     public ICollection<Client> AgentClients { get; set; } = new List<Client>();
     // Navigation: ngành nghề khách hàng (danh mục)
     public ClientIndustry? ClientIndustry { get; set; }
+    public Account? UpdatedByAccount { get; set; }
 }
 

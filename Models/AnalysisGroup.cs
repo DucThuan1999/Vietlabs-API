@@ -12,8 +12,10 @@ public class AnalysisGroup
     public string? Notes { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }
+    public Guid? UpdatedBy { get; set; }  // AccountId người cập nhật
 
     // Navigation: 1 AnalysisGroup có nhiều AnalysisItem
     public ICollection<AnalysisItem> AnalysisItems { get; set; } = new List<AnalysisItem>();
+    public Account? UpdatedByAccount { get; set; }
 }
 

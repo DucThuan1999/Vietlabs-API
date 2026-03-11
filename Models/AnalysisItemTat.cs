@@ -10,8 +10,10 @@ public class AnalysisItemTat
     public string? Notes { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }
+    public Guid? UpdatedBy { get; set; }  // AccountId người cập nhật
 
     // Navigation property
     public AnalysisItem? AnalysisItem { get; set; }
+    public Account? UpdatedByAccount { get; set; }
 }
 

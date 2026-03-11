@@ -121,6 +121,14 @@ public class QuotationItemConfiguration : IEntityTypeConfiguration<QuotationItem
 
         builder.Property(qi => qi.UpdatedAt)
             .HasColumnName("updated_at");
+
+        builder.Property(qi => qi.UpdatedBy)
+            .HasColumnName("updated_by");
+
+        builder.HasOne(qi => qi.UpdatedByAccount)
+            .WithMany()
+            .HasForeignKey(qi => qi.UpdatedBy)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }
 

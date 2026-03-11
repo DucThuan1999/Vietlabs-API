@@ -11,8 +11,10 @@ public class StoreRecord
     public string? ContentType { get; set; }
     public DateTime CreatedDate { get; set; }
     public DateTime? UpdatedDate { get; set; }
+    public Guid? UpdatedBy { get; set; }  // AccountId người cập nhật
 
     // Navigation property
     public Client? Client { get; set; }
+    public Account? UpdatedByAccount { get; set; }
 }
 

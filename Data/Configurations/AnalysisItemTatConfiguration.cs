@@ -48,6 +48,9 @@ public class AnalysisItemTatConfiguration : IEntityTypeConfiguration<AnalysisIte
         builder.Property(tat => tat.UpdatedAt)
             .HasColumnName("updated_at");
 
+        builder.Property(tat => tat.UpdatedBy)
+            .HasColumnName("updated_by");
+
         // Foreign key relationship
         builder.HasOne(tat => tat.AnalysisItem)
             .WithMany(ai => ai.AnalysisItemTats)
@@ -62,6 +65,11 @@ public class AnalysisItemTatConfiguration : IEntityTypeConfiguration<AnalysisIte
         // Index for better query performance
         builder.HasIndex(tat => tat.AnalysisItemId);
         builder.HasIndex(tat => tat.TatType);
+
+        builder.HasOne(tat => tat.UpdatedByAccount)
+            .WithMany()
+            .HasForeignKey(tat => tat.UpdatedBy)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }
 

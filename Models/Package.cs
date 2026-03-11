@@ -1,7 +1,7 @@
 namespace VietLab.Models;
 
 /// <summary>
-/// Gói phân tích - chứa nhiều nhóm chỉ tiêu
+/// Gói phân tích - chứa nhiều chỉ tiêu (AnalysisItem)
 /// </summary>
 public class Package
 {
@@ -18,11 +18,13 @@ public class Package
     public string? Notes { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }
+    public Guid? UpdatedBy { get; set; }  // AccountId người cập nhật
 
-    // Navigation: 1 Package có nhiều PackageAnalysisGroup (many-to-many với AnalysisGroup)
-    public ICollection<PackageAnalysisGroup> PackageAnalysisGroups { get; set; } = new List<PackageAnalysisGroup>();
-    
+    // Navigation: 1 Package có nhiều PackageAnalysisItem (many-to-many với AnalysisItem)
+    public ICollection<PackageAnalysisItem> PackageAnalysisItems { get; set; } = new List<PackageAnalysisItem>();
+
     // Navigation: Package - SampleMatrix (nền mẫu)
     public SampleMatrix? SampleMatrix { get; set; }
+    public Account? UpdatedByAccount { get; set; }
 }
 

@@ -76,6 +76,14 @@ public class ClientDebtConfiguration : IEntityTypeConfiguration<ClientDebt>
 
         builder.Property(cd => cd.UpdatedAt)
             .HasColumnName("updated_at");
+
+        builder.Property(cd => cd.UpdatedBy)
+            .HasColumnName("updated_by");
+
+        builder.HasOne(cd => cd.UpdatedByAccount)
+            .WithMany()
+            .HasForeignKey(cd => cd.UpdatedBy)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }
 

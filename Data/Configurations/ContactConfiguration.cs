@@ -13,6 +13,11 @@ public class ContactConfiguration : IEntityTypeConfiguration<Contact>
 
         // Primary key
         builder.HasKey(c => c.ContactId);
+
+        builder.HasOne(c => c.UpdatedByAccount)
+            .WithMany()
+            .HasForeignKey(c => c.UpdatedBy)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }
 

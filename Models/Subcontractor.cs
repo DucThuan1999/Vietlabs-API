@@ -27,8 +27,10 @@ public class Subcontractor
 
     public DateTime? CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
+    public Guid? UpdatedBy { get; set; }  // AccountId người cập nhật
 
     public Department? Department { get; set; }
+    public Account? UpdatedByAccount { get; set; }
 
     /// <summary>Năng lực: danh sách chỉ tiêu nhà thầu phụ có thể thực hiện</summary>
     public ICollection<SubcontractorCapability> SubcontractorCapabilities { get; set; } = new List<SubcontractorCapability>();

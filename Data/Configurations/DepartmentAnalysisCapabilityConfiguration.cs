@@ -31,6 +31,14 @@ public class DepartmentAnalysisCapabilityConfiguration : IEntityTypeConfiguratio
             .HasColumnName("analysis_item_id")
             .IsRequired();
 
+        builder.Property(dac => dac.Nd107)
+            .HasColumnName("nd_107")
+            .IsRequired()
+            .HasDefaultValue(false);
+
+        builder.Property(dac => dac.Nd107ExpiredDate)
+            .HasColumnName("nd_107_expired_date");
+
         builder.Property(dac => dac.Status)
             .HasColumnName("status")
             .HasMaxLength(50)
@@ -48,6 +56,9 @@ public class DepartmentAnalysisCapabilityConfiguration : IEntityTypeConfiguratio
         builder.Property(dac => dac.UpdatedAt)
             .HasColumnName("updated_at");
 
+        builder.Property(dac => dac.UpdatedBy)
+            .HasColumnName("updated_by");
+
         // Unique constraint on (department_id, branch_id, analysis_item_id)
         builder.HasIndex(dac => new { dac.DepartmentId, dac.BranchId, dac.AnalysisItemId })
             .IsUnique()
@@ -62,6 +73,11 @@ public class DepartmentAnalysisCapabilityConfiguration : IEntityTypeConfiguratio
         builder.HasOne(dac => dac.AnalysisItem)
             .WithMany()
             .HasForeignKey(dac => dac.AnalysisItemId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(dac => dac.UpdatedByAccount)
+            .WithMany()
+            .HasForeignKey(dac => dac.UpdatedBy)
             .OnDelete(DeleteBehavior.Restrict);
     }
 }

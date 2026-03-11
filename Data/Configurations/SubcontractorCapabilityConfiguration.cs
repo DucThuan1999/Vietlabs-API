@@ -23,6 +23,14 @@ public class SubcontractorCapabilityConfiguration : IEntityTypeConfiguration<Sub
             .HasColumnName("analysis_item_id")
             .IsRequired();
 
+        builder.Property(sc => sc.Nd107)
+            .HasColumnName("nd_107")
+            .IsRequired()
+            .HasDefaultValue(false);
+
+        builder.Property(sc => sc.Nd107ExpiredDate)
+            .HasColumnName("nd_107_expired_date");
+
         builder.Property(sc => sc.Notes)
             .HasColumnName("notes")
             .HasMaxLength(2000);
@@ -35,6 +43,12 @@ public class SubcontractorCapabilityConfiguration : IEntityTypeConfiguration<Sub
 
         builder.Property(sc => sc.CreatedAt).HasColumnName("created_at");
         builder.Property(sc => sc.UpdatedAt).HasColumnName("updated_at");
+        builder.Property(sc => sc.UpdatedBy).HasColumnName("updated_by");
+
+        builder.HasOne(sc => sc.UpdatedByAccount)
+            .WithMany()
+            .HasForeignKey(sc => sc.UpdatedBy)
+            .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasIndex(sc => new { sc.SubcontractorId, sc.AnalysisItemId })
             .IsUnique()

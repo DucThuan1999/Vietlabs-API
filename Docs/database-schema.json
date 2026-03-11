@@ -1,0 +1,903 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Vietlabs API - Database Schema",
+  "description": "Cấu trúc dữ liệu (entities) từ API để frontend sử dụng. Tất cả property names theo camelCase như API trả về.",
+  "version": "1.0",
+  "apiBasePath": "/odata",
+  "entities": {
+    "clients": {
+      "description": "Khách hàng",
+      "primaryKey": "clientId",
+      "fields": {
+        "clientId": { "type": "string", "format": "uuid", "description": "Khóa chính" },
+        "companyName": { "type": "string", "required": true, "description": "Tên công ty" },
+        "companyNameEn": { "type": "string", "description": "Tên công ty tiếng Anh" },
+        "internalCode": { "type": "string", "description": "Mã khách hàng nội bộ" },
+        "taxCode": { "type": "string", "description": "Mã số thuế" },
+        "bankName": { "type": "string", "description": "Tên ngân hàng" },
+        "bankAccountNumber": { "type": "string", "description": "Số tài khoản" },
+        "bankAccountName": { "type": "string", "description": "Tên chủ tài khoản" },
+        "address": { "type": "string", "description": "Địa chỉ" },
+        "province": { "type": "string", "description": "Tỉnh/Thành phố" },
+        "country": { "type": "string", "description": "Quốc gia" },
+        "ward": { "type": "string", "description": "Xã/Phường" },
+        "clientIndustryId": { "type": "string", "format": "uuid", "fk": "clientIndustries", "description": "Ngành nghề (danh mục)" },
+        "profession": { "type": "string", "description": "Ngành nghề (nhập tự do)" },
+        "scale": { "type": "string", "description": "Quy mô" },
+        "customerType": { "type": "string", "description": "Loại khách hàng (Enterprise, SMB, Prospect, Đại lý...)" },
+        "discountRate": { "type": "number", "description": "Tỷ lệ giảm giá (%)" },
+        "commissionRate": { "type": "number", "description": "Tỷ lệ hoa hồng (%)" },
+        "representativeName": { "type": "string", "description": "Tên người đại diện pháp luật" },
+        "representativeEmail": { "type": "string", "description": "Email người đại diện" },
+        "representativePhone": { "type": "string", "description": "SĐT người đại diện" },
+        "representativeTitle": { "type": "string", "description": "Chức vụ người đại diện" },
+        "salesOwnerName": { "type": "string", "description": "Tên nhân viên kinh doanh phụ trách" },
+        "salesOwnerEmail": { "type": "string", "description": "Email nhân viên kinh doanh" },
+        "salesOwnerPhone": { "type": "string", "description": "SĐT nhân viên kinh doanh" },
+        "csoOwnerName": { "type": "string", "description": "Tên nhân viên chăm sóc khách hàng phụ trách" },
+        "csoOwnerEmail": { "type": "string", "description": "Email CS phụ trách" },
+        "csoOwnerPhone": { "type": "string", "description": "SĐT CS phụ trách" },
+        "isBlacklisted": { "type": "boolean", "description": "Có trong danh sách đen không" },
+        "blacklistReason": { "type": "string", "description": "Lý do đưa vào danh sách đen" },
+        "agentClientId": { "type": "string", "format": "uuid", "fk": "clients", "description": "Đại lý (nếu khách thuộc đại lý)" },
+        "forecast": { "type": "number", "description": "Dự báo doanh thu" },
+        "revenue": { "type": "number", "description": "Doanh thu" },
+        "createdDate": { "type": "string", "format": "date-time", "description": "Ngày tạo" },
+        "lastContactDate": { "type": "string", "format": "date-time", "description": "Ngày liên hệ gần nhất" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Thời gian cập nhật" },
+        "updatedBy": { "type": "string", "format": "uuid", "fk": "accounts", "description": "Account người cập nhật" },
+        "status": { "type": "string", "enum": ["Active", "Inactive", "Prospect"], "description": "Trạng thái: Active, Inactive, Prospect" },
+        "notes": { "type": "string", "description": "Ghi chú" },
+        "issueInvoice": { "type": "string", "description": "Thông tin xuất hóa đơn" }
+      },
+      "relations": {
+        "updatedByAccount": { "type": "single", "entity": "accounts", "fk": "updatedBy" },
+        "contacts": { "type": "collection", "entity": "contacts", "fk": "clientId" },
+        "quotations": { "type": "collection", "entity": "quotations", "fk": "clientId" },
+        "clientDebt": { "type": "single", "entity": "clientDebts", "fk": "clientId" },
+        "clientForecasts": { "type": "collection", "entity": "clientForecasts", "fk": "clientId" },
+        "clientHistories": { "type": "collection", "entity": "clientHistories", "fk": "clientId" },
+        "storeRecords": { "type": "collection", "entity": "storeRecords", "fk": "clientId" },
+        "agentClient": { "type": "single", "entity": "clients", "fk": "agentClientId" },
+        "clientIndustry": { "type": "single", "entity": "clientIndustries", "fk": "clientIndustryId" }
+      }
+    },
+    "contacts": {
+      "description": "Người liên hệ của khách hàng",
+      "primaryKey": "contactId",
+      "fields": {
+        "contactId": { "type": "string", "format": "uuid", "description": "Khóa chính" },
+        "clientId": { "type": "string", "format": "uuid", "required": true, "fk": "clients", "description": "Khách hàng" },
+        "fullName": { "type": "string", "required": true, "description": "Họ tên" },
+        "email": { "type": "string", "description": "Email" },
+        "phone": { "type": "string", "description": "Số điện thoại" },
+        "department": { "type": "string", "description": "Phòng ban" },
+        "title": { "type": "string", "description": "Chức vụ" },
+        "isPrimary": { "type": "boolean", "description": "Là người liên hệ chính" },
+        "notes": { "type": "string", "description": "Ghi chú" },
+        "isSampleSender": { "type": "boolean", "description": "Người gửi mẫu" },
+        "isResultReceiver": { "type": "boolean", "description": "Người nhận kết quả" },
+        "isPayer": { "type": "boolean", "description": "Người thanh toán" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Thời gian tạo" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Thời gian cập nhật" },
+        "updatedBy": { "type": "string", "format": "uuid", "fk": "accounts", "description": "Account người cập nhật" }
+      },
+      "relations": {
+        "client": { "type": "single", "entity": "clients", "fk": "clientId" },
+        "updatedByAccount": { "type": "single", "entity": "accounts", "fk": "updatedBy" }
+      }
+    },
+    "employees": {
+      "description": "Nhân viên",
+      "primaryKey": "employeeId",
+      "fields": {
+        "employeeId": { "type": "string", "format": "uuid", "description": "Khóa chính" },
+        "employeeCode": { "type": "string", "description": "Mã nhân viên" },
+        "departmentId": { "type": "string", "format": "uuid", "fk": "departments", "description": "Phòng ban" },
+        "role": { "type": "string", "description": "Vai trò/Quyền" },
+        "fullName": { "type": "string", "required": true, "description": "Họ tên" },
+        "employeeTitleId": { "type": "string", "format": "uuid", "fk": "employeeTitles", "description": "Chức vụ (danh mục)" },
+        "title": { "type": "string", "description": "Chức vụ (nhập tự do)" },
+        "email": { "type": "string", "description": "Email" },
+        "mobile": { "type": "string", "description": "Số điện thoại di động" },
+        "notes": { "type": "string", "description": "Ghi chú" },
+        "status": { "type": "string", "enum": ["Active", "Inactive"], "description": "Trạng thái" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Thời gian cập nhật" },
+        "updatedBy": { "type": "string", "format": "uuid", "fk": "accounts", "description": "Account người cập nhật" },
+        "managerId": { "type": "string", "format": "uuid", "fk": "employees", "description": "Quản lý trực tiếp" }
+      },
+      "relations": {
+        "department": { "type": "single", "entity": "departments", "fk": "departmentId" },
+        "employeeTitle": { "type": "single", "entity": "employeeTitles", "fk": "employeeTitleId" },
+        "manager": { "type": "single", "entity": "employees", "fk": "managerId" },
+        "account": { "type": "single", "entity": "accounts", "reverse": "employeeId" }
+      }
+    },
+    "branches": {
+      "description": "Chi nhánh",
+      "primaryKey": "branchId",
+      "fields": {
+        "branchId": { "type": "string", "format": "uuid", "description": "Khóa chính" },
+        "branchCode": { "type": "string", "description": "Mã chi nhánh" },
+        "nameVi": { "type": "string", "description": "Tên chi nhánh (tiếng Việt)" },
+        "nameEn": { "type": "string", "description": "Tên chi nhánh (tiếng Anh)" },
+        "license": { "type": "string", "description": "Chứng nhận hoạt động/Giấy phép" },
+        "notes": { "type": "string", "description": "Ghi chú" },
+        "status": { "type": "string", "enum": ["Active", "Inactive"], "description": "Trạng thái" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Thời gian cập nhật" },
+        "updatedBy": { "type": "string", "format": "uuid", "fk": "accounts", "description": "Account người cập nhật" }
+      },
+      "relations": {
+        "updatedByAccount": { "type": "single", "entity": "accounts", "fk": "updatedBy" },
+        "departments": { "type": "collection", "entity": "departments", "fk": "branchId" }
+      }
+    },
+    "departments": {
+      "description": "Phòng ban",
+      "primaryKey": "departmentId",
+      "fields": {
+        "departmentId": { "type": "string", "format": "uuid", "description": "Khóa chính" },
+        "departmentCode": { "type": "string", "description": "Mã phòng ban" },
+        "branchId": { "type": "string", "format": "uuid", "required": true, "fk": "branches", "description": "Chi nhánh" },
+        "nameVi": { "type": "string", "description": "Tên phòng ban (tiếng Việt)" },
+        "nameEn": { "type": "string", "description": "Tên phòng ban (tiếng Anh)" },
+        "notes": { "type": "string", "description": "Ghi chú" },
+        "status": { "type": "string", "enum": ["Active", "Inactive"], "description": "Trạng thái" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Thời gian cập nhật" },
+        "updatedBy": { "type": "string", "format": "uuid", "fk": "accounts", "description": "Account người cập nhật" }
+      },
+      "relations": {
+        "updatedByAccount": { "type": "single", "entity": "accounts", "fk": "updatedBy" },
+        "branch": { "type": "single", "entity": "branches", "fk": "branchId" }
+      }
+    },
+    "accounts": {
+      "description": "Tài khoản đăng nhập",
+      "primaryKey": "accountId",
+      "fields": {
+        "accountId": { "type": "string", "format": "uuid", "description": "Khóa chính" },
+        "employeeId": { "type": "string", "format": "uuid", "required": true, "fk": "employees", "description": "Nhân viên" },
+        "permissionId": { "type": "string", "format": "uuid", "required": true, "fk": "permissions", "description": "Quyền hạn" },
+        "userName": { "type": "string", "required": true, "description": "Tên đăng nhập" },
+        "passwordHash": { "type": "string", "description": "Mật khẩu (đã băm)" },
+        "status": { "type": "string", "enum": ["Active", "Inactive"], "description": "Trạng thái" }
+      },
+      "relations": {
+        "employee": { "type": "single", "entity": "employees", "fk": "employeeId" },
+        "permission": { "type": "single", "entity": "permissions", "fk": "permissionId" }
+      }
+    },
+    "permissions": {
+      "description": "Quyền hạn",
+      "primaryKey": "permissionId",
+      "fields": {
+        "permissionId": { "type": "string", "format": "uuid", "description": "Khóa chính" },
+        "permissionCode": { "type": "string", "description": "Mã quyền" },
+        "name": { "type": "string", "required": true, "description": "Tên quyền" },
+        "notes": { "type": "string", "description": "Ghi chú" },
+        "status": { "type": "string", "enum": ["Active", "Inactive"], "description": "Trạng thái" }
+      }
+    },
+    "sampleMatrixGroups": {
+      "description": "Nhóm nền mẫu",
+      "primaryKey": "sampleMatrixGroupId",
+      "fields": {
+        "sampleMatrixGroupId": { "type": "string", "format": "uuid", "description": "Khóa chính" },
+        "sampleMatrixGroupCode": { "type": "string", "description": "Mã nhóm nền mẫu" },
+        "nameVi": { "type": "string", "description": "Tên nhóm (tiếng Việt)" },
+        "nameEn": { "type": "string", "description": "Tên nhóm (tiếng Anh)" },
+        "status": { "type": "string", "enum": ["Active", "Inactive"], "description": "Trạng thái" },
+        "notes": { "type": "string", "description": "Ghi chú" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Thời gian tạo" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Thời gian cập nhật" },
+        "updatedBy": { "type": "string", "format": "uuid", "fk": "accounts", "description": "Account người cập nhật" }
+      },
+      "relations": {
+        "sampleMatrices": { "type": "collection", "entity": "sampleMatrices", "fk": "sampleMatrixGroupId" }
+      }
+    },
+    "sampleMatrices": {
+      "description": "Nền mẫu",
+      "primaryKey": "sampleMatrixId",
+      "fields": {
+        "sampleMatrixId": { "type": "string", "format": "uuid", "description": "Khóa chính" },
+        "sampleMatrixCode": { "type": "string", "description": "Mã nền mẫu" },
+        "nameVi": { "type": "string", "description": "Tên nền mẫu (tiếng Việt)" },
+        "nameEn": { "type": "string", "description": "Tên nền mẫu (tiếng Anh)" },
+        "sampleMatrixGroupId": { "type": "string", "format": "uuid", "required": true, "fk": "sampleMatrixGroups", "description": "Nhóm nền mẫu" },
+        "registeredMatrix": { "type": "string", "description": "Nền mẫu đăng ký" },
+        "status": { "type": "string", "enum": ["Active", "Inactive"], "description": "Trạng thái" },
+        "notes": { "type": "string", "description": "Ghi chú" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Thời gian tạo" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Thời gian cập nhật" },
+        "updatedBy": { "type": "string", "format": "uuid", "fk": "accounts", "description": "Account người cập nhật" }
+      },
+      "relations": {
+        "sampleMatrixGroup": { "type": "single", "entity": "sampleMatrixGroups", "fk": "sampleMatrixGroupId" }
+      }
+    },
+    "equipmentTypes": {
+      "description": "Loại thiết bị",
+      "primaryKey": "equipmentTypeId",
+      "fields": {
+        "equipmentTypeId": { "type": "string", "format": "uuid", "description": "Khóa chính" },
+        "equipmentTypeCode": { "type": "string", "description": "Mã loại thiết bị" },
+        "nameVi": { "type": "string", "description": "Tên loại thiết bị (tiếng Việt)" },
+        "nameEn": { "type": "string", "description": "Tên loại thiết bị (tiếng Anh)" },
+        "status": { "type": "string", "enum": ["Active", "Inactive"], "description": "Trạng thái" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Thời gian tạo" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Thời gian cập nhật" },
+        "updatedBy": { "type": "string", "format": "uuid", "fk": "accounts", "description": "Account người cập nhật" }
+      },
+      "relations": {
+        "updatedByAccount": { "type": "single", "entity": "accounts", "fk": "updatedBy" }
+      }
+    },
+    "analysisGroups": {
+      "description": "Nhóm chỉ tiêu phân tích",
+      "primaryKey": "analysisGroupId",
+      "fields": {
+        "analysisGroupId": { "type": "string", "format": "uuid", "description": "Khóa chính" },
+        "analysisGroupCode": { "type": "string", "description": "Mã nhóm chỉ tiêu" },
+        "nameVi": { "type": "string", "description": "Tên nhóm (tiếng Việt)" },
+        "nameEn": { "type": "string", "description": "Tên nhóm (tiếng Anh)" },
+        "wholeGroupStandardPrice": { "type": "number", "description": "Giá nhóm chuẩn (whole group)" },
+        "stepPrice": { "type": "number", "description": "Giá bước nhảy" },
+        "status": { "type": "string", "enum": ["Active", "Inactive"], "description": "Trạng thái" },
+        "notes": { "type": "string", "description": "Ghi chú" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Thời gian tạo" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Thời gian cập nhật" },
+        "updatedBy": { "type": "string", "format": "uuid", "fk": "accounts", "description": "Account người cập nhật" }
+      },
+      "relations": {
+        "updatedByAccount": { "type": "single", "entity": "accounts", "fk": "updatedBy" },
+        "analysisItems": { "type": "collection", "entity": "analysisItems", "fk": "analysisGroupId" }
+      }
+    },
+    "analysisItems": {
+      "description": "Chỉ tiêu phân tích",
+      "primaryKey": "analysisItemId",
+      "fields": {
+        "analysisItemId": { "type": "string", "format": "uuid", "description": "Khóa chính" },
+        "analysisItemCode": { "type": "string", "description": "Mã chỉ tiêu" },
+        "nameVi": { "type": "string", "description": "Tên chỉ tiêu (tiếng Việt)" },
+        "nameEn": { "type": "string", "description": "Tên chỉ tiêu (tiếng Anh)" },
+        "shortName": { "type": "string", "description": "Tên viết tắt" },
+        "organization": { "type": "string", "description": "Tổ chức" },
+        "equipmentTypeId": { "type": "string", "format": "uuid", "required": true, "fk": "equipmentTypes", "description": "Loại thiết bị" },
+        "analysisGroupId": { "type": "string", "format": "uuid", "required": true, "fk": "analysisGroups", "description": "Nhóm chỉ tiêu" },
+        "sampleMatrixId": { "type": "string", "format": "uuid", "required": true, "fk": "sampleMatrices", "description": "Nền mẫu" },
+        "sampleMatrixGroupId": { "type": "string", "format": "uuid", "required": true, "fk": "sampleMatrixGroups", "description": "Nhóm nền mẫu" },
+        "referenceMethodId": { "type": "string", "format": "uuid", "fk": "referenceMethods", "description": "Phương pháp tham chiếu" },
+        "standardId": { "type": "string", "format": "uuid", "fk": "standards", "description": "Tiêu chuẩn/qui chuẩn áp dụng" },
+        "publishedGroupCode": { "type": "string", "description": "Mã phương pháp công bố" },
+        "lod": { "type": "number", "description": "Giới hạn phát hiện (Limit of Detection)" },
+        "loq": { "type": "number", "description": "Giới hạn định lượng (Limit of Quantification)" },
+        "unitPrice": { "type": "number", "required": true, "description": "Đơn giá" },
+        "unitOfMeasureId": { "type": "string", "format": "uuid", "fk": "unitOfMeasures", "description": "Đơn vị tính (ĐVT)" },
+        "nd107": { "type": "boolean", "description": "Thuộc NĐ107" },
+        "nd107ExpiredDate": { "type": "string", "format": "date-time", "description": "Ngày hết hạn NĐ107" },
+        "status": { "type": "string", "enum": ["Active", "Inactive"], "description": "Trạng thái" },
+        "notes": { "type": "string", "description": "Ghi chú" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Thời gian tạo" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Thời gian cập nhật" },
+        "updatedBy": { "type": "string", "format": "uuid", "fk": "accounts", "description": "Account người cập nhật" }
+      },
+      "relations": {
+        "equipmentType": { "type": "single", "entity": "equipmentTypes", "fk": "equipmentTypeId" },
+        "analysisGroup": { "type": "single", "entity": "analysisGroups", "fk": "analysisGroupId" },
+        "sampleMatrix": { "type": "single", "entity": "sampleMatrices", "fk": "sampleMatrixId" },
+        "sampleMatrixGroup": { "type": "single", "entity": "sampleMatrixGroups", "fk": "sampleMatrixGroupId" },
+        "referenceMethod": { "type": "single", "entity": "referenceMethods", "fk": "referenceMethodId" },
+        "standard": { "type": "single", "entity": "standards", "fk": "standardId" },
+        "unitOfMeasure": { "type": "single", "entity": "unitOfMeasures", "fk": "unitOfMeasureId" },
+        "updatedByAccount": { "type": "single", "entity": "accounts", "fk": "updatedBy" },
+        "analysisItemTats": { "type": "collection", "entity": "analysisItemTats", "fk": "analysisItemId" },
+        "designations": { "type": "collection", "entity": "analysisItemDesignations", "fk": "analysisItemId" }
+      }
+    },
+    "referenceMethods": {
+      "description": "Phương pháp tham chiếu (mapping tên – mã quốc tế)",
+      "primaryKey": "referenceMethodId",
+      "fields": {
+        "referenceMethodId": { "type": "string", "format": "uuid", "description": "Khóa chính" },
+        "sequenceNumber": { "type": "integer", "description": "Thứ tự sắp xếp" },
+        "nameVi": { "type": "string", "description": "Tên phương pháp (tiếng Việt)" },
+        "nameEn": { "type": "string", "description": "Tên phương pháp (tiếng Anh)" },
+        "referenceMethodCode": { "type": "string", "description": "Mã phương pháp tham chiếu quốc tế" },
+        "status": { "type": "string", "enum": ["Active", "Inactive"], "description": "Trạng thái" },
+        "notes": { "type": "string", "description": "Ghi chú" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Thời gian tạo" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Thời gian cập nhật" },
+        "updatedBy": { "type": "string", "format": "uuid", "fk": "accounts", "description": "Account người cập nhật" }
+      },
+      "relations": {
+        "updatedByAccount": { "type": "single", "entity": "accounts", "fk": "updatedBy" }
+      }
+    },
+    "analysisItemTats": {
+      "description": "Thời gian quay vòng (TAT) theo loại (Thường, Nhanh, Khẩn)",
+      "primaryKey": "analysisItemTatId",
+      "fields": {
+        "analysisItemTatId": { "type": "string", "format": "uuid", "description": "Khóa chính" },
+        "analysisItemId": { "type": "string", "format": "uuid", "required": true, "fk": "analysisItems", "description": "Chỉ tiêu phân tích" },
+        "tatType": { "type": "string", "description": "Loại TAT (Normal, Fast, Urgent / Thường, Nhanh, Khẩn)" },
+        "tatValue": { "type": "integer", "description": "Giá trị TAT (số ngày hoặc giờ)" },
+        "tatUnit": { "type": "string", "enum": ["Days", "Hours"], "description": "Đơn vị: Days hoặc Hours" },
+        "notes": { "type": "string", "description": "Ghi chú" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Thời gian tạo" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Thời gian cập nhật" },
+        "updatedBy": { "type": "string", "format": "uuid", "fk": "accounts", "description": "Account người cập nhật" }
+      },
+      "relations": {
+        "analysisItem": { "type": "single", "entity": "analysisItems", "fk": "analysisItemId" },
+        "updatedByAccount": { "type": "single", "entity": "accounts", "fk": "updatedBy" }
+      }
+    },
+    "departmentAnalysisCapabilities": {
+      "description": "Năng lực phân tích của phòng ban (chỉ tiêu phòng ban có thể thực hiện)",
+      "primaryKey": "departmentAnalysisCapabilityId",
+      "fields": {
+        "departmentAnalysisCapabilityId": { "type": "string", "format": "uuid", "description": "Khóa chính" },
+        "departmentId": { "type": "string", "format": "uuid", "required": true, "fk": "departments", "description": "Phòng ban" },
+        "branchId": { "type": "string", "required": true, "description": "Mã chi nhánh (derived)" },
+        "analysisItemId": { "type": "string", "format": "uuid", "required": true, "fk": "analysisItems", "description": "Chỉ tiêu phân tích" },
+        "status": { "type": "string", "enum": ["Active", "Inactive"], "description": "Trạng thái" },
+        "notes": { "type": "string", "description": "Ghi chú" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Thời gian tạo" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Thời gian cập nhật" },
+        "updatedBy": { "type": "string", "format": "uuid", "fk": "accounts", "description": "Account người cập nhật" }
+      },
+      "relations": {
+        "department": { "type": "single", "entity": "departments", "fk": "departmentId" },
+        "analysisItem": { "type": "single", "entity": "analysisItems", "fk": "analysisItemId" },
+        "updatedByAccount": { "type": "single", "entity": "accounts", "fk": "updatedBy" }
+      }
+    },
+    "designations": {
+      "description": "Danh mục chỉ định (chỉ định năng lực phòng ban/nhà thầu phụ)",
+      "primaryKey": "designationId",
+      "fields": {
+        "designationId": { "type": "string", "format": "uuid", "description": "Khóa chính" },
+        "sequenceNumber": { "type": "integer", "description": "Thứ tự sắp xếp" },
+        "designationCode": { "type": "string", "description": "Mã chỉ định" },
+        "name": { "type": "string", "description": "Tên chỉ định" },
+        "note": { "type": "string", "description": "Ghi chú" },
+        "status": { "type": "string", "enum": ["Active", "Inactive"], "description": "Trạng thái" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Thời gian tạo" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Thời gian cập nhật" },
+        "updatedBy": { "type": "string", "format": "uuid", "fk": "accounts", "description": "Account người cập nhật" }
+      },
+      "relations": {
+        "updatedByAccount": { "type": "single", "entity": "accounts", "fk": "updatedBy" },
+        "analysisItemDesignations": { "type": "collection", "entity": "analysisItemDesignations", "fk": "designationId" },
+        "subcontractorCapabilityDesignations": { "type": "collection", "entity": "subcontractorCapabilityDesignations", "fk": "designationId" }
+      }
+    },
+    "analysisItemDesignations": {
+      "description": "Chỉ tiêu - Chỉ định (bảng trung gian, có ngày hết hạn)",
+      "primaryKey": "analysisItemDesignationId",
+      "fields": {
+        "analysisItemDesignationId": { "type": "string", "format": "uuid", "description": "Khóa chính" },
+        "analysisItemId": { "type": "string", "format": "uuid", "required": true, "fk": "analysisItems", "description": "Chỉ tiêu phân tích" },
+        "designationId": { "type": "string", "format": "uuid", "required": true, "fk": "designations", "description": "Chỉ định" },
+        "expiredDate": { "type": "string", "format": "date-time", "description": "Ngày hết hạn chỉ định" }
+      },
+      "relations": {
+        "analysisItem": { "type": "single", "entity": "analysisItems", "fk": "analysisItemId" },
+        "designation": { "type": "single", "entity": "designations", "fk": "designationId" }
+      }
+    },
+    "standards": {
+      "description": "Danh mục tiêu chuẩn/qui chuẩn",
+      "primaryKey": "standardId",
+      "fields": {
+        "standardId": { "type": "string", "format": "uuid", "description": "Khóa chính" },
+        "sequenceNumber": { "type": "integer", "description": "Thứ tự sắp xếp" },
+        "standardCode": { "type": "string", "description": "Mã tiêu chuẩn/qui chuẩn" },
+        "nameVi": { "type": "string", "description": "Tên (tiếng Việt)" },
+        "nameEn": { "type": "string", "description": "Tên (tiếng Anh)" },
+        "status": { "type": "string", "enum": ["Active", "Inactive"], "description": "Trạng thái" },
+        "notes": { "type": "string", "description": "Ghi chú" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Thời gian tạo" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Thời gian cập nhật" },
+        "updatedBy": { "type": "string", "format": "uuid", "fk": "accounts", "description": "Account người cập nhật" }
+      }
+    },
+    "quotations": {
+      "description": "Báo giá",
+      "primaryKey": "quotationId",
+      "fields": {
+        "quotationId": { "type": "string", "format": "uuid", "description": "Khóa chính" },
+        "quotationCode": { "type": "string", "description": "Mã báo giá" },
+        "employeeId": { "type": "string", "format": "uuid", "fk": "employees", "description": "Nhân viên kinh doanh tạo báo giá" },
+        "salesPersonName": { "type": "string", "description": "Tên nhân viên kinh doanh" },
+        "salesPersonEmail": { "type": "string", "description": "Email nhân viên kinh doanh" },
+        "salesPersonPhone": { "type": "string", "description": "SĐT nhân viên kinh doanh" },
+        "clientId": { "type": "string", "format": "uuid", "required": true, "fk": "clients", "description": "Khách hàng" },
+        "agentName": { "type": "string", "description": "Tên đại lý (override)" },
+        "companyName": { "type": "string", "description": "Tên công ty/doanh nghiệp (override)" },
+        "contactId": { "type": "string", "format": "uuid", "fk": "contacts", "description": "Người liên hệ" },
+        "contactName": { "type": "string", "description": "Tên người liên hệ (override)" },
+        "taxCode": { "type": "string", "description": "Mã số thuế (override)" },
+        "contactEmail": { "type": "string", "description": "Email người liên hệ (override)" },
+        "forecast": { "type": "number", "description": "Dự báo (override)" },
+        "contactPhone": { "type": "string", "description": "SĐT người liên hệ (override)" },
+        "revenue": { "type": "number", "description": "Doanh thu (override)" },
+        "address": { "type": "string", "description": "Địa chỉ (override)" },
+        "debtContactName": { "type": "string", "description": "Người liên lạc công nợ" },
+        "debtContactPhone": { "type": "string", "description": "SĐT liên lạc công nợ" },
+        "debtContactEmail": { "type": "string", "description": "Email liên lạc công nợ" },
+        "paymentMethod": { "type": "string", "description": "Hình thức thanh toán" },
+        "validFrom": { "type": "string", "format": "date-time", "description": "Hiệu lực từ ngày" },
+        "validTo": { "type": "string", "format": "date-time", "description": "Hiệu lực đến ngày" },
+        "discountPercent": { "type": "number", "description": "Giảm giá (%)" },
+        "subTotal": { "type": "number", "description": "Tạm tính" },
+        "totalDiscountPercent": { "type": "number", "description": "Tổng % giảm giá" },
+        "totalDiscount": { "type": "number", "description": "Tổng tiền giảm" },
+        "vatPercent": { "type": "number", "description": "VAT % (mặc định 8)" },
+        "vatAmount": { "type": "number", "description": "Tiền VAT" },
+        "totalAmount": { "type": "number", "description": "Tổng đơn giá" },
+        "quotationDiscountPercent": { "type": "number", "description": "% chiết khấu theo báo giá" },
+        "clientDiscountPercent": { "type": "number", "description": "% chiết khấu theo khách hàng (DiscountRate)" },
+        "status": { "type": "string", "enum": ["Draft", "Sent", "Approved", "Rejected", "Expired"], "description": "Trạng thái báo giá" },
+        "notes": { "type": "string", "description": "Ghi chú" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Thời gian tạo" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Thời gian cập nhật" },
+        "createdBy": { "type": "string", "format": "uuid", "fk": "accounts", "description": "Account người tạo" },
+        "updatedBy": { "type": "string", "format": "uuid", "fk": "accounts", "description": "Account người cập nhật" },
+        "approverLevel1Id": { "type": "string", "format": "uuid", "fk": "employees", "description": "Người phê duyệt cấp 1 (Manager)" },
+        "approverLevel2Id": { "type": "string", "format": "uuid", "fk": "employees", "description": "Người phê duyệt cấp 2 (Người chỉ định)" },
+        "approvedLevel1At": { "type": "string", "format": "date-time", "description": "Thời gian phê duyệt cấp 1" },
+        "approvedLevel2At": { "type": "string", "format": "date-time", "description": "Thời gian phê duyệt cấp 2" },
+        "approvalLevel1Status": { "type": "string", "enum": ["Pending", "Approved", "Rejected"], "description": "Trạng thái phê duyệt cấp 1" },
+        "approvalLevel2Status": { "type": "string", "enum": ["Pending", "Approved", "Rejected"], "description": "Trạng thái phê duyệt cấp 2" },
+        "approvalLevel1Comment": { "type": "string", "description": "Ghi chú phê duyệt cấp 1" },
+        "approvalLevel2Comment": { "type": "string", "description": "Ghi chú phê duyệt cấp 2" }
+      },
+      "relations": {
+        "employee": { "type": "single", "entity": "employees", "fk": "employeeId" },
+        "client": { "type": "single", "entity": "clients", "fk": "clientId" },
+        "contact": { "type": "single", "entity": "contacts", "fk": "contactId" },
+        "approverLevel1": { "type": "single", "entity": "employees", "fk": "approverLevel1Id" },
+        "approverLevel2": { "type": "single", "entity": "employees", "fk": "approverLevel2Id" },
+        "quotationItems": { "type": "collection", "entity": "quotationItems", "fk": "quotationId" },
+        "quotationAnalysisGroups": { "type": "collection", "entity": "quotationAnalysisGroups", "fk": "quotationId" },
+        "quotationHistories": { "type": "collection", "entity": "quotationHistories", "fk": "quotationId" }
+      }
+    },
+    "quotationItems": {
+      "description": "Chi tiết báo giá (chỉ tiêu / nhóm chỉ tiêu / gói)",
+      "primaryKey": "quotationItemId",
+      "fields": {
+        "quotationItemId": { "type": "string", "format": "uuid", "description": "Khóa chính" },
+        "quotationId": { "type": "string", "format": "uuid", "required": true, "fk": "quotations", "description": "Báo giá" },
+        "itemType": { "type": "string", "required": true, "enum": ["AnalysisItem", "AnalysisGroup", "Package"], "description": "Loại dòng: Chỉ tiêu, Nhóm chỉ tiêu, hoặc Gói" },
+        "analysisItemId": { "type": "string", "format": "uuid", "fk": "analysisItems", "description": "Chỉ tiêu (khi itemType=AnalysisItem)" },
+        "analysisGroupId": { "type": "string", "format": "uuid", "fk": "analysisGroups", "description": "Nhóm chỉ tiêu (khi itemType=AnalysisGroup)" },
+        "packageId": { "type": "string", "format": "uuid", "fk": "packages", "description": "Gói (khi itemType=Package)" },
+        "isStandalone": { "type": "boolean", "description": "Chỉ tiêu đứng riêng hay trong nhóm (null nếu không phải AnalysisItem)" },
+        "itemCode": { "type": "string", "description": "Mã item (snapshot)" },
+        "itemNameVi": { "type": "string", "description": "Tên tiếng Việt (snapshot)" },
+        "itemNameEn": { "type": "string", "description": "Tên tiếng Anh (snapshot)" },
+        "description": { "type": "string", "description": "Mô tả" },
+        "sampleMatrixName": { "type": "string", "description": "Tên nền mẫu (snapshot)" },
+        "publishedGroupCode": { "type": "string", "description": "Mã phương pháp (snapshot)" },
+        "unit": { "type": "string", "description": "Đơn vị tính (snapshot)" },
+        "lod": { "type": "string", "description": "Giới hạn phát hiện (snapshot, string)" },
+        "loq": { "type": "string", "description": "Giới hạn định lượng (snapshot, string)" },
+        "tat": { "type": "string", "description": "Thời gian quay vòng (snapshot, string)" },
+        "quantity": { "type": "integer", "description": "Số lượng" },
+        "defaultPrice": { "type": "number", "description": "Đơn giá chuẩn (snapshot)" },
+        "unitPrice": { "type": "number", "required": true, "description": "Đơn giá bán (có thể chỉnh)" },
+        "discountPercent": { "type": "number", "description": "% giảm giá cho dòng này" },
+        "discountAmount": { "type": "number", "description": "Số tiền giảm giá" },
+        "subTotal": { "type": "number", "required": true, "description": "Thành tiền (Quantity * UnitPrice - Discount)" },
+        "displayOrder": { "type": "integer", "description": "Thứ tự hiển thị" },
+        "notes": { "type": "string", "description": "Ghi chú" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Thời gian tạo" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Thời gian cập nhật" },
+        "updatedBy": { "type": "string", "format": "uuid", "fk": "accounts", "description": "Account người cập nhật" }
+      },
+      "relations": {
+        "quotation": { "type": "single", "entity": "quotations", "fk": "quotationId" },
+        "analysisItem": { "type": "single", "entity": "analysisItems", "fk": "analysisItemId" },
+        "analysisGroup": { "type": "single", "entity": "analysisGroups", "fk": "analysisGroupId" },
+        "package": { "type": "single", "entity": "packages", "fk": "packageId" },
+        "updatedByAccount": { "type": "single", "entity": "accounts", "fk": "updatedBy" }
+      }
+    },
+    "quotationAnalysisGroups": {
+      "description": "Giá nhóm chỉ tiêu trong báo giá (bảng trung gian, override giá theo báo giá)",
+      "primaryKey": "quotationAnalysisGroupId",
+      "fields": {
+        "quotationAnalysisGroupId": { "type": "string", "format": "uuid", "description": "Khóa chính" },
+        "quotationId": { "type": "string", "format": "uuid", "required": true, "fk": "quotations", "description": "Báo giá" },
+        "analysisGroupId": { "type": "string", "format": "uuid", "required": true, "fk": "analysisGroups", "description": "Nhóm chỉ tiêu" },
+        "stepPrice": { "type": "number", "description": "Giá bước nhảy (override)" },
+        "groupSalePrice": { "type": "number", "description": "Giá bán nhóm (override)" },
+        "discountRate": { "type": "number", "description": "Tỷ lệ giảm giá (%)" },
+        "notes": { "type": "string", "description": "Ghi chú" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Thời gian tạo" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Thời gian cập nhật" },
+        "updatedBy": { "type": "string", "format": "uuid", "fk": "accounts", "description": "Account người cập nhật" }
+      },
+      "relations": {
+        "quotation": { "type": "single", "entity": "quotations", "fk": "quotationId" },
+        "analysisGroup": { "type": "single", "entity": "analysisGroups", "fk": "analysisGroupId" },
+        "updatedByAccount": { "type": "single", "entity": "accounts", "fk": "updatedBy" }
+      }
+    },
+    "packages": {
+      "description": "Gói phân tích (chứa nhiều nhóm chỉ tiêu)",
+      "primaryKey": "packageId",
+      "fields": {
+        "packageId": { "type": "string", "format": "uuid", "description": "Khóa chính" },
+        "packageCode": { "type": "string", "description": "Mã gói" },
+        "nameVi": { "type": "string", "description": "Tên gói (tiếng Việt)" },
+        "nameEn": { "type": "string", "description": "Tên gói (tiếng Anh)" },
+        "description": { "type": "string", "description": "Mô tả gói" },
+        "defaultPrice": { "type": "number", "description": "Giá mặc định" },
+        "publishedGroupCode": { "type": "string", "description": "Mã phương pháp" },
+        "sampleMatrixId": { "type": "string", "format": "uuid", "fk": "sampleMatrices", "description": "Nền mẫu" },
+        "status": { "type": "string", "enum": ["Active", "Inactive"], "description": "Trạng thái" },
+        "notes": { "type": "string", "description": "Ghi chú" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Thời gian tạo" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Thời gian cập nhật" },
+        "updatedBy": { "type": "string", "format": "uuid", "fk": "accounts", "description": "Account người cập nhật" }
+      },
+      "relations": {
+        "sampleMatrix": { "type": "single", "entity": "sampleMatrices", "fk": "sampleMatrixId" },
+        "updatedByAccount": { "type": "single", "entity": "accounts", "fk": "updatedBy" },
+        "packageAnalysisItems": { "type": "collection", "entity": "packageAnalysisItems", "fk": "packageId" }
+      }
+    },
+    "packageAnalysisItems": {
+      "description": "Gói - Chỉ tiêu (bảng trung gian many-to-many)",
+      "primaryKey": "packageAnalysisItemId",
+      "fields": {
+        "packageAnalysisItemId": { "type": "string", "format": "uuid", "description": "Khóa chính" },
+        "packageId": { "type": "string", "format": "uuid", "required": true, "fk": "packages", "description": "Gói" },
+        "analysisItemId": { "type": "string", "format": "uuid", "required": true, "fk": "analysisItems", "description": "Chỉ tiêu" },
+        "displayOrder": { "type": "integer", "description": "Thứ tự hiển thị trong gói" },
+        "isRequired": { "type": "boolean", "description": "Bắt buộc trong gói hay không" },
+        "notes": { "type": "string", "description": "Ghi chú" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Thời gian tạo" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Thời gian cập nhật" },
+        "updatedBy": { "type": "string", "format": "uuid", "fk": "accounts", "description": "Account người cập nhật" }
+      },
+      "relations": {
+        "package": { "type": "single", "entity": "packages", "fk": "packageId" },
+        "analysisItem": { "type": "single", "entity": "analysisItems", "fk": "analysisItemId" },
+        "updatedByAccount": { "type": "single", "entity": "accounts", "fk": "updatedBy" }
+      }
+    },
+    "clientDebts": {
+      "description": "Công nợ khách hàng (1-1 với Client, sync từ MISA)",
+      "primaryKey": "clientDebtId",
+      "fields": {
+        "clientDebtId": { "type": "string", "format": "uuid", "description": "Khóa chính" },
+        "clientId": { "type": "string", "format": "uuid", "required": true, "fk": "clients", "description": "Khách hàng" },
+        "paymentMethod": { "type": "string", "description": "Hình thức thanh toán" },
+        "totalDebt": { "type": "number", "description": "Tổng công nợ" },
+        "debtTermDays": { "type": "integer", "description": "Thời hạn công nợ (số ngày)" },
+        "creditLimit": { "type": "number", "description": "Hạn mức dư nợ" },
+        "debtContactName": { "type": "string", "description": "Người liên lạc công nợ" },
+        "debtContactPhone": { "type": "string", "description": "SĐT liên lạc công nợ" },
+        "debtContactEmail": { "type": "string", "description": "Email liên lạc công nợ" },
+        "contractEffectiveDate": { "type": "string", "format": "date-time", "description": "Hợp đồng hiệu lực từ ngày" },
+        "contractEndDate": { "type": "string", "format": "date-time", "description": "Hợp đồng kết thúc ngày" },
+        "attachments": { "type": "string", "description": "File đính kèm (JSON hoặc đường dẫn)" },
+        "lastSyncedAt": { "type": "string", "format": "date-time", "description": "Lần sync MISA gần nhất" },
+        "misaReferenceId": { "type": "string", "description": "ID tham chiếu từ MISA" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Thời gian tạo" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Thời gian cập nhật" },
+        "updatedBy": { "type": "string", "format": "uuid", "fk": "accounts", "description": "Account người cập nhật" }
+      },
+      "relations": {
+        "client": { "type": "single", "entity": "clients", "fk": "clientId" },
+        "updatedByAccount": { "type": "single", "entity": "accounts", "fk": "updatedBy" }
+      }
+    },
+    "clientForecasts": {
+      "description": "Dự báo doanh thu theo kỳ của khách hàng",
+      "primaryKey": "clientForecastId",
+      "fields": {
+        "clientForecastId": { "type": "string", "format": "uuid", "description": "Khóa chính" },
+        "clientId": { "type": "string", "format": "uuid", "required": true, "fk": "clients", "description": "Khách hàng" },
+        "fromDate": { "type": "string", "format": "date-time", "description": "Từ ngày" },
+        "toDate": { "type": "string", "format": "date-time", "description": "Đến ngày" },
+        "forecastAmount": { "type": "number", "description": "Số tiền dự báo" },
+        "notes": { "type": "string", "description": "Ghi chú" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Thời gian tạo" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Thời gian cập nhật" },
+        "createdBy": { "type": "string", "format": "uuid", "fk": "accounts", "description": "Account người tạo" },
+        "updatedBy": { "type": "string", "format": "uuid", "fk": "accounts", "description": "Account người cập nhật" }
+      },
+      "relations": {
+        "client": { "type": "single", "entity": "clients", "fk": "clientId" }
+      }
+    },
+    "countries": {
+      "description": "Danh mục quốc gia",
+      "primaryKey": "countryId",
+      "fields": {
+        "countryId": { "type": "string", "format": "uuid", "description": "Khóa chính" },
+        "sequenceNumber": { "type": "integer", "description": "Thứ tự sắp xếp" },
+        "nameEn": { "type": "string", "required": true, "description": "Tên nước (EN)" },
+        "fullNameVi": { "type": "string", "required": true, "description": "Tên đầy đủ (VI)" },
+        "fullNameEn": { "type": "string", "required": true, "description": "Tên đầy đủ (EN)" },
+        "alpha2": { "type": "string", "description": "Mã Alpha-2 (VD: VN, US)" },
+        "alpha3": { "type": "string", "description": "Mã Alpha-3 (VD: VNM, USA)" },
+        "status": { "type": "string", "enum": ["Active", "Inactive"], "description": "Trạng thái" },
+        "notes": { "type": "string", "description": "Ghi chú" }
+      },
+      "relations": {
+        "provinces": { "type": "collection", "entity": "provinces", "fk": "countryId" }
+      }
+    },
+    "provinces": {
+      "description": "Danh mục Tỉnh/Thành phố",
+      "primaryKey": "provinceId",
+      "fields": {
+        "provinceId": { "type": "string", "format": "uuid", "description": "Khóa chính" },
+        "provinceCode": { "type": "string", "description": "Mã tỉnh/thành" },
+        "sequenceNumber": { "type": "integer", "description": "Thứ tự sắp xếp" },
+        "name": { "type": "string", "required": true, "description": "Tên tỉnh/thành phố" },
+        "type": { "type": "string", "description": "Loại (Tỉnh, Thành phố, ...)" },
+        "fullName": { "type": "string", "description": "Tên đầy đủ" },
+        "countryId": { "type": "string", "format": "uuid", "required": true, "fk": "countries", "description": "Quốc gia" },
+        "status": { "type": "string", "enum": ["Active", "Inactive"], "description": "Trạng thái" },
+        "notes": { "type": "string", "description": "Ghi chú" }
+      },
+      "relations": {
+        "country": { "type": "single", "entity": "countries", "fk": "countryId" },
+        "wards": { "type": "collection", "entity": "wards", "fk": "provinceId" }
+      }
+    },
+    "wards": {
+      "description": "Danh mục Xã/Phường/Thị trấn",
+      "primaryKey": "wardId",
+      "fields": {
+        "wardId": { "type": "string", "format": "uuid", "description": "Khóa chính" },
+        "sequenceNumber": { "type": "integer", "description": "Thứ tự sắp xếp" },
+        "code": { "type": "string", "description": "Mã" },
+        "name": { "type": "string", "required": true, "description": "Tên xã/phường" },
+        "type": { "type": "string", "description": "Loại (Xã, Phường, Thị trấn)" },
+        "provinceId": { "type": "string", "format": "uuid", "required": true, "fk": "provinces", "description": "Tỉnh/Thành phố" },
+        "countryId": { "type": "string", "format": "uuid", "required": true, "fk": "countries", "description": "Quốc gia" },
+        "status": { "type": "string", "enum": ["Active", "Inactive"], "description": "Trạng thái" },
+        "notes": { "type": "string", "description": "Ghi chú" }
+      },
+      "relations": {
+        "province": { "type": "single", "entity": "provinces", "fk": "provinceId" },
+        "country": { "type": "single", "entity": "countries", "fk": "countryId" }
+      }
+    },
+    "clientIndustries": {
+      "description": "Danh mục ngành nghề khách hàng",
+      "primaryKey": "clientIndustryId",
+      "fields": {
+        "clientIndustryId": { "type": "string", "format": "uuid", "description": "Khóa chính" },
+        "sequenceNumber": { "type": "integer", "description": "Thứ tự sắp xếp" },
+        "industryCode": { "type": "string", "required": true, "description": "Mã ngành nghề" },
+        "nameVi": { "type": "string", "required": true, "description": "Tên (tiếng Việt)" },
+        "nameEn": { "type": "string", "description": "Tên (tiếng Anh)" },
+        "status": { "type": "string", "enum": ["Active", "Inactive"], "description": "Trạng thái" },
+        "notes": { "type": "string", "description": "Ghi chú" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Thời gian tạo" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Thời gian cập nhật" },
+        "createdBy": { "type": "string", "format": "uuid", "fk": "accounts", "description": "Account người tạo" },
+        "updatedBy": { "type": "string", "format": "uuid", "fk": "accounts", "description": "Account người cập nhật" }
+      }
+    },
+    "employeeTitles": {
+      "description": "Danh mục chức vụ nhân viên",
+      "primaryKey": "employeeTitleId",
+      "fields": {
+        "employeeTitleId": { "type": "string", "format": "uuid", "description": "Khóa chính" },
+        "sequenceNumber": { "type": "integer", "description": "Thứ tự sắp xếp" },
+        "titleCode": { "type": "string", "required": true, "description": "Mã chức vụ" },
+        "nameVi": { "type": "string", "required": true, "description": "Tên chức vụ (tiếng Việt)" },
+        "nameEn": { "type": "string", "description": "Tên chức vụ (tiếng Anh)" },
+        "status": { "type": "string", "enum": ["Active", "Inactive"], "description": "Trạng thái" },
+        "notes": { "type": "string", "description": "Ghi chú" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Thời gian tạo" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Thời gian cập nhật" },
+        "createdBy": { "type": "string", "format": "uuid", "fk": "accounts", "description": "Account người tạo" },
+        "updatedBy": { "type": "string", "format": "uuid", "fk": "accounts", "description": "Account người cập nhật" }
+      }
+    },
+    "subcontractors": {
+      "description": "Nhà thầu phụ",
+      "primaryKey": "subcontractorId",
+      "fields": {
+        "subcontractorId": { "type": "string", "format": "uuid", "description": "Khóa chính" },
+        "code": { "type": "string", "required": true, "description": "Mã nhà thầu" },
+        "name": { "type": "string", "required": true, "description": "Tên nhà thầu" },
+        "contactPerson": { "type": "string", "description": "Người liên hệ" },
+        "phone": { "type": "string", "description": "Số điện thoại" },
+        "email": { "type": "string", "description": "Email" },
+        "address": { "type": "string", "description": "Địa chỉ" },
+        "departmentId": { "type": "string", "format": "uuid", "fk": "departments", "description": "Phòng ban phụ trách" },
+        "notes": { "type": "string", "description": "Ghi chú" },
+        "status": { "type": "string", "enum": ["Active", "Inactive"], "description": "Trạng thái" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Thời gian tạo" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Thời gian cập nhật" },
+        "updatedBy": { "type": "string", "format": "uuid", "fk": "accounts", "description": "Account người cập nhật" }
+      },
+      "relations": {
+        "department": { "type": "single", "entity": "departments", "fk": "departmentId" },
+        "updatedByAccount": { "type": "single", "entity": "accounts", "fk": "updatedBy" },
+        "subcontractorCapabilities": { "type": "collection", "entity": "subcontractorCapabilities", "fk": "subcontractorId" }
+      }
+    },
+    "subcontractorCapabilities": {
+      "description": "Năng lực nhà thầu phụ (chỉ tiêu nhà thầu có thể thực hiện)",
+      "primaryKey": "subcontractorCapabilityId",
+      "fields": {
+        "subcontractorCapabilityId": { "type": "string", "format": "uuid", "description": "Khóa chính" },
+        "subcontractorId": { "type": "string", "format": "uuid", "required": true, "fk": "subcontractors", "description": "Nhà thầu phụ" },
+        "analysisItemId": { "type": "string", "format": "uuid", "required": true, "fk": "analysisItems", "description": "Chỉ tiêu phân tích" },
+        "notes": { "type": "string", "description": "Ghi chú" },
+        "status": { "type": "string", "enum": ["Active", "Inactive"], "description": "Trạng thái" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Thời gian tạo" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Thời gian cập nhật" },
+        "updatedBy": { "type": "string", "format": "uuid", "fk": "accounts", "description": "Account người cập nhật" }
+      },
+      "relations": {
+        "subcontractor": { "type": "single", "entity": "subcontractors", "fk": "subcontractorId" },
+        "analysisItem": { "type": "single", "entity": "analysisItems", "fk": "analysisItemId" },
+        "updatedByAccount": { "type": "single", "entity": "accounts", "fk": "updatedBy" },
+        "designations": { "type": "collection", "entity": "subcontractorCapabilityDesignations", "fk": "subcontractorCapabilityId" }
+      }
+    },
+    "subcontractorCapabilityDesignations": {
+      "description": "Chỉ định của năng lực nhà thầu phụ (bảng trung gian, có ngày hết hạn)",
+      "primaryKey": "subcontractorCapabilityDesignationId",
+      "fields": {
+        "subcontractorCapabilityDesignationId": { "type": "string", "format": "uuid", "description": "Khóa chính" },
+        "subcontractorCapabilityId": { "type": "string", "format": "uuid", "required": true, "fk": "subcontractorCapabilities", "description": "Năng lực nhà thầu phụ" },
+        "designationId": { "type": "string", "format": "uuid", "required": true, "fk": "designations", "description": "Chỉ định" },
+        "expiredDate": { "type": "string", "format": "date-time", "description": "Ngày hết hạn chỉ định" }
+      },
+      "relations": {
+        "subcontractorCapability": { "type": "single", "entity": "subcontractorCapabilities", "fk": "subcontractorCapabilityId" },
+        "designation": { "type": "single", "entity": "designations", "fk": "designationId" }
+      }
+    },
+    "quotationHistories": {
+      "description": "Lịch sử thay đổi báo giá",
+      "primaryKey": "quotationHistoryId",
+      "fields": {
+        "quotationHistoryId": { "type": "string", "format": "uuid", "description": "Khóa chính" },
+        "quotationId": { "type": "string", "format": "uuid", "required": true, "fk": "quotations", "description": "Báo giá" },
+        "changedDate": { "type": "string", "format": "date-time", "description": "Thời điểm thay đổi" },
+        "changeDescription": { "type": "string", "required": true, "description": "Nội dung thay đổi" },
+        "changedByAccountId": { "type": "string", "format": "uuid", "required": true, "fk": "accounts", "description": "Account người thay đổi" },
+        "changeType": { "type": "string", "enum": ["Created", "Updated", "Deleted", "StatusChanged", "Approved", "Rejected"], "description": "Loại thay đổi" },
+        "oldValues": { "type": "string", "description": "Snapshot dữ liệu cũ (JSON)" },
+        "newValues": { "type": "string", "description": "Snapshot dữ liệu mới (JSON)" }
+      },
+      "relations": {
+        "quotation": { "type": "single", "entity": "quotations", "fk": "quotationId" },
+        "changedByAccount": { "type": "single", "entity": "accounts", "fk": "changedByAccountId" }
+      }
+    },
+    "quotationApprovalThresholds": {
+      "description": "Cấu hình ngưỡng phê duyệt báo giá theo % giảm giá",
+      "primaryKey": "quotationApprovalThresholdId",
+      "fields": {
+        "quotationApprovalThresholdId": { "type": "string", "format": "uuid", "description": "Khóa chính" },
+        "minDiscountPercent": { "type": "number", "required": true, "description": "Giảm giá tối thiểu (%)" },
+        "maxDiscountPercent": { "type": "number", "required": true, "description": "Giảm giá tối đa (%)" },
+        "approvalLevels": { "type": "integer", "required": true, "description": "Số cấp phê duyệt (0, 1, 2)" },
+        "description": { "type": "string", "description": "Mô tả ngưỡng" },
+        "status": { "type": "string", "enum": ["Active", "Inactive"], "description": "Trạng thái" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Thời gian tạo" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Thời gian cập nhật" },
+        "createdBy": { "type": "string", "format": "uuid", "fk": "accounts", "description": "Account người tạo" },
+        "updatedBy": { "type": "string", "format": "uuid", "fk": "accounts", "description": "Account người cập nhật" }
+      }
+    },
+    "moduleApprovers": {
+      "description": "Cấu hình người phê duyệt theo module (User chỉ định hoặc theo Chức vụ)",
+      "primaryKey": "moduleApproverId",
+      "fields": {
+        "moduleApproverId": { "type": "string", "format": "uuid", "description": "Khóa chính" },
+        "moduleCode": { "type": "string", "required": true, "description": "Mã module (Quotation, Client, Package, ...)" },
+        "approvalLevel": { "type": "integer", "required": true, "description": "Cấp phê duyệt (1, 2, 3...)" },
+        "approverType": { "type": "string", "enum": ["User", "Title"], "description": "Loại: User (chỉ định) hoặc Title (theo chức vụ)" },
+        "approverEmployeeId": { "type": "string", "format": "uuid", "fk": "employees", "description": "Nhân viên phê duyệt (khi approverType=User)" },
+        "approverTitle": { "type": "string", "description": "Chức vụ phê duyệt (khi approverType=Title)" },
+        "permissionId": { "type": "string", "format": "uuid", "fk": "permissions", "description": "Áp dụng cho quyền (null = toàn hệ thống)" },
+        "notes": { "type": "string", "description": "Ghi chú" },
+        "status": { "type": "string", "enum": ["Active", "Inactive"], "description": "Trạng thái" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Thời gian tạo" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Thời gian cập nhật" },
+        "createdBy": { "type": "string", "format": "uuid", "fk": "accounts", "description": "Account người tạo" },
+        "updatedBy": { "type": "string", "format": "uuid", "fk": "accounts", "description": "Account người cập nhật" }
+      },
+      "relations": {
+        "approverEmployee": { "type": "single", "entity": "employees", "fk": "approverEmployeeId" },
+        "permission": { "type": "single", "entity": "permissions", "fk": "permissionId" }
+      }
+    },
+    "storeRecords": {
+      "description": "Hồ sơ lưu trữ (file đính kèm) của khách hàng",
+      "primaryKey": "storeRecordId",
+      "fields": {
+        "storeRecordId": { "type": "string", "format": "uuid", "description": "Khóa chính" },
+        "clientId": { "type": "string", "format": "uuid", "required": true, "fk": "clients", "description": "Khách hàng" },
+        "attachmentName": { "type": "string", "description": "Tên hiển thị file" },
+        "attachmentPath": { "type": "string", "required": true, "description": "Đường dẫn lưu file" },
+        "fileName": { "type": "string", "description": "Tên file gốc" },
+        "fileSize": { "type": "integer", "description": "Kích thước file (bytes)" },
+        "contentType": { "type": "string", "description": "MIME type" },
+        "createdDate": { "type": "string", "format": "date-time", "description": "Ngày tạo" },
+        "updatedDate": { "type": "string", "format": "date-time", "description": "Ngày cập nhật" },
+        "updatedBy": { "type": "string", "format": "uuid", "fk": "accounts", "description": "Account người cập nhật" }
+      },
+      "relations": {
+        "client": { "type": "single", "entity": "clients", "fk": "clientId" },
+        "updatedByAccount": { "type": "single", "entity": "accounts", "fk": "updatedBy" }
+      }
+    },
+    "clientHistories": {
+      "description": "Lịch sử thay đổi khách hàng",
+      "primaryKey": "clientHistoryId",
+      "fields": {
+        "clientHistoryId": { "type": "string", "format": "uuid", "description": "Khóa chính" },
+        "clientId": { "type": "string", "format": "uuid", "required": true, "fk": "clients", "description": "Khách hàng" },
+        "changedDate": { "type": "string", "format": "date-time", "description": "Thời điểm thay đổi" },
+        "changeDescription": { "type": "string", "required": true, "description": "Nội dung thay đổi" },
+        "changedByAccountId": { "type": "string", "format": "uuid", "required": true, "fk": "accounts", "description": "Account người thay đổi" },
+        "changeType": { "type": "string", "enum": ["Created", "Updated", "Deleted"], "description": "Loại thay đổi" }
+      },
+      "relations": {
+        "client": { "type": "single", "entity": "clients", "fk": "clientId" },
+        "changedByAccount": { "type": "single", "entity": "accounts", "fk": "changedByAccountId" }
+      }
+    }
+  },
+  "odataEndpoints": {
+    "clients": "/odata/Clients",
+    "contacts": "/odata/Contacts",
+    "employees": "/odata/Employees",
+    "branches": "/odata/Branches",
+    "departments": "/odata/Departments",
+    "accounts": "/odata/Accounts",
+    "permissions": "/odata/Permissions",
+    "sampleMatrixGroups": "/odata/SampleMatrixGroups",
+    "sampleMatrices": "/odata/SampleMatrices",
+    "equipmentTypes": "/odata/EquipmentTypes",
+    "analysisGroups": "/odata/AnalysisGroups",
+    "analysisItems": "/odata/AnalysisItems",
+    "referenceMethods": "/odata/ReferenceMethods",
+    "analysisItemTats": "/odata/AnalysisItemTats",
+    "departmentAnalysisCapabilities": "/odata/DepartmentAnalysisCapabilities",
+    "designations": "/odata/Designations",
+    "analysisItemDesignations": "/odata/AnalysisItemDesignations",
+    "standards": "/odata/Standards",
+    "quotations": "/odata/Quotations",
+    "quotationItems": "/odata/QuotationItems",
+    "quotationAnalysisGroups": "/odata/QuotationAnalysisGroups",
+    "packages": "/odata/Packages",
+    "packageAnalysisItems": "/odata/PackageAnalysisItems",
+    "clientDebts": "/odata/ClientDebts",
+    "clientForecasts": "/odata/ClientForecasts",
+    "countries": "/odata/Countries",
+    "provinces": "/odata/Provinces",
+    "wards": "/odata/Wards",
+    "clientIndustries": "/odata/ClientIndustries",
+    "employeeTitles": "/odata/EmployeeTitles",
+    "subcontractors": "/odata/Subcontractors",
+    "subcontractorCapabilities": "/odata/SubcontractorCapabilities",
+    "subcontractorCapabilityDesignations": "/odata/SubcontractorCapabilityDesignations",
+    "quotationHistories": "/odata/QuotationHistories",
+    "quotationApprovalThresholds": "/odata/QuotationApprovalThresholds",
+    "moduleApprovers": "/odata/ModuleApprovers",
+    "storeRecords": "/odata/StoreRecords",
+    "clientHistories": "/odata/ClientHistories"
+  }
+}

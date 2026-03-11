@@ -27,7 +27,8 @@ public class DepartmentAnalysisCapabilitiesController : ODataController
     {
         return Ok(_context.DepartmentAnalysisCapabilities
             .Include(dac => dac.Department)
-            .Include(dac => dac.AnalysisItem));
+            .Include(dac => dac.AnalysisItem)
+            .Include(dac => dac.Designations).ThenInclude(d => d.Designation));
     }
 
     [HttpGet("DepartmentAnalysisCapabilities({key})")]
@@ -37,6 +38,7 @@ public class DepartmentAnalysisCapabilitiesController : ODataController
         var departmentAnalysisCapability = _context.DepartmentAnalysisCapabilities
             .Include(dac => dac.Department)
             .Include(dac => dac.AnalysisItem)
+            .Include(dac => dac.Designations).ThenInclude(d => d.Designation)
             .FirstOrDefault(dac => dac.DepartmentAnalysisCapabilityId == key);
         if (departmentAnalysisCapability == null)
         {

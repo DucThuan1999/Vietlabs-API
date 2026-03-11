@@ -21,9 +21,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- Exclude Scripts folder from publish -->
+    <!-- Exclude Scripts and Docs from publish (no runtime dependency) -->
     <Content Remove="Scripts\**" />
+    <Content Remove="Docs\**" />
     <None Remove="Scripts\**" />
+    <None Remove="Docs\**" />
   </ItemGroup>
 
 </Project>

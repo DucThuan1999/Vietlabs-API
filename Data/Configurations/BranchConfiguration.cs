@@ -14,6 +14,10 @@ public class BranchConfiguration : IEntityTypeConfiguration<Branch>
         // Primary key
         builder.HasKey(b => b.BranchId);
 
+        builder.Property(b => b.Address)
+            .HasColumnName("address")
+            .HasMaxLength(500);
+
         builder.Property(b => b.UpdatedAt).HasColumnName("updated_at");
         builder.Property(b => b.UpdatedBy).HasColumnName("updated_by");
 

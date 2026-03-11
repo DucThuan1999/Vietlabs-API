@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OData.Query;
 using Microsoft.AspNetCore.OData.Routing.Controllers;
@@ -21,11 +22,19 @@ public class SampleMatricesController : ODataController
         _logger = logger;
     }
 
+    private Guid? GetCurrentAccountId()
+    {
+        var accountIdClaim = User.FindFirst("AccountId")?.Value;
+        return Guid.TryParse(accountIdClaim, out var accountId) ? accountId : null;
+    }
+
     [HttpGet("SampleMatrices")]
     [EnableQuery]
     public IActionResult Get()
     {
-        return Ok(_context.SampleMatrices.Include(sm => sm.SampleMatrixGroup));
+        return Ok(_context.SampleMatrices
+            .Include(sm => sm.UpdatedByAccount)
+            .Include(sm => sm.SampleMatrixGroup));
     }
 
     [HttpGet("SampleMatrices({key})")]
@@ -33,6 +42,7 @@ public class SampleMatricesController : ODataController
     public IActionResult Get([FromRoute] Guid key)
     {
         var matrix = _context.SampleMatrices
+            .Include(sm => sm.UpdatedByAccount)
             .Include(sm => sm.SampleMatrixGroup)
             .FirstOrDefault(sm => sm.SampleMatrixId == key);
         if (matrix == null)
@@ -79,8 +89,21 @@ public class SampleMatricesController : ODataController
             return BadRequest(ModelState);
         }
 
-        matrix.UpdatedAt = DateTime.UtcNow;
-        _context.Entry(matrix).State = EntityState.Modified;
+        var existing = await _context.SampleMatrices.FindAsync(key);
+        if (existing == null)
+        {
+            return NotFound();
+        }
+
+        existing.SampleMatrixCode = matrix.SampleMatrixCode;
+        existing.NameVi = matrix.NameVi;
+        existing.NameEn = matrix.NameEn;
+        existing.SampleMatrixGroupId = matrix.SampleMatrixGroupId;
+        existing.RegisteredMatrix = matrix.RegisteredMatrix;
+        existing.Status = matrix.Status;
+        existing.Notes = matrix.Notes;
+        existing.UpdatedAt = DateTime.UtcNow;
+        existing.UpdatedBy = GetCurrentAccountId();
 
         try
         {
@@ -99,7 +122,8 @@ public class SampleMatricesController : ODataController
             return this.HandleDatabaseError(ex, _logger, "cập nhật mẫu vật");
         }
 
-        return Updated(matrix);
+        await _context.Entry(existing).Reference(sm => sm.UpdatedByAccount).LoadAsync();
+        return Updated(existing);
     }
 
     [HttpDelete("SampleMatrices({key})")]

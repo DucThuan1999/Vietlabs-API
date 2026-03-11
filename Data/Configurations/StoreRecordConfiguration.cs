@@ -48,11 +48,19 @@ public class StoreRecordConfiguration : IEntityTypeConfiguration<StoreRecord>
         builder.Property(sr => sr.UpdatedDate)
             .HasColumnName("updated_date");
 
+        builder.Property(sr => sr.UpdatedBy)
+            .HasColumnName("updated_by");
+
         // Foreign key relationship
         builder.HasOne(sr => sr.Client)
             .WithMany()
             .HasForeignKey(sr => sr.ClientId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasOne(sr => sr.UpdatedByAccount)
+            .WithMany()
+            .HasForeignKey(sr => sr.UpdatedBy)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }
 

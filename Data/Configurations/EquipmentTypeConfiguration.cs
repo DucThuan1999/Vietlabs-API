@@ -35,6 +35,18 @@ public class EquipmentTypeConfiguration : IEntityTypeConfiguration<EquipmentType
             .HasMaxLength(50)
             .IsRequired()
             .HasDefaultValue("Active");
+
+        builder.Property(e => e.CreatedAt)
+            .HasColumnName("created_at");
+        builder.Property(e => e.UpdatedAt)
+            .HasColumnName("updated_at");
+        builder.Property(e => e.UpdatedBy)
+            .HasColumnName("updated_by");
+
+        builder.HasOne(e => e.UpdatedByAccount)
+            .WithMany()
+            .HasForeignKey(e => e.UpdatedBy)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }
 

@@ -49,6 +49,9 @@ public class QuotationAnalysisGroupConfiguration : IEntityTypeConfiguration<Quot
         builder.Property(qag => qag.UpdatedAt)
             .HasColumnName("updated_at");
 
+        builder.Property(qag => qag.UpdatedBy)
+            .HasColumnName("updated_by");
+
         // Unique constraint: một quotation không thể có cùng analysis group 2 lần
         builder.HasIndex(qag => new { qag.QuotationId, qag.AnalysisGroupId })
             .IsUnique()
@@ -64,6 +67,11 @@ public class QuotationAnalysisGroupConfiguration : IEntityTypeConfiguration<Quot
         builder.HasOne(qag => qag.AnalysisGroup)
             .WithMany()
             .HasForeignKey(qag => qag.AnalysisGroupId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(qag => qag.UpdatedByAccount)
+            .WithMany()
+            .HasForeignKey(qag => qag.UpdatedBy)
             .OnDelete(DeleteBehavior.Restrict);
     }
 }

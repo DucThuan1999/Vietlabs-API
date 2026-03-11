@@ -28,7 +28,7 @@ public class QuotationItem
     // Snapshot dữ liệu từ AnalysisItem (lưu khi tạo để backup)
     public string? SampleMatrixName { get; set; } // Tên nền mẫu (snapshot từ SampleMatrix.NameVi)
     public string? PublishedGroupCode { get; set; } // Mã phương pháp (snapshot từ AnalysisItem.PublishedGroupCode)
-    public string? Unit { get; set; } // Đơn vị tính (snapshot từ AnalysisItem.Unit)
+    public string? Unit { get; set; } // Đơn vị tính (snapshot từ AnalysisItem.UnitOfMeasure.NameVi)
     public string? Lod { get; set; } // Giới hạn phát hiện (snapshot từ AnalysisItem.Lod, format string)
     public string? Loq { get; set; } // Giới hạn định lượng (snapshot từ AnalysisItem.Loq, format string)
     public string? Tat { get; set; } // Thời gian quay vòng (snapshot từ AnalysisItemTat, format string)
@@ -47,11 +47,13 @@ public class QuotationItem
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }
+    public Guid? UpdatedBy { get; set; }  // AccountId người cập nhật
 
     // Navigation Properties
     public Quotation? Quotation { get; set; }
     public AnalysisItem? AnalysisItem { get; set; }
     public AnalysisGroup? AnalysisGroup { get; set; }
     public Package? Package { get; set; }
+    public Account? UpdatedByAccount { get; set; }
 }
 

@@ -55,6 +55,14 @@ public class SampleMatrixConfiguration : IEntityTypeConfiguration<SampleMatrix>
         builder.Property(sm => sm.UpdatedAt)
             .HasColumnName("updated_at");
 
+        builder.Property(sm => sm.UpdatedBy)
+            .HasColumnName("updated_by");
+
+        builder.HasOne(sm => sm.UpdatedByAccount)
+            .WithMany()
+            .HasForeignKey(sm => sm.UpdatedBy)
+            .OnDelete(DeleteBehavior.Restrict);
+
         // Foreign key relationship
         builder.HasOne(sm => sm.SampleMatrixGroup)
             .WithMany(smg => smg.SampleMatrices)

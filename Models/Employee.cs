@@ -14,11 +14,15 @@ public class Employee
     public string? Notes { get; set; }        // Mô tả/Ghi chú
     public string Status { get; set; } = "Active";           // Trạng thái
 
+    public DateTime? UpdatedAt { get; set; }
+    public Guid? UpdatedBy { get; set; }    // AccountId người cập nhật
+
     // Quan hệ manager (self-referencing)
     public Guid? ManagerId { get; set; }      // Foreign key đến Employee (manager)
 
     // Navigation
     public Department? Department { get; set; }
+    public Account? UpdatedByAccount { get; set; }
     public Account? Account { get; set; }
     public Employee? Manager { get; set; }   // Manager của employee này
     public ICollection<Employee> Subordinates { get; set; } = new List<Employee>(); // Các nhân viên dưới quyền

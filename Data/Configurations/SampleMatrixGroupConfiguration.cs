@@ -46,6 +46,14 @@ public class SampleMatrixGroupConfiguration : IEntityTypeConfiguration<SampleMat
 
         builder.Property(smg => smg.UpdatedAt)
             .HasColumnName("updated_at");
+
+        builder.Property(smg => smg.UpdatedBy)
+            .HasColumnName("updated_by");
+
+        builder.HasOne(smg => smg.UpdatedByAccount)
+            .WithMany()
+            .HasForeignKey(smg => smg.UpdatedBy)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }
 

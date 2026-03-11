@@ -120,6 +120,7 @@ public class EmployeeTitlesController : ODataController
             return this.HandleDatabaseError(ex, _logger, "cập nhật chức vụ nhân viên");
         }
 
+        await _context.Entry(title).Reference(t => t.UpdatedByAccount).LoadAsync();
         return Updated(title);
     }
 
@@ -145,6 +146,7 @@ public class EmployeeTitlesController : ODataController
             return this.HandleDatabaseError(ex, _logger, "cập nhật chức vụ nhân viên");
         }
 
+        await _context.Entry(title).Reference(t => t.UpdatedByAccount).LoadAsync();
         return Updated(title);
     }
 

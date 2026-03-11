@@ -10,6 +10,8 @@ public class SubcontractorCapability
     public Guid SubcontractorId { get; set; }
     /// <summary>FK - Chỉ tiêu phân tích</summary>
     public Guid AnalysisItemId { get; set; }
+    public bool Nd107 { get; set; }
+    public DateTime? Nd107ExpiredDate { get; set; }
     /// <summary>Mô tả / Ghi chú</summary>
     public string? Notes { get; set; }
     /// <summary>Trạng thái (Active, Inactive, ...)</summary>
@@ -17,7 +19,10 @@ public class SubcontractorCapability
 
     public DateTime? CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
+    public Guid? UpdatedBy { get; set; }  // AccountId người cập nhật
 
     public Subcontractor? Subcontractor { get; set; }
+    public Account? UpdatedByAccount { get; set; }
     public AnalysisItem? AnalysisItem { get; set; }
+    public ICollection<SubcontractorCapabilityDesignation> Designations { get; set; } = new List<SubcontractorCapabilityDesignation>();
 }
