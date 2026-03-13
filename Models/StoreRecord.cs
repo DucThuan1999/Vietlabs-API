@@ -3,7 +3,7 @@ namespace VietLab.Models;
 public class StoreRecord
 {
     public Guid StoreRecordId { get; set; }
-    public Guid ClientId { get; set; }
+    public Guid? ClientId { get; set; }
     public string? AttachmentName { get; set; }
     public string AttachmentPath { get; set; } = string.Empty;
     public string? FileName { get; set; }

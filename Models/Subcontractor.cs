@@ -25,6 +25,21 @@ public class Subcontractor
     /// <summary>Trạng thái (Active, Inactive, ...)</summary>
     public string Status { get; set; } = "Active";
 
+    /// <summary>Mã số thuế</summary>
+    public string? TaxCode { get; set; }
+    /// <summary>Số tài khoản ngân hàng</summary>
+    public string? BankAccountNumber { get; set; }
+    /// <summary>Tên người nhận (tài khoản ngân hàng)</summary>
+    public string? BankAccountHolder { get; set; }
+    /// <summary>Tên ngân hàng</summary>
+    public string? BankName { get; set; }
+    /// <summary>Hợp đồng: Yes, No, Overdue</summary>
+    public string? ContractStatus { get; set; }
+    /// <summary>Chu kỳ thanh toán: BeforeAnalysis, BeforeReceivingResult, AfterInvoice</summary>
+    public string? PaymentCycle { get; set; }
+    /// <summary>Số ngày thanh toán (khi PaymentCycle = AfterInvoice)</summary>
+    public int? PaymentDays { get; set; }
+
     public DateTime? CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
     public Guid? UpdatedBy { get; set; }  // AccountId người cập nhật

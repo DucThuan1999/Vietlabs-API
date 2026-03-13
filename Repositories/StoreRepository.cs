@@ -20,9 +20,10 @@ public class StoreRepository : IStoreRepository
         _logger = logger;
     }
 
-    private string GetStoragePath(Guid clientId)
+    private string GetStoragePath(Guid? clientId)
     {
-        var uploadsPath = Path.Combine(_environment.ContentRootPath, "Uploads", clientId.ToString());
+        var folderName = clientId.HasValue ? clientId.Value.ToString() : "Unassigned";
+        var uploadsPath = Path.Combine(_environment.ContentRootPath, "Uploads", folderName);
         if (!Directory.Exists(uploadsPath))
         {
             Directory.CreateDirectory(uploadsPath);
@@ -30,17 +31,18 @@ public class StoreRepository : IStoreRepository
         return uploadsPath;
     }
 
-    public async Task<StoreRecord> CreateFile(Guid clientId, string? attachmentName, IFormFile file)
+    public async Task<StoreRecord> CreateFile(Guid? clientId, string? attachmentName, IFormFile file)
     {
         if (file == null || file.Length == 0)
         {
             throw new ArgumentException("File is required");
         }
 
+        var folderName = clientId.HasValue ? clientId.Value.ToString() : "Unassigned";
         var storagePath = GetStoragePath(clientId);
         var fileName = $"{Guid.NewGuid()}_{file.FileName}";
         var filePath = Path.Combine(storagePath, fileName);
-        var relativePath = Path.Combine("Uploads", clientId.ToString(), fileName).Replace("\\", "/");
+        var relativePath = Path.Combine("Uploads", folderName, fileName).Replace("\\", "/");
 
         // Save file to disk
         using (var stream = new FileStream(filePath, FileMode.Create))
@@ -88,10 +90,11 @@ public class StoreRepository : IStoreRepository
         }
 
         // Save new file
+        var folderName = storeRecord.ClientId.HasValue ? storeRecord.ClientId.Value.ToString() : "Unassigned";
         var storagePath = GetStoragePath(storeRecord.ClientId);
         var fileName = $"{Guid.NewGuid()}_{file.FileName}";
         var filePath = Path.Combine(storagePath, fileName);
-        var relativePath = Path.Combine("Uploads", storeRecord.ClientId.ToString(), fileName).Replace("\\", "/");
+        var relativePath = Path.Combine("Uploads", folderName, fileName).Replace("\\", "/");
 
         using (var stream = new FileStream(filePath, FileMode.Create))
         {

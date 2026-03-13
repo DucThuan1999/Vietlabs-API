@@ -19,6 +19,13 @@ public class QuotationItem
     // Phân biệt AnalysisItem standalone hay trong nhóm
     public bool? IsStandalone { get; set; } // true nếu AnalysisItem đứng riêng, false nếu trong nhóm, null nếu không phải AnalysisItem
 
+    /// <summary>Vietlabs | Subcontractor. Null nếu không xác định.</summary>
+    public string? CapacityType { get; set; }
+    /// <summary>FK - Năng lực Vietlabs (khi CapacityType = Vietlabs).</summary>
+    public Guid? DepartmentAnalysisCapabilityId { get; set; }
+    /// <summary>FK - Năng lực nhà thầu phụ (khi CapacityType = Subcontractor).</summary>
+    public Guid? SubcontractorCapabilityId { get; set; }
+
     // Thông tin hiển thị (có thể override từ master data)
     public string? ItemCode { get; set; } // Mã item
     public string? ItemNameVi { get; set; } // Tên tiếng Việt
@@ -55,5 +62,7 @@ public class QuotationItem
     public AnalysisGroup? AnalysisGroup { get; set; }
     public Package? Package { get; set; }
     public Account? UpdatedByAccount { get; set; }
+    public DepartmentAnalysisCapability? DepartmentAnalysisCapability { get; set; }
+    public SubcontractorCapability? SubcontractorCapability { get; set; }
 }
 

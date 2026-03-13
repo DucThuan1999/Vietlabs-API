@@ -59,6 +59,27 @@ public class SubcontractorConfiguration : IEntityTypeConfiguration<Subcontractor
             .IsRequired()
             .HasDefaultValue("Active");
 
+        builder.Property(s => s.TaxCode)
+            .HasColumnName("tax_code")
+            .HasMaxLength(50);
+        builder.Property(s => s.BankAccountNumber)
+            .HasColumnName("bank_account_number")
+            .HasMaxLength(100);
+        builder.Property(s => s.BankAccountHolder)
+            .HasColumnName("bank_account_holder")
+            .HasMaxLength(200);
+        builder.Property(s => s.BankName)
+            .HasColumnName("bank_name")
+            .HasMaxLength(200);
+        builder.Property(s => s.ContractStatus)
+            .HasColumnName("contract_status")
+            .HasMaxLength(50);
+        builder.Property(s => s.PaymentCycle)
+            .HasColumnName("payment_cycle")
+            .HasMaxLength(50);
+        builder.Property(s => s.PaymentDays)
+            .HasColumnName("payment_days");
+
         builder.Property(s => s.CreatedAt).HasColumnName("created_at");
         builder.Property(s => s.UpdatedAt).HasColumnName("updated_at");
         builder.Property(s => s.UpdatedBy).HasColumnName("updated_by");

@@ -51,10 +51,11 @@ public class StoreRecordConfiguration : IEntityTypeConfiguration<StoreRecord>
         builder.Property(sr => sr.UpdatedBy)
             .HasColumnName("updated_by");
 
-        // Foreign key relationship
+        // Foreign key relationship (optional: ClientId nullable)
         builder.HasOne(sr => sr.Client)
             .WithMany()
             .HasForeignKey(sr => sr.ClientId)
+            .IsRequired(false)
             .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasOne(sr => sr.UpdatedByAccount)

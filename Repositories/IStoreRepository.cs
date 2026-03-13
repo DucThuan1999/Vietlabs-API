@@ -4,7 +4,7 @@ namespace VietLab.Repositories;
 
 public interface IStoreRepository
 {
-    Task<StoreRecord> CreateFile(Guid clientId, string? attachmentName, IFormFile file);
+    Task<StoreRecord> CreateFile(Guid? clientId, string? attachmentName, IFormFile file);
     Task<StoreRecord> UpdateFile(Guid storeRecordId, string? attachmentName, IFormFile file);
     byte[] GetFileContent(Guid storeRecordId);
     StoreRecord? GetFileInfo(Guid storeRecordId);

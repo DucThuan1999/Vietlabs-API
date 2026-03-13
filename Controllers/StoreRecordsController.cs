@@ -18,7 +18,7 @@ public class StoreRecordsController : ControllerBase
     }
 
     [HttpPost("create-file")]
-    public async Task<IActionResult> CreateFile(Guid clientId, string? attachmentName, IFormFile file)
+    public async Task<IActionResult> CreateFile(Guid? clientId, string? attachmentName, IFormFile file)
     {
         try
         {

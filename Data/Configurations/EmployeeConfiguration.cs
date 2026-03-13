@@ -15,6 +15,7 @@ public class EmployeeConfiguration : IEntityTypeConfiguration<Employee>
         builder.HasKey(e => e.EmployeeId);
 
         builder.Property(e => e.DepartmentId).HasColumnName("department_id");
+        builder.Property(e => e.ExtensionNumber).HasColumnName("extension_number");
 
         builder.Property(e => e.UpdatedAt).HasColumnName("updated_at");
         builder.Property(e => e.UpdatedBy).HasColumnName("updated_by");

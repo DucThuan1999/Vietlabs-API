@@ -20,7 +20,10 @@ public static class ODataEdmModel
         contactEntitySet.EntityType.HasOptional(c => c.UpdatedByAccount).AutoExpand = true;
         var employeeEntitySet = builder.EntitySet<Employee>("Employees");
         employeeEntitySet.EntityType.HasOptional(e => e.Department).AutoExpand = true;
+        employeeEntitySet.EntityType.HasOptional(e => e.EmployeeTitle).AutoExpand = true;
         employeeEntitySet.EntityType.HasOptional(e => e.UpdatedByAccount).AutoExpand = true;
+        employeeEntitySet.EntityType.HasOptional(e => e.Account).AutoExpand = true;
+        employeeEntitySet.EntityType.HasOptional(e => e.Manager).AutoExpand = true;
         var branchEntitySet = builder.EntitySet<Branch>("Branches");
         branchEntitySet.EntityType.HasOptional(b => b.UpdatedByAccount).AutoExpand = true;
         var departmentEntitySet = builder.EntitySet<Department>("Departments");

@@ -39,6 +39,16 @@ public class QuotationItemConfiguration : IEntityTypeConfiguration<QuotationItem
         builder.Property(qi => qi.IsStandalone)
             .HasColumnName("is_standalone");
 
+        builder.Property(qi => qi.CapacityType)
+            .HasColumnName("capacity_type")
+            .HasMaxLength(50);
+
+        builder.Property(qi => qi.DepartmentAnalysisCapabilityId)
+            .HasColumnName("department_analysis_capability_id");
+
+        builder.Property(qi => qi.SubcontractorCapabilityId)
+            .HasColumnName("subcontractor_capability_id");
+
         builder.Property(qi => qi.ItemCode)
             .HasColumnName("item_code")
             .HasMaxLength(255);
@@ -128,6 +138,16 @@ public class QuotationItemConfiguration : IEntityTypeConfiguration<QuotationItem
         builder.HasOne(qi => qi.UpdatedByAccount)
             .WithMany()
             .HasForeignKey(qi => qi.UpdatedBy)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(qi => qi.DepartmentAnalysisCapability)
+            .WithMany()
+            .HasForeignKey(qi => qi.DepartmentAnalysisCapabilityId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(qi => qi.SubcontractorCapability)
+            .WithMany()
+            .HasForeignKey(qi => qi.SubcontractorCapabilityId)
             .OnDelete(DeleteBehavior.Restrict);
     }
 }

@@ -10,6 +10,7 @@ public class Employee
     public Guid? EmployeeTitleId { get; set; } // FK đến danh mục chức vụ
     public string? Title { get; set; }        // Chức vụ (giữ để tương thích / nhập tự do)
     public string? Email { get; set; }
+    public string? ExtensionNumber { get; set; }  // Số máy nhánh
     public string? Mobile { get; set; }       // SĐT
     public string? Notes { get; set; }        // Mô tả/Ghi chú
     public string Status { get; set; } = "Active";           // Trạng thái

@@ -35,6 +35,7 @@ public class EmployeesController : ODataController
         return Ok(_context.Employees
             .Include(e => e.Department)
             .Include(e => e.EmployeeTitle)
+            .Include(e => e.Manager)
             .Include(e => e.UpdatedByAccount)
             .Include(e => e.Account).ThenInclude(a => a!.Permission));
     }
@@ -46,6 +47,7 @@ public class EmployeesController : ODataController
         var employee = _context.Employees
             .Include(e => e.Department)
             .Include(e => e.EmployeeTitle)
+            .Include(e => e.Manager)
             .Include(e => e.UpdatedByAccount)
             .Include(e => e.Account).ThenInclude(a => a!.Permission)
             .FirstOrDefault(e => e.EmployeeId == key);
@@ -105,6 +107,7 @@ public class EmployeesController : ODataController
         existing.EmployeeTitleId = employee.EmployeeTitleId;
         existing.Title = employee.Title;
         existing.Email = employee.Email;
+        existing.ExtensionNumber = employee.ExtensionNumber;
         existing.Mobile = employee.Mobile;
         existing.Notes = employee.Notes;
         existing.Status = employee.Status;
@@ -132,6 +135,7 @@ public class EmployeesController : ODataController
         var updated = await _context.Employees
             .Include(e => e.Department)
             .Include(e => e.EmployeeTitle)
+            .Include(e => e.Manager)
             .Include(e => e.UpdatedByAccount)
             .Include(e => e.Account).ThenInclude(a => a!.Permission)
             .FirstOrDefaultAsync(e => e.EmployeeId == key);
