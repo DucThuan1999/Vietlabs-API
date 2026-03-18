@@ -31,6 +31,8 @@ public class AnalysisItemsController : ODataController
             .Include(ai => ai.SampleMatrix)
             .Include(ai => ai.SampleMatrixGroup)
             .Include(ai => ai.UnitOfMeasure)
+            .Include(ai => ai.StandardQuantityUnitOfMeasure)
+            .Include(ai => ai.LaboratoryTechnique)
             .Include(ai => ai.AnalysisItemTats));
     }
 
@@ -44,6 +46,8 @@ public class AnalysisItemsController : ODataController
             .Include(ai => ai.SampleMatrix)
             .Include(ai => ai.SampleMatrixGroup)
             .Include(ai => ai.UnitOfMeasure)
+            .Include(ai => ai.StandardQuantityUnitOfMeasure)
+            .Include(ai => ai.LaboratoryTechnique)
             .Include(ai => ai.AnalysisItemTats)
             .FirstOrDefault(ai => ai.AnalysisItemId == key);
         if (item == null)

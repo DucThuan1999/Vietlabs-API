@@ -9,6 +9,5 @@ public class Permission
     public string Status { get; set; } = "Active";             // Trạng thái
 
     // Navigation
-    public ICollection<Account> Accounts { get; set; } = new List<Account>();
     public ICollection<ModuleApprover> ModuleApprovers { get; set; } = new List<ModuleApprover>();
 }

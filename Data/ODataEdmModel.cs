@@ -29,11 +29,9 @@ public static class ODataEdmModel
         var departmentEntitySet = builder.EntitySet<Department>("Departments");
         departmentEntitySet.EntityType.HasOptional(d => d.UpdatedByAccount).AutoExpand = true;
         
-        // Account với AutoExpand cho Employee và Permission
         var accountEntitySet = builder.EntitySet<Account>("Accounts");
         var accountEntityType = accountEntitySet.EntityType;
         accountEntityType.HasOptional(a => a.Employee).AutoExpand = true;
-        accountEntityType.HasRequired(a => a.Permission).AutoExpand = true;
         
         builder.EntitySet<Permission>("Permissions");
         
@@ -50,6 +48,8 @@ public static class ODataEdmModel
         analysisItemEntitySet.EntityType.HasOptional(ai => ai.ReferenceMethod).AutoExpand = true;
         analysisItemEntitySet.EntityType.HasOptional(ai => ai.Standard).AutoExpand = true;
         analysisItemEntitySet.EntityType.HasOptional(ai => ai.UnitOfMeasure).AutoExpand = true;
+        analysisItemEntitySet.EntityType.HasOptional(ai => ai.StandardQuantityUnitOfMeasure).AutoExpand = true;
+        analysisItemEntitySet.EntityType.HasOptional(ai => ai.LaboratoryTechnique).AutoExpand = true;
         analysisItemEntitySet.EntityType.HasOptional(ai => ai.UpdatedByAccount).AutoExpand = true;
         var analysisItemTatEntitySet = builder.EntitySet<AnalysisItemTat>("AnalysisItemTats");
         analysisItemTatEntitySet.EntityType.HasOptional(tat => tat.UpdatedByAccount).AutoExpand = true;
@@ -144,7 +144,10 @@ public static class ODataEdmModel
         // Danh mục Đơn vị tính (Unit of Measure)
         var unitOfMeasureEntitySet = builder.EntitySet<UnitOfMeasure>("UnitOfMeasures");
         unitOfMeasureEntitySet.EntityType.HasOptional(u => u.UpdatedByAccount).AutoExpand = true;
-        
+
+        var laboratoryTechniqueEntitySet = builder.EntitySet<LaboratoryTechnique>("LaboratoryTechniques");
+        laboratoryTechniqueEntitySet.EntityType.HasOptional(lt => lt.UpdatedByAccount).AutoExpand = true;
+
         return builder.GetEdmModel();
     }
 }

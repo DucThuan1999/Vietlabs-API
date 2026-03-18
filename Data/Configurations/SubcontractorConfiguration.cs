@@ -20,6 +20,10 @@ public class SubcontractorConfiguration : IEntityTypeConfiguration<Subcontractor
             .HasMaxLength(50)
             .IsRequired();
 
+        builder.Property(s => s.ShortName)
+            .HasColumnName("short_name")
+            .HasMaxLength(50);
+
         builder.Property(s => s.Name)
             .HasColumnName("name")
             .HasMaxLength(200)
@@ -90,6 +94,9 @@ public class SubcontractorConfiguration : IEntityTypeConfiguration<Subcontractor
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasIndex(s => s.Code);
+        builder.HasIndex(s => s.ShortName)
+            .IsUnique()
+            .HasFilter("[short_name] IS NOT NULL");
         builder.HasIndex(s => s.Status);
     }
 }

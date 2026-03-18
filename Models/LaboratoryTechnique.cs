@@ -1,15 +1,15 @@
 namespace VietLab.Models;
 
 /// <summary>
-/// Danh mục Đơn vị tính (ĐVT): AnalysisItem.UnitOfMeasureId và StandardQuantityUnitOfMeasureId.
+/// Danh mục Kĩ thuật (Sắc Ký, Cổ Điển, Quang Phổ, Vi Sinh, ...): gắn với AnalysisItem.
 /// </summary>
-public class UnitOfMeasure
+public class LaboratoryTechnique
 {
-    public Guid UnitOfMeasureId { get; set; }
-    public int? SequenceNumber { get; set; }  // STT
-    public string? UnitOfMeasureCode { get; set; }  // Mã đơn vị tính
-    public string? NameVi { get; set; }  // Tên (VIE)
-    public string? NameEn { get; set; }  // Tên (ENG)
+    public Guid LaboratoryTechniqueId { get; set; }
+    public int? SequenceNumber { get; set; }
+    public string? TechniqueCode { get; set; }
+    public string? NameVi { get; set; }
+    public string? NameEn { get; set; }
     public string Status { get; set; } = "Active";
     public string? Notes { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

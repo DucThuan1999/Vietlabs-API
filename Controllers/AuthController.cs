@@ -6,6 +6,7 @@ using System.Text;
 using VietLab.Data;
 using VietLab.Models;
 using VietLab.Models.DTOs;
+using VietLab.Services;
 
 namespace VietLab.Controllers;
 
@@ -15,11 +16,31 @@ public class AuthController : ControllerBase
 {
     private readonly ApplicationDbContext _context;
     private readonly ILogger<AuthController> _logger;
+    private readonly ModulePermissionService _modulePerm;
 
-    public AuthController(ApplicationDbContext context, ILogger<AuthController> logger)
+    public AuthController(ApplicationDbContext context, ILogger<AuthController> logger, ModulePermissionService modulePerm)
     {
         _context = context;
         _logger = logger;
+        _modulePerm = modulePerm;
+    }
+
+    private async Task<UserInfo> MapToUserInfoAsync(Account account, CancellationToken ct = default)
+    {
+        var codes = await _modulePerm.GetGrantedCodesAsync(account.AccountId, ct);
+        return new UserInfo
+        {
+            AccountId = account.AccountId,
+            EmployeeId = account.EmployeeId,
+            UserName = account.UserName,
+            FullName = account.Employee?.FullName ?? "",
+            Email = account.Employee?.Email ?? "",
+            Department = account.Employee?.Department?.NameVi ?? "",
+            Role = account.Employee?.Role ?? "",
+            Title = account.Employee?.Title ?? "",
+            Status = account.Status,
+            GrantedPermissionCodes = codes
+        };
     }
 
     /// <summary>
@@ -47,7 +68,6 @@ public class AuthController : ControllerBase
                 // Tìm account đầu tiên có status Active, hoặc tìm theo username nếu có
                 var adminAccount = await _context.Accounts
                     .Include(a => a.Employee).ThenInclude(e => e!.Department)
-                    .Include(a => a.Permission)
                     .FirstOrDefaultAsync(a => 
                         (string.IsNullOrEmpty(request.UserName) || a.UserName == request.UserName) 
                         && a.Status == "Active");
@@ -57,7 +77,6 @@ public class AuthController : ControllerBase
                     // Nếu không tìm thấy account, tìm account đầu tiên có status Active
                     adminAccount = await _context.Accounts
                         .Include(a => a.Employee).ThenInclude(e => e!.Department)
-                        .Include(a => a.Permission)
                         .FirstOrDefaultAsync(a => a.Status == "Active");
                     
                     if (adminAccount == null)
@@ -76,25 +95,21 @@ public class AuthController : ControllerBase
                 var adminRefreshToken = await GenerateAndSaveRefreshToken(adminAccount.AccountId);
 
                 // Tạo response với account tìm được
+                var adminUser = await MapToUserInfoAsync(adminAccount);
+                if (adminAccount.Employee == null)
+                {
+                    if (string.IsNullOrWhiteSpace(adminUser.FullName)) adminUser.FullName = "Admin User";
+                    if (string.IsNullOrWhiteSpace(adminUser.Email)) adminUser.Email = "admin@viet-labs.com";
+                    if (string.IsNullOrWhiteSpace(adminUser.Department)) adminUser.Department = "IT";
+                    if (string.IsNullOrWhiteSpace(adminUser.Role)) adminUser.Role = "Admin";
+                    if (string.IsNullOrWhiteSpace(adminUser.Title)) adminUser.Title = "Administrator";
+                }
+
                 var adminResponse = new LoginResponse
                 {
                     Success = true,
                     Message = "Đăng nhập thành công (Admin Bypass)",
-                    User = new UserInfo
-                    {
-                        AccountId = adminAccount.AccountId,
-                        EmployeeId = adminAccount.EmployeeId,
-                        UserName = adminAccount.UserName,
-                        FullName = adminAccount.Employee?.FullName ?? "Admin User",
-                        Email = adminAccount.Employee?.Email ?? "admin@viet-labs.com",
-                        Department = adminAccount.Employee?.Department?.NameVi ?? "IT",
-                        Role = adminAccount.Employee?.Role ?? "Admin",
-                        Title = adminAccount.Employee?.Title ?? "Administrator",
-                        PermissionId = adminAccount.PermissionId,
-                        PermissionName = adminAccount.Permission?.Name ?? "Full Access",
-                        PermissionCode = adminAccount.Permission?.PermissionCode ?? "ADMIN",
-                        Status = adminAccount.Status
-                    },
+                    User = adminUser,
                     Token = adminAccessToken,
                     RefreshToken = adminRefreshToken.Token,
                     TokenExpiresAt = DateTime.UtcNow.AddHours(1), // Access token hết hạn sau 1 giờ
@@ -108,7 +123,6 @@ public class AuthController : ControllerBase
             // Tìm account theo username
             var account = await _context.Accounts
                 .Include(a => a.Employee).ThenInclude(e => e!.Department)
-                .Include(a => a.Permission)
                 .FirstOrDefaultAsync(a => a.UserName == request.UserName && a.Status == "Active");
 
             if (account == null)
@@ -117,7 +131,7 @@ public class AuthController : ControllerBase
                 return Unauthorized(new LoginResponse
                 {
                     Success = false,
-                    Message = "Tên đăng nhập hoặc mật khẩu không đúng"
+                    Message = "Không tìm thấy tài khoản hoặc tài khoản chưa được kích hoạt. Vui lòng kiểm tra tên đăng nhập."
                 });
             }
 
@@ -132,7 +146,7 @@ public class AuthController : ControllerBase
                 return Unauthorized(new LoginResponse
                 {
                     Success = false,
-                    Message = "Tên đăng nhập hoặc mật khẩu không đúng"
+                    Message = "Mật khẩu không đúng. Vui lòng thử lại hoặc dùng chức năng đổi mật khẩu nếu bạn quên mật khẩu."
                 });
             }
 
@@ -156,21 +170,7 @@ public class AuthController : ControllerBase
             {
                 Success = true,
                 Message = "Đăng nhập thành công",
-                    User = new UserInfo
-                    {
-                        AccountId = account.AccountId,
-                        EmployeeId = account.EmployeeId,
-                        UserName = account.UserName,
-                        FullName = account.Employee.FullName,
-                        Email = account.Employee.Email ?? "",
-                        Department = account.Employee.Department?.NameVi ?? "",
-                        Role = account.Employee.Role ?? "",
-                        Title = account.Employee.Title ?? "",
-                        PermissionId = account.PermissionId,
-                        PermissionName = account.Permission?.Name ?? "",
-                        PermissionCode = account.Permission?.PermissionCode ?? "",
-                        Status = account.Status
-                    },
+                    User = await MapToUserInfoAsync(account),
                 Token = accessToken,
                 RefreshToken = refreshToken.Token,
                 TokenExpiresAt = DateTime.UtcNow.AddHours(1), // Access token hết hạn sau 1 giờ
@@ -321,7 +321,6 @@ public class AuthController : ControllerBase
                 .Include(rt => rt.Account!)
                     .ThenInclude(a => a.Employee)
                 .Include(rt => rt.Account!)
-                    .ThenInclude(a => a.Permission)
                 .FirstOrDefaultAsync(rt => rt.Token == request.RefreshToken && !rt.IsRevoked);
 
             if (refreshToken == null)
@@ -370,6 +369,10 @@ public class AuthController : ControllerBase
             // Tạo access token mới
             var newAccessToken = GenerateSimpleToken(refreshToken.Account.AccountId, refreshToken.Account.UserName);
 
+            var accFull = await _context.Accounts
+                .Include(a => a.Employee).ThenInclude(e => e!.Department)
+                .FirstOrDefaultAsync(a => a.AccountId == refreshToken.AccountId);
+
             _logger.LogInformation("Token refreshed successfully for account: {AccountId}", refreshToken.AccountId);
 
             return Ok(new RefreshTokenResponse
@@ -379,7 +382,8 @@ public class AuthController : ControllerBase
                 Token = newAccessToken,
                 RefreshToken = newRefreshToken.Token,
                 TokenExpiresAt = DateTime.UtcNow.AddHours(1),
-                RefreshTokenExpiresAt = newRefreshToken.ExpiresAt
+                RefreshTokenExpiresAt = newRefreshToken.ExpiresAt,
+                User = accFull != null ? await MapToUserInfoAsync(accFull) : null
             });
         }
         catch (Exception ex)
@@ -452,6 +456,50 @@ public class AuthController : ControllerBase
     }
 
     /// <summary>
+    /// Lấy lại profile + ma trận quyền (body: accessToken, refreshToken).
+    /// </summary>
+    [HttpPost("me")]
+    [AllowAnonymous]
+    public async Task<IActionResult> Me([FromBody] MeRequest? body)
+    {
+        var token = body?.AccessToken;
+        if (string.IsNullOrWhiteSpace(token))
+            return Unauthorized(new { success = false, message = "Thiếu accessToken." });
+
+        Guid accountId;
+        string userName;
+        try
+        {
+            var tokenString = Encoding.UTF8.GetString(Convert.FromBase64String(token));
+            var tokenParts = tokenString.Split(':');
+            if (tokenParts.Length < 2 || !Guid.TryParse(tokenParts[0], out accountId))
+                return Unauthorized(new { success = false, message = "Token không hợp lệ." });
+            userName = tokenParts[1];
+        }
+        catch
+        {
+            return Unauthorized(new { success = false, message = "Token không hợp lệ." });
+        }
+
+        var account = await _context.Accounts
+            .Include(a => a.Employee).ThenInclude(e => e!.Department)
+            .FirstOrDefaultAsync(a => a.AccountId == accountId && a.UserName == userName && a.Status == "Active");
+
+        if (account == null)
+            return Unauthorized(new { success = false, message = "Tài khoản không hợp lệ." });
+
+        var user = await MapToUserInfoAsync(account);
+        return Ok(new
+        {
+            success = true,
+            user,
+            account = new { accountId = account.AccountId, userName = account.UserName },
+            token = new { accessToken = token, refreshToken = body?.RefreshToken },
+            refreshToken = body?.RefreshToken
+        });
+    }
+
+    /// <summary>
     /// Test endpoint để kiểm tra Bearer token authentication
     /// </summary>
     /// <returns>Thông tin user từ token nếu authenticated thành công</returns>
@@ -465,8 +513,6 @@ public class AuthController : ControllerBase
             var accountId = User.FindFirst("AccountId")?.Value;
             var userName = User.Identity?.Name;
             var employeeId = User.FindFirst("EmployeeId")?.Value;
-            var permissionId = User.FindFirst("PermissionId")?.Value;
-            var permissionCode = User.FindFirst("PermissionCode")?.Value;
             var fullName = User.FindFirst(System.Security.Claims.ClaimTypes.GivenName)?.Value;
             var email = User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;
 
@@ -479,8 +525,6 @@ public class AuthController : ControllerBase
                     accountId = accountId,
                     userName = userName,
                     employeeId = employeeId,
-                    permissionId = permissionId,
-                    permissionCode = permissionCode,
                     fullName = fullName,
                     email = email,
                     isAuthenticated = User.Identity?.IsAuthenticated ?? false,

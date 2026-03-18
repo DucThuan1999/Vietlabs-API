@@ -21,9 +21,8 @@ public class UserInfo
     public string Department { get; set; } = string.Empty;
     public string Role { get; set; } = string.Empty;
     public string Title { get; set; } = string.Empty;
-    public Guid PermissionId { get; set; }
-    public string PermissionName { get; set; } = string.Empty;
-    public string PermissionCode { get; set; } = string.Empty;
     public string Status { get; set; } = string.Empty;
+    /// <summary>Mã quyền dạng Module.Action (ví dụ Quotation.View, Admin.Edit).</summary>
+    public List<string> GrantedPermissionCodes { get; set; } = new();
 }
 

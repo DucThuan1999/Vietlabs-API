@@ -13,5 +13,6 @@ public class RefreshTokenResponse
     public string? RefreshToken { get; set; } // Refresh token mới (nếu rotate)
     public DateTime? TokenExpiresAt { get; set; }
     public DateTime? RefreshTokenExpiresAt { get; set; }
+    public UserInfo? User { get; set; }
 }
 

@@ -6,8 +6,10 @@ namespace VietLab.Models;
 public class Subcontractor
 {
     public Guid SubcontractorId { get; set; }
-    /// <summary>Mã nhà thầu</summary>
+    /// <summary>Mã nhà thầu phụ (NTP-001, NTP-002, ...)</summary>
     public string Code { get; set; } = string.Empty;
+    /// <summary>Short name (giá trị mã cũ trước khi chuyển sang NTP-xxx)</summary>
+    public string? ShortName { get; set; }
     /// <summary>Tên nhà thầu</summary>
     public string Name { get; set; } = string.Empty;
     /// <summary>Người liên hệ</summary>

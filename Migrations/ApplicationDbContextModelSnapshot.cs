@@ -38,10 +38,6 @@ namespace VietLab.Migrations
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("password_hash");
 
-                    b.Property<Guid>("PermissionId")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("permission_id");
-
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)")
@@ -58,9 +54,6 @@ namespace VietLab.Migrations
                         .IsUnique()
                         .HasDatabaseName("i_x_account_employee_id");
 
-                    b.HasIndex("PermissionId")
-                        .HasDatabaseName("i_x_account_permission_id");
-
                     b.ToTable("account", (string)null);
 
                     b.HasData(
@@ -69,7 +62,6 @@ namespace VietLab.Migrations
                             AccountId = new Guid("a1a1a1a1-a1a1-a1a1-a1a1-a1a1a1a1a1a1"),
                             EmployeeId = new Guid("44444444-4444-4444-4444-444444444444"),
                             PasswordHash = "hashed-password-1",
-                            PermissionId = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
                             Status = "Active",
                             UserName = "an.nguyen"
                         },
@@ -78,7 +70,6 @@ namespace VietLab.Migrations
                             AccountId = new Guid("b2b2b2b2-b2b2-b2b2-b2b2-b2b2b2b2b2b2"),
                             EmployeeId = new Guid("55555555-5555-5555-5555-555555555555"),
                             PasswordHash = "hashed-password-2",
-                            PermissionId = new Guid("cccccccc-cccc-cccc-cccc-cccccccccccc"),
                             Status = "Active",
                             UserName = "huong.le"
                         },
@@ -87,7 +78,6 @@ namespace VietLab.Migrations
                             AccountId = new Guid("c3c3c3c3-c3c3-c3c3-c3c3-c3c3c3c3c3c3"),
                             EmployeeId = new Guid("11111111-eeee-eeee-eeee-eeeeeeeeeeee"),
                             PasswordHash = "hashed-password-3",
-                            PermissionId = new Guid("dddddddd-dddd-dddd-dddd-dddddddddddd"),
                             Status = "Active",
                             UserName = "binh.tran"
                         },
@@ -96,7 +86,6 @@ namespace VietLab.Migrations
                             AccountId = new Guid("d4d4d4d4-d4d4-d4d4-d4d4-d4d4d4d4d4d4"),
                             EmployeeId = new Guid("22222222-ffff-ffff-ffff-ffffffffffff"),
                             PasswordHash = "hashed-password-4",
-                            PermissionId = new Guid("dddddddd-dddd-dddd-dddd-dddddddddddd"),
                             Status = "Active",
                             UserName = "mai.pham"
                         },
@@ -105,7 +94,6 @@ namespace VietLab.Migrations
                             AccountId = new Guid("e5e5e5e5-e5e5-e5e5-e5e5-e5e5e5e5e5e5"),
                             EmployeeId = new Guid("33333333-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
                             PasswordHash = "hashed-password-5",
-                            PermissionId = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
                             Status = "Active",
                             UserName = "duc.hoang"
                         },
@@ -114,7 +102,6 @@ namespace VietLab.Migrations
                             AccountId = new Guid("f6f6f6f6-f6f6-f6f6-f6f6-f6f6f6f6f6f6"),
                             EmployeeId = new Guid("44444444-1111-1111-1111-111111111111"),
                             PasswordHash = "hashed-password-6",
-                            PermissionId = new Guid("cccccccc-cccc-cccc-cccc-cccccccccccc"),
                             Status = "Active",
                             UserName = "lan.vu"
                         },
@@ -123,7 +110,6 @@ namespace VietLab.Migrations
                             AccountId = new Guid("17171717-1717-1717-1717-171717171717"),
                             EmployeeId = new Guid("55555555-2222-2222-2222-222222222222"),
                             PasswordHash = "hashed-password-7",
-                            PermissionId = new Guid("cccccccc-cccc-cccc-cccc-cccccccccccc"),
                             Status = "Active",
                             UserName = "hung.do"
                         },
@@ -132,10 +118,117 @@ namespace VietLab.Migrations
                             AccountId = new Guid("28282828-2828-2828-2828-282828282828"),
                             EmployeeId = new Guid("66666666-3333-3333-3333-333333333333"),
                             PasswordHash = "hashed-password-8",
-                            PermissionId = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
                             Status = "Active",
                             UserName = "hoa.bui"
                         });
+                });
+
+            modelBuilder.Entity("VietLab.Models.AccountModuleGrant", b =>
+                {
+                    b.Property<Guid>("AccountModuleGrantId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("account_module_grant_id");
+
+                    b.Property<Guid>("AccountId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("account_id");
+
+                    b.Property<Guid>("MatrixActionId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("matrix_action_id");
+
+                    b.Property<Guid>("SecurityModuleId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("security_module_id");
+
+                    b.HasKey("AccountModuleGrantId");
+
+                    b.HasIndex("AccountId", "SecurityModuleId", "MatrixActionId")
+                        .IsUnique()
+                        .HasDatabaseName("IX_account_module_grant_account_module_action");
+
+                    b.ToTable("account_module_grant", (string)null);
+                });
+
+            modelBuilder.Entity("VietLab.Models.MatrixAction", b =>
+                {
+                    b.Property<Guid>("MatrixActionId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("matrix_action_id");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)")
+                        .HasColumnName("code");
+
+                    b.Property<string>("NameVi")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("name_vi");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("int")
+                        .HasColumnName("sort_order");
+
+                    b.HasKey("MatrixActionId");
+
+                    b.HasIndex("Code")
+                        .IsUnique()
+                        .HasDatabaseName("IX_matrix_action_code");
+
+                    b.ToTable("matrix_action", (string)null);
+                });
+
+            modelBuilder.Entity("VietLab.Models.SecurityModule", b =>
+                {
+                    b.Property<Guid>("SecurityModuleId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("security_module_id");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)")
+                        .HasColumnName("code");
+
+                    b.Property<string>("NameVi")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("name_vi");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("int")
+                        .HasColumnName("sort_order");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("status");
+
+                    b.HasKey("SecurityModuleId");
+
+                    b.HasIndex("Code")
+                        .IsUnique()
+                        .HasDatabaseName("IX_security_module_code");
+
+                    b.ToTable("security_module", (string)null);
+                });
+
+            modelBuilder.Entity("VietLab.Models.SecurityModuleAction", b =>
+                {
+                    b.Property<Guid>("MatrixActionId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("matrix_action_id");
+
+                    b.Property<Guid>("SecurityModuleId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("security_module_id");
+
+                    b.HasKey("SecurityModuleId", "MatrixActionId");
+
+                    b.ToTable("security_module_matrix_action", (string)null);
                 });
 
             modelBuilder.Entity("VietLab.Models.AnalysisGroup", b =>
@@ -2896,10 +2989,6 @@ namespace VietLab.Migrations
                         .HasColumnType("nvarchar(1000)")
                         .HasColumnName("attachment_path");
 
-                    b.Property<Guid>("ClientId")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("client_id");
-
                     b.Property<string>("ContentType")
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)")
@@ -2918,14 +3007,24 @@ namespace VietLab.Migrations
                         .HasColumnType("bigint")
                         .HasColumnName("file_size");
 
+                    b.Property<string>("ModuleCode")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)")
+                        .HasColumnName("module_code");
+
+                    b.Property<Guid>("OwnerId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("owner_id");
+
                     b.Property<DateTime?>("UpdatedDate")
                         .HasColumnType("datetime2")
                         .HasColumnName("updated_date");
 
                     b.HasKey("StoreRecordId");
 
-                    b.HasIndex("ClientId")
-                        .HasDatabaseName("i_x_store_record_client_id");
+                    b.HasIndex("ModuleCode", "OwnerId")
+                        .HasDatabaseName("i_x_store_record_module_owner");
 
                     b.ToTable("store_record", (string)null);
                 });
@@ -3007,16 +3106,60 @@ namespace VietLab.Migrations
                         .IsRequired()
                         .HasConstraintName("f_k_account_employee_employee_id");
 
-                    b.HasOne("VietLab.Models.Permission", "Permission")
-                        .WithMany("Accounts")
-                        .HasForeignKey("PermissionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("f_k_account_permission_permission_id");
-
                     b.Navigation("Employee");
 
-                    b.Navigation("Permission");
+                    b.Navigation("ModuleGrants");
+                });
+
+            modelBuilder.Entity("VietLab.Models.AccountModuleGrant", b =>
+                {
+                    b.HasOne("VietLab.Models.Account", "Account")
+                        .WithMany("ModuleGrants")
+                        .HasForeignKey("AccountId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("FK_account_module_grant_account_account_id");
+
+                    b.HasOne("VietLab.Models.MatrixAction", "MatrixAction")
+                        .WithMany("AccountGrants")
+                        .HasForeignKey("MatrixActionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("FK_account_module_grant_matrix_action_matrix_action_id");
+
+                    b.HasOne("VietLab.Models.SecurityModule", "SecurityModule")
+                        .WithMany("AccountGrants")
+                        .HasForeignKey("SecurityModuleId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("FK_account_module_grant_security_module_security_module_id");
+
+                    b.Navigation("Account");
+
+                    b.Navigation("MatrixAction");
+
+                    b.Navigation("SecurityModule");
+                });
+
+            modelBuilder.Entity("VietLab.Models.SecurityModuleAction", b =>
+                {
+                    b.HasOne("VietLab.Models.MatrixAction", "MatrixAction")
+                        .WithMany("ModuleActions")
+                        .HasForeignKey("MatrixActionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("FK_security_module_matrix_action_matrix_action_matrix_action_id");
+
+                    b.HasOne("VietLab.Models.SecurityModule", "SecurityModule")
+                        .WithMany("ModuleActions")
+                        .HasForeignKey("SecurityModuleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("FK_security_module_matrix_action_security_module_security_module_id");
+
+                    b.Navigation("MatrixAction");
+
+                    b.Navigation("SecurityModule");
                 });
 
             modelBuilder.Entity("VietLab.Models.AnalysisItem", b =>
@@ -3310,14 +3453,6 @@ namespace VietLab.Migrations
 
             modelBuilder.Entity("VietLab.Models.StoreRecord", b =>
                 {
-                    b.HasOne("VietLab.Models.Client", "Client")
-                        .WithMany()
-                        .HasForeignKey("ClientId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("f_k_store_record_client_client_id");
-
-                    b.Navigation("Client");
                 });
 
             modelBuilder.Entity("VietLab.Models.Ward", b =>
@@ -3379,14 +3514,16 @@ namespace VietLab.Migrations
                     b.Navigation("Quotations");
                 });
 
+            modelBuilder.Entity("VietLab.Models.MatrixAction", b =>
+                {
+                    b.Navigation("AccountGrants");
+
+                    b.Navigation("ModuleActions");
+                });
+
             modelBuilder.Entity("VietLab.Models.Package", b =>
                 {
                     b.Navigation("PackageAnalysisGroups");
-                });
-
-            modelBuilder.Entity("VietLab.Models.Permission", b =>
-                {
-                    b.Navigation("Accounts");
                 });
 
             modelBuilder.Entity("VietLab.Models.Province", b =>
@@ -3402,6 +3539,13 @@ namespace VietLab.Migrations
             modelBuilder.Entity("VietLab.Models.SampleMatrixGroup", b =>
                 {
                     b.Navigation("SampleMatrices");
+                });
+
+            modelBuilder.Entity("VietLab.Models.SecurityModule", b =>
+                {
+                    b.Navigation("AccountGrants");
+
+                    b.Navigation("ModuleActions");
                 });
 #pragma warning restore 612, 618
         }

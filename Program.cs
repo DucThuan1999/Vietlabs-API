@@ -154,6 +154,7 @@ builder.Services.AddScoped<VietLab.Repositories.IStoreRepository, VietLab.Reposi
 // Add Services
 builder.Services.AddScoped<VietLab.Services.IClientHistoryService, VietLab.Services.ClientHistoryService>();
 builder.Services.AddScoped<VietLab.Services.IQuotationHistoryService, VietLab.Services.QuotationHistoryService>();
+builder.Services.AddScoped<VietLab.Services.ModulePermissionService>();
 
 // Luôn đăng ký Authentication + scheme Bearer (tránh lỗi "No authentication handlers are registered" khi gọi [Authorize(AuthenticationSchemes = "Bearer")])
 builder.Services.AddAuthentication(options =>

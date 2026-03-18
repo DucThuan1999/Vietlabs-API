@@ -193,3 +193,6 @@ FodyWeavers.xsd
 
 .scripts/
 .publish/
+
+# Thư mục publish deploy (dll/exe) — không đưa lên Git
+publish/

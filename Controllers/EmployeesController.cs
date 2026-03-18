@@ -37,7 +37,7 @@ public class EmployeesController : ODataController
             .Include(e => e.EmployeeTitle)
             .Include(e => e.Manager)
             .Include(e => e.UpdatedByAccount)
-            .Include(e => e.Account).ThenInclude(a => a!.Permission));
+            .Include(e => e.Account));
     }
 
     [HttpGet("Employees({key})")]
@@ -49,7 +49,7 @@ public class EmployeesController : ODataController
             .Include(e => e.EmployeeTitle)
             .Include(e => e.Manager)
             .Include(e => e.UpdatedByAccount)
-            .Include(e => e.Account).ThenInclude(a => a!.Permission)
+            .Include(e => e.Account)
             .FirstOrDefault(e => e.EmployeeId == key);
         if (employee == null)
         {
@@ -137,7 +137,7 @@ public class EmployeesController : ODataController
             .Include(e => e.EmployeeTitle)
             .Include(e => e.Manager)
             .Include(e => e.UpdatedByAccount)
-            .Include(e => e.Account).ThenInclude(a => a!.Permission)
+            .Include(e => e.Account)
             .FirstOrDefaultAsync(e => e.EmployeeId == key);
         return Updated(updated ?? existing);
     }

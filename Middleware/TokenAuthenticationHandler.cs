@@ -75,7 +75,6 @@ public class TokenAuthenticationHandler : AuthenticationHandler<AuthenticationSc
             // Tìm account trong database
             var account = await _context.Accounts
                 .Include(a => a.Employee)
-                .Include(a => a.Permission)
                 .FirstOrDefaultAsync(a => a.AccountId == accountId && a.UserName == userName && a.Status == "Active");
 
             if (account == null)
@@ -94,7 +93,6 @@ public class TokenAuthenticationHandler : AuthenticationHandler<AuthenticationSc
                 // Tìm account đầu tiên có UserName trùng hoặc tìm account admin
                 var fallbackAccount = await _context.Accounts
                     .Include(a => a.Employee)
-                    .Include(a => a.Permission)
                     .FirstOrDefaultAsync(a => a.UserName == userName && a.Status == "Active");
                 
                 if (fallbackAccount != null)
@@ -116,8 +114,6 @@ public class TokenAuthenticationHandler : AuthenticationHandler<AuthenticationSc
                 new Claim(ClaimTypes.Name, account.UserName),
                 new Claim("AccountId", account.AccountId.ToString()),
                 new Claim("EmployeeId", account.EmployeeId.ToString()),
-                new Claim("PermissionId", account.PermissionId.ToString()),
-                new Claim("PermissionCode", account.Permission?.PermissionCode ?? ""),
             };
 
             if (account.Employee != null)

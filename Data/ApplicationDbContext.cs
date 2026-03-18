@@ -53,6 +53,11 @@ public class ApplicationDbContext : DbContext
     public DbSet<Standard> Standards { get; set; }
     public DbSet<ReferenceMethod> ReferenceMethods { get; set; }
     public DbSet<UnitOfMeasure> UnitOfMeasures { get; set; }
+    public DbSet<LaboratoryTechnique> LaboratoryTechniques { get; set; }
+    public DbSet<SecurityModule> SecurityModules { get; set; }
+    public DbSet<MatrixAction> MatrixActions { get; set; }
+    public DbSet<SecurityModuleAction> SecurityModuleActions { get; set; }
+    public DbSet<AccountModuleGrant> AccountModuleGrants { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -101,6 +106,11 @@ public class ApplicationDbContext : DbContext
         modelBuilder.ApplyConfiguration(new StandardConfiguration());
         modelBuilder.ApplyConfiguration(new ReferenceMethodConfiguration());
         modelBuilder.ApplyConfiguration(new UnitOfMeasureConfiguration());
+        modelBuilder.ApplyConfiguration(new LaboratoryTechniqueConfiguration());
+        modelBuilder.ApplyConfiguration(new SecurityModuleConfiguration());
+        modelBuilder.ApplyConfiguration(new MatrixActionConfiguration());
+        modelBuilder.ApplyConfiguration(new SecurityModuleActionConfiguration());
+        modelBuilder.ApplyConfiguration(new AccountModuleGrantConfiguration());
 
         // Tất cả tên bảng đã được set trong Configuration classes
         // Chỉ cần convert tên cột sang snake_case
@@ -128,7 +138,8 @@ public class ApplicationDbContext : DbContext
                                        entityType.ClrType.Name == "SubcontractorCapabilityDesignation" ||
                                        entityType.ClrType.Name == "Standard" ||
                                        entityType.ClrType.Name == "ReferenceMethod" ||
-                                       entityType.ClrType.Name == "UnitOfMeasure";
+                                       entityType.ClrType.Name == "UnitOfMeasure" ||
+                                       entityType.ClrType.Name == "LaboratoryTechnique";
                     
                     if (!isManuallySet)
                     {
@@ -207,12 +218,6 @@ public class ApplicationDbContext : DbContext
             .HasOne(a => a.Employee)
             .WithOne(e => e.Account)
             .HasForeignKey<Account>(a => a.EmployeeId);
-
-        // Quan hệ 1-n: Permission - Accounts (một account có 1 permission)
-        modelBuilder.Entity<Account>()
-            .HasOne(a => a.Permission)
-            .WithMany(p => p.Accounts)
-            .HasForeignKey(a => a.PermissionId);
 
         // Quan hệ 1-n: Account - RefreshTokens
         modelBuilder.Entity<RefreshToken>()
@@ -492,7 +497,6 @@ public class ApplicationDbContext : DbContext
             {
                 AccountId = acc1Id,
                 EmployeeId = emp1Id,
-                PermissionId = permAdminId,
                 UserName = "an.nguyen",
                 PasswordHash = "hashed-password-1",
                 Status = "Active"
@@ -501,7 +505,6 @@ public class ApplicationDbContext : DbContext
             {
                 AccountId = acc2Id,
                 EmployeeId = emp2Id,
-                PermissionId = permManagerId,
                 UserName = "huong.le",
                 PasswordHash = "hashed-password-2",
                 Status = "Active"
@@ -510,7 +513,6 @@ public class ApplicationDbContext : DbContext
             {
                 AccountId = acc3Id,
                 EmployeeId = emp3Id,
-                PermissionId = permSalesId,
                 UserName = "binh.tran",
                 PasswordHash = "hashed-password-3",
                 Status = "Active"
@@ -519,7 +521,6 @@ public class ApplicationDbContext : DbContext
             {
                 AccountId = acc4Id,
                 EmployeeId = emp4Id,
-                PermissionId = permSalesId,
                 UserName = "mai.pham",
                 PasswordHash = "hashed-password-4",
                 Status = "Active"
@@ -528,7 +529,6 @@ public class ApplicationDbContext : DbContext
             {
                 AccountId = acc5Id,
                 EmployeeId = emp5Id,
-                PermissionId = permUserId,
                 UserName = "duc.hoang",
                 PasswordHash = "hashed-password-5",
                 Status = "Active"
@@ -537,7 +537,6 @@ public class ApplicationDbContext : DbContext
             {
                 AccountId = acc6Id,
                 EmployeeId = emp6Id,
-                PermissionId = permManagerId,
                 UserName = "lan.vu",
                 PasswordHash = "hashed-password-6",
                 Status = "Active"
@@ -546,7 +545,6 @@ public class ApplicationDbContext : DbContext
             {
                 AccountId = acc7Id,
                 EmployeeId = emp7Id,
-                PermissionId = permManagerId,
                 UserName = "hung.do",
                 PasswordHash = "hashed-password-7",
                 Status = "Active"
@@ -555,7 +553,6 @@ public class ApplicationDbContext : DbContext
             {
                 AccountId = acc8Id,
                 EmployeeId = emp8Id,
-                PermissionId = permUserId,
                 UserName = "hoa.bui",
                 PasswordHash = "hashed-password-8",
                 Status = "Active"
@@ -1490,6 +1487,56 @@ public class ApplicationDbContext : DbContext
         );
 
         // PackageAnalysisItems: không seed mặc định (gắn chỉ tiêu vào gói qua API hoặc migration dữ liệu)
+
+        // Danh mục Kĩ thuật (liên kết AnalysisItem.LaboratoryTechniqueId)
+        var ltSacKy = Guid.Parse("7b000001-0001-4001-8001-000000000001");
+        var ltCoDien = Guid.Parse("7b000001-0002-4002-8002-000000000002");
+        var ltQuangPho = Guid.Parse("7b000001-0003-4003-8003-000000000003");
+        var ltViSinh = Guid.Parse("7b000001-0004-4004-8004-000000000004");
+        var labTechSeedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+
+        modelBuilder.Entity<LaboratoryTechnique>().HasData(
+            new LaboratoryTechnique
+            {
+                LaboratoryTechniqueId = ltSacKy,
+                SequenceNumber = 1,
+                TechniqueCode = "SAC_KY",
+                NameVi = "Sắc Ký",
+                NameEn = "Chromatography",
+                Status = "Active",
+                CreatedAt = labTechSeedAt
+            },
+            new LaboratoryTechnique
+            {
+                LaboratoryTechniqueId = ltCoDien,
+                SequenceNumber = 2,
+                TechniqueCode = "CO_DIEN",
+                NameVi = "Cổ Điển",
+                NameEn = "Classical",
+                Status = "Active",
+                CreatedAt = labTechSeedAt
+            },
+            new LaboratoryTechnique
+            {
+                LaboratoryTechniqueId = ltQuangPho,
+                SequenceNumber = 3,
+                TechniqueCode = "QUANG_PHO",
+                NameVi = "Quang Phổ",
+                NameEn = "Spectroscopy",
+                Status = "Active",
+                CreatedAt = labTechSeedAt
+            },
+            new LaboratoryTechnique
+            {
+                LaboratoryTechniqueId = ltViSinh,
+                SequenceNumber = 4,
+                TechniqueCode = "VI_SINH",
+                NameVi = "Vi Sinh",
+                NameEn = "Microbiology",
+                Status = "Active",
+                CreatedAt = labTechSeedAt
+            }
+        );
     }
 
     /// <summary>

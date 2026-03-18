@@ -18,8 +18,14 @@ public class StoreRecordConfiguration : IEntityTypeConfiguration<StoreRecord>
         builder.Property(sr => sr.StoreRecordId)
             .HasColumnName("store_record_id");
 
-        builder.Property(sr => sr.ClientId)
-            .HasColumnName("client_id");
+        builder.Property(sr => sr.ModuleCode)
+            .HasColumnName("module_code")
+            .HasMaxLength(50)
+            .IsRequired();
+
+        builder.Property(sr => sr.OwnerId)
+            .HasColumnName("owner_id")
+            .IsRequired();
 
         builder.Property(sr => sr.AttachmentName)
             .HasColumnName("attachment_name")
@@ -51,12 +57,8 @@ public class StoreRecordConfiguration : IEntityTypeConfiguration<StoreRecord>
         builder.Property(sr => sr.UpdatedBy)
             .HasColumnName("updated_by");
 
-        // Foreign key relationship (optional: ClientId nullable)
-        builder.HasOne(sr => sr.Client)
-            .WithMany()
-            .HasForeignKey(sr => sr.ClientId)
-            .IsRequired(false)
-            .OnDelete(DeleteBehavior.Cascade);
+        builder.HasIndex(sr => new { sr.ModuleCode, sr.OwnerId })
+            .HasDatabaseName("i_x_store_record_module_owner");
 
         builder.HasOne(sr => sr.UpdatedByAccount)
             .WithMany()

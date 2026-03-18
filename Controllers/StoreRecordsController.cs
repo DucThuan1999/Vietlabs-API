@@ -18,7 +18,7 @@ public class StoreRecordsController : ControllerBase
     }
 
     [HttpPost("create-file")]
-    public async Task<IActionResult> CreateFile(Guid? clientId, string? attachmentName, IFormFile file)
+    public async Task<IActionResult> CreateFile(string moduleCode, Guid ownerId, string? attachmentName, IFormFile file)
     {
         try
         {
@@ -26,8 +26,12 @@ public class StoreRecordsController : ControllerBase
             {
                 return BadRequest("No file uploaded.");
             }
+            if (string.IsNullOrWhiteSpace(moduleCode))
+            {
+                return BadRequest("ModuleCode is required.");
+            }
 
-            var storeRecord = await _storeRepo.CreateFile(clientId, attachmentName, file);
+            var storeRecord = await _storeRepo.CreateFile(moduleCode.Trim(), ownerId, attachmentName, file);
             return Ok(storeRecord);
         }
         catch (Exception ex)
@@ -97,11 +101,15 @@ public class StoreRecordsController : ControllerBase
     }
 
     [HttpGet("get-folder-info")]
-    public IActionResult GetFolderInfo(Guid clientId)
+    public IActionResult GetFolderInfo(string moduleCode, Guid ownerId)
     {
         try
         {
-            var filesInfo = _storeRepo.GetFolderInfo(clientId);
+            if (string.IsNullOrWhiteSpace(moduleCode))
+            {
+                return BadRequest("ModuleCode is required.");
+            }
+            var filesInfo = _storeRepo.GetFolderInfo(moduleCode.Trim(), ownerId);
             return Ok(filesInfo);
         }
         catch (Exception ex)
@@ -125,11 +133,15 @@ public class StoreRecordsController : ControllerBase
     }
 
     [HttpDelete("delete-folder")]
-    public IActionResult DeleteFolder(Guid clientId)
+    public IActionResult DeleteFolder(string moduleCode, Guid ownerId)
     {
         try
         {
-            _storeRepo.DeleteFolder(clientId);
+            if (string.IsNullOrWhiteSpace(moduleCode))
+            {
+                return BadRequest("ModuleCode is required.");
+            }
+            _storeRepo.DeleteFolder(moduleCode.Trim(), ownerId);
             return Ok("Folder deleted successfully.");
         }
         catch (Exception ex)
@@ -137,4 +149,4 @@ public class StoreRecordsController : ControllerBase
             return BadRequest(ex.Message);
         }
     }
-    }
+}

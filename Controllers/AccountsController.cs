@@ -21,22 +21,23 @@ public class AccountsController : ODataController
         _logger = logger;
     }
 
+    private static IQueryable<Account> AccountsWithEmployeeGraph(IQueryable<Account> query) =>
+        query
+            .Include(a => a.Employee)!.ThenInclude(e => e!.Department)
+            .Include(a => a.Employee)!.ThenInclude(e => e!.EmployeeTitle);
+
     [HttpGet("Accounts")]
     [EnableQuery]
     public IActionResult Get()
     {
-        return Ok(_context.Accounts
-            .Include(a => a.Employee).ThenInclude(e => e!.EmployeeTitle)
-            .Include(a => a.Permission));
+        return Ok(AccountsWithEmployeeGraph(_context.Accounts));
     }
 
     [HttpGet("Accounts({key})")]
     [EnableQuery]
     public IActionResult Get([FromRoute] Guid key)
     {
-        var account = _context.Accounts
-            .Include(a => a.Employee).ThenInclude(e => e!.EmployeeTitle)
-            .Include(a => a.Permission)
+        var account = AccountsWithEmployeeGraph(_context.Accounts)
             .FirstOrDefault(a => a.AccountId == key);
         if (account == null)
         {
@@ -98,9 +99,13 @@ public class AccountsController : ODataController
 
         // Chỉ cập nhật scalar/FK từ body, không dùng navigation từ body
         existing.EmployeeId = account.EmployeeId;
-        existing.PermissionId = account.PermissionId;
         existing.UserName = account.UserName;
-        existing.PasswordHash = account.PasswordHash;
+        // Body PATCH kiểu (form nhân viên) thường không gửi PasswordHash → null xóa mật khẩu.
+        // Chỉ đổi hash khi client gửi giá trị thật (đổi mật khẩu).
+        if (!string.IsNullOrEmpty(account.PasswordHash))
+        {
+            existing.PasswordHash = account.PasswordHash;
+        }
         existing.Status = account.Status;
 
         try

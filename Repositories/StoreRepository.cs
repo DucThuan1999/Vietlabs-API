@@ -20,10 +20,9 @@ public class StoreRepository : IStoreRepository
         _logger = logger;
     }
 
-    private string GetStoragePath(Guid? clientId)
+    private string GetStoragePath(string moduleCode, Guid ownerId)
     {
-        var folderName = clientId.HasValue ? clientId.Value.ToString() : "Unassigned";
-        var uploadsPath = Path.Combine(_environment.ContentRootPath, "Uploads", folderName);
+        var uploadsPath = Path.Combine(_environment.ContentRootPath, "Uploads", moduleCode, ownerId.ToString());
         if (!Directory.Exists(uploadsPath))
         {
             Directory.CreateDirectory(uploadsPath);
@@ -31,18 +30,21 @@ public class StoreRepository : IStoreRepository
         return uploadsPath;
     }
 
-    public async Task<StoreRecord> CreateFile(Guid? clientId, string? attachmentName, IFormFile file)
+    public async Task<StoreRecord> CreateFile(string moduleCode, Guid ownerId, string? attachmentName, IFormFile file)
     {
         if (file == null || file.Length == 0)
         {
             throw new ArgumentException("File is required");
         }
+        if (string.IsNullOrWhiteSpace(moduleCode))
+        {
+            throw new ArgumentException("ModuleCode is required");
+        }
 
-        var folderName = clientId.HasValue ? clientId.Value.ToString() : "Unassigned";
-        var storagePath = GetStoragePath(clientId);
+        var storagePath = GetStoragePath(moduleCode, ownerId);
         var fileName = $"{Guid.NewGuid()}_{file.FileName}";
         var filePath = Path.Combine(storagePath, fileName);
-        var relativePath = Path.Combine("Uploads", folderName, fileName).Replace("\\", "/");
+        var relativePath = Path.Combine("Uploads", moduleCode, ownerId.ToString(), fileName).Replace("\\", "/");
 
         // Save file to disk
         using (var stream = new FileStream(filePath, FileMode.Create))
@@ -50,11 +52,11 @@ public class StoreRepository : IStoreRepository
             await file.CopyToAsync(stream);
         }
 
-        // Create database record
         var storeRecord = new StoreRecord
         {
             StoreRecordId = Guid.NewGuid(),
-            ClientId = clientId,
+            ModuleCode = moduleCode.Trim(),
+            OwnerId = ownerId,
             AttachmentName = attachmentName ?? file.FileName,
             AttachmentPath = relativePath,
             FileName = file.FileName,
@@ -89,12 +91,11 @@ public class StoreRepository : IStoreRepository
             File.Delete(oldFilePath);
         }
 
-        // Save new file
-        var folderName = storeRecord.ClientId.HasValue ? storeRecord.ClientId.Value.ToString() : "Unassigned";
-        var storagePath = GetStoragePath(storeRecord.ClientId);
+        // Save new file (same module/owner as existing record)
+        var storagePath = GetStoragePath(storeRecord.ModuleCode, storeRecord.OwnerId);
         var fileName = $"{Guid.NewGuid()}_{file.FileName}";
         var filePath = Path.Combine(storagePath, fileName);
-        var relativePath = Path.Combine("Uploads", folderName, fileName).Replace("\\", "/");
+        var relativePath = Path.Combine("Uploads", storeRecord.ModuleCode, storeRecord.OwnerId.ToString(), fileName).Replace("\\", "/");
 
         using (var stream = new FileStream(filePath, FileMode.Create))
         {
@@ -136,10 +137,10 @@ public class StoreRepository : IStoreRepository
         return _context.StoreRecords.Find(storeRecordId);
     }
 
-    public List<StoreRecord> GetFolderInfo(Guid clientId)
+    public List<StoreRecord> GetFolderInfo(string moduleCode, Guid ownerId)
     {
         return _context.StoreRecords
-            .Where(sr => sr.ClientId == clientId)
+            .Where(sr => sr.ModuleCode == moduleCode && sr.OwnerId == ownerId)
             .OrderByDescending(sr => sr.CreatedDate)
             .ToList();
     }
@@ -162,16 +163,16 @@ public class StoreRepository : IStoreRepository
         }
     }
 
-    public void DeleteFolder(Guid clientId)
+    public void DeleteFolder(string moduleCode, Guid ownerId)
     {
-        var storagePath = GetStoragePath(clientId);
+        var storagePath = GetStoragePath(moduleCode, ownerId);
         if (Directory.Exists(storagePath))
         {
             Directory.Delete(storagePath, true);
         }
 
         var storeRecords = _context.StoreRecords
-            .Where(sr => sr.ClientId == clientId)
+            .Where(sr => sr.ModuleCode == moduleCode && sr.OwnerId == ownerId)
             .ToList();
 
         if (storeRecords.Any())

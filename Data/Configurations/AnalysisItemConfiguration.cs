@@ -64,6 +64,9 @@ public class AnalysisItemConfiguration : IEntityTypeConfiguration<AnalysisItem>
         builder.Property(ai => ai.UnitOfMeasureId)
             .HasColumnName("unit_of_measure_id");
 
+        builder.Property(ai => ai.LaboratoryTechniqueId)
+            .HasColumnName("laboratory_technique_id");
+
         builder.Property(ai => ai.PublishedGroupCode)
             .HasColumnName("published_group_code")
             .HasMaxLength(255);
@@ -75,6 +78,17 @@ public class AnalysisItemConfiguration : IEntityTypeConfiguration<AnalysisItem>
         builder.Property(ai => ai.Loq)
             .HasColumnName("loq")
             .HasColumnType("decimal(10,3)");
+
+        builder.Property(ai => ai.StandardValue)
+            .HasColumnName("standard_value")
+            .HasMaxLength(500);
+
+        builder.Property(ai => ai.StandardQuantityText)
+            .HasColumnName("standard_quantity_text")
+            .HasMaxLength(500);
+
+        builder.Property(ai => ai.StandardQuantityUnitOfMeasureId)
+            .HasColumnName("standard_quantity_unit_of_measure_id");
 
         builder.Property(ai => ai.UnitPrice)
             .HasColumnName("unit_price")
@@ -136,6 +150,16 @@ public class AnalysisItemConfiguration : IEntityTypeConfiguration<AnalysisItem>
         builder.HasOne(ai => ai.UnitOfMeasure)
             .WithMany(u => u.AnalysisItems)
             .HasForeignKey(ai => ai.UnitOfMeasureId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(ai => ai.StandardQuantityUnitOfMeasure)
+            .WithMany()
+            .HasForeignKey(ai => ai.StandardQuantityUnitOfMeasureId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(ai => ai.LaboratoryTechnique)
+            .WithMany(lt => lt.AnalysisItems)
+            .HasForeignKey(ai => ai.LaboratoryTechniqueId)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne(ai => ai.UpdatedByAccount)
