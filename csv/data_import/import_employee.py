@@ -100,8 +100,99 @@ HEADER_TEN_NV = "Tên Nhân Viên"
 HEADER_EMAIL = "Email"
 HEADER_SDT = "SĐT"
 HEADER_PHONG_BAN = "Phòng Ban"
+HEADER_BO_PHAN = "Bộ phận"
 HEADER_CHUC_VU = "Chức Vụ"
 HEADER_QUAN_LY_TRUC_TIEP = "Quản lý trực tiếp"
+
+
+def load_sections(cursor) -> Dict[str, str]:
+    """Load section: name_vi (normalized) và section_code -> section_id (guid string)."""
+    cursor.execute("""
+        SELECT section_id, name_vi, section_code
+        FROM section
+        WHERE status = N'Active'
+    """)
+    rows = cursor.fetchall()
+    result = {}
+    for row in rows:
+        sec_id = str(row[0])
+        name_vi = (row[1] or "").strip()
+        code = (row[2] or "").strip()
+        key = normalize_name(name_vi)
+        if key:
+            result[key] = sec_id
+        if code:
+            result[code.upper()] = sec_id
+    return result
+
+
+def cleanup_stale_employees(cursor, csv_codes: set):
+    """Xóa nhân viên trong DB không có trong CSV và dọn dẹp liên kết."""
+    print("--- Bắt đầu dọn dẹp nhân viên không có trong CSV ---")
+    cursor.execute("SELECT employee_id, employee_code, full_name FROM employee")
+    db_employees = cursor.fetchall()
+    
+    to_delete = []
+    for eid, code, name in db_employees:
+        c = (code or "").strip().upper()
+        if c and c not in csv_codes:
+            to_delete.append((str(eid), c, name))
+            
+    if not to_delete:
+        print("Không có nhân viên nào thừa cần xóa.")
+        return
+
+    print(f"Phát hiện {len(to_delete)} nhân viên cần xóa khỏi DB.")
+
+    audit_tables = [
+        ('client_industry', 'created_by'), ('client_industry', 'updated_by'),
+        ('employee_title', 'created_by'), ('employee_title', 'updated_by'),
+        ('branch', 'updated_by'), ('department', 'updated_by'),
+        ('employee', 'updated_by'), ('section', 'updated_by'),
+        ('client_history', 'changed_by_account_id'), ('quotation_history', 'changed_by_account_id'),
+        ('quotation', 'employee_id'), ('employee', 'manager_id'),
+        ('employee_analysis_capability', 'employee_id'), ('module_approver', 'approver_employee_id')
+    ]
+
+    deleted_count = 0
+    skipped_count = 0
+
+    for emp_id, code, name in to_delete:
+        try:
+            # Lấy account_id
+            cursor.execute("SELECT account_id FROM account WHERE employee_id = ?", (emp_id,))
+            acc_row = cursor.fetchone()
+            acc_id = str(acc_row[0]) if acc_row else None
+
+            # 1. Try to nullify references
+            for table, col in audit_tables:
+                # Nếu là audit field (account_id)
+                if acc_id and col in ['created_by', 'updated_by', 'changed_by_account_id']:
+                    try:
+                        cursor.execute(f"UPDATE [{table}] SET [{col}] = NULL WHERE [{col}] = ?", (acc_id,))
+                    except: pass # Bỏ qua nếu không cho NULL
+                # Nếu là employee_id direct ref
+                elif col in ['employee_id', 'manager_id', 'approver_employee_id']:
+                    try:
+                        cursor.execute(f"UPDATE [{table}] SET [{col}] = NULL WHERE [{col}] = ?", (emp_id,))
+                    except: pass
+
+            # 2. Xóa Account related
+            if acc_id:
+                cursor.execute("DELETE FROM refresh_token WHERE account_id = ?", (acc_id,))
+                cursor.execute("DELETE FROM account_module_grant WHERE account_id = ?", (acc_id,))
+                cursor.execute("DELETE FROM account WHERE account_id = ?", (acc_id,))
+            
+            # 3. Xóa Employee
+            cursor.execute("DELETE FROM employee WHERE employee_id = ?", (emp_id,))
+            deleted_count += 1
+            print(f"  [Xóa] {code} - {name}")
+
+        except Exception as e:
+            skipped_count += 1
+            print(f"  [Bỏ qua] {code} - {name} (Lỗi: có dữ liệu liên kết không thể xóa)")
+
+    print(f"Hoàn tất: Đã xóa {deleted_count}, Bỏ qua {skipped_count} nhân viên.")
 
 
 def _cell(d: Dict[str, str], key: str) -> str:
@@ -110,10 +201,10 @@ def _cell(d: Dict[str, str], key: str) -> str:
     return (val or "").strip()
 
 
-def parse_csv_row_dict(row_dict: Dict[str, str]) -> Optional[Tuple[str, str, str, str, str, str, str]]:
+def parse_csv_row_dict(row_dict: Dict[str, str]) -> Optional[Tuple[str, str, str, str, str, str, str, str]]:
     """
     Parse 1 dòng CSV (đã chuyển thành dict theo header).
-    Trả về (employee_code, full_name, email, phone, department, title, manager_name) hoặc None nếu bỏ qua.
+    Trả về (employee_code, full_name, email, phone, department, section, title, manager_name) hoặc None nếu bỏ qua.
     Cột "Quản lý trực tiếp" -> manager_name (dùng để set manager_id sau khi insert).
     """
     stt = _cell(row_dict, HEADER_STT)
@@ -122,6 +213,7 @@ def parse_csv_row_dict(row_dict: Dict[str, str]) -> Optional[Tuple[str, str, str
     email = _cell(row_dict, HEADER_EMAIL)
     phone = _cell(row_dict, HEADER_SDT)
     department = _cell(row_dict, HEADER_PHONG_BAN)
+    section = _cell(row_dict, HEADER_BO_PHAN)
     title = _cell(row_dict, HEADER_CHUC_VU)
     manager_name = _cell(row_dict, HEADER_QUAN_LY_TRUC_TIEP)
 
@@ -133,10 +225,10 @@ def parse_csv_row_dict(row_dict: Dict[str, str]) -> Optional[Tuple[str, str, str
     if not name:
         return None
 
-    return (code, name, email, phone, department, title, manager_name)
+    return (code, name, email, phone, department, section, title, manager_name)
 
 
-def read_employees_from_csv(path: str) -> List[Tuple[str, str, str, str, str, str, str]]:
+def read_employees_from_csv(path: str) -> List[Tuple[str, str, str, str, str, str, str, str]]:
     """Đọc file CSV theo header (delimiter ;), cột 'Quản lý trực tiếp' map -> manager_id."""
     rows_data = []
     with open(path, "r", encoding="utf-8-sig") as f:
@@ -164,8 +256,14 @@ def run():
         department_map = load_departments(cursor)
         print(f"Đã load {len(department_map)} phòng ban từ department.")
 
+        section_map = load_sections(cursor)
+        print(f"Đã load {len(section_map)} bộ phận từ section.")
+
         data = read_employees_from_csv(EMPLOYEE_CSV)
         print(f"Đọc được {len(data)} dòng nhân viên từ CSV.")
+
+        # Tập hợp mã NV từ CSV để cleanup sau này
+        csv_codes = {code.strip().upper() for code, _, _, _, _, _, _, _ in data if code}
 
         # Kiểm tra mã nhân viên đã tồn tại chưa
         cursor.execute("SELECT employee_code FROM employee WHERE employee_code IS NOT NULL")
@@ -177,7 +275,7 @@ def run():
         # Lưu (employee_code, full_name, manager_name) để cập nhật manager_id sau
         pending_managers: List[Tuple[str, str, str]] = []
 
-        for code, full_name, email, phone, department, title, manager_name in data:
+        for code, full_name, email, phone, department, section, title, manager_name in data:
             code_upper = code.upper()
             mobile = (phone or "").strip() or None
 
@@ -187,42 +285,65 @@ def run():
                 dept_key = normalize_name(department)
                 department_id = department_map.get(dept_key) or department_map.get(department.strip().upper())
 
+            # Map Bộ phận (CSV) -> section_id
+            section_id = None
+            if section:
+                sec_key = normalize_name(section)
+                section_id = section_map.get(sec_key) or section_map.get(section.strip().upper())
+
+            employee_id = None
             if code_upper in existing_codes:
-                # Nhân viên đã tồn tại: cập nhật mobile và department_id từ CSV
-                cursor.execute(
-                    "UPDATE employee SET mobile = ?, department_id = ? WHERE UPPER(LTRIM(RTRIM(employee_code))) = ?",
-                    (mobile, department_id, code_upper)
-                )
-                if cursor.rowcount > 0:
-                    updated_mobile += 1
+                # Tìm ID nhân viên đã có
+                cursor.execute("SELECT employee_id FROM employee WHERE UPPER(LTRIM(RTRIM(employee_code))) = ?", (code_upper,))
+                row = cursor.fetchone()
+                if row:
+                    employee_id = str(row[0])
+                    employee_title_id = None
+                    title_key = normalize_name(title)
+                    if title_key and title_key in title_map:
+                        employee_title_id = title_map[title_key]
+
+                    # Nhân viên đã tồn tại: cập nhật mobile, department_id, section_id, title từ CSV
+                    cursor.execute(
+                        """
+                        UPDATE employee 
+                        SET mobile = ?, department_id = ?, section_id = ?, 
+                            employee_title_id = ?, title = ? 
+                        WHERE employee_id = ?
+                        """,
+                        (mobile, department_id, section_id, employee_title_id, title or None, employee_id)
+                    )
+                    if cursor.rowcount > 0:
+                        updated_mobile += 1
                 skipped += 1
-                continue
+            else:
+                employee_id = str(uuid.uuid4())
+                employee_title_id = None
+                title_key = normalize_name(title)
+                if title_key and title_key in title_map:
+                    employee_title_id = title_map[title_key]
 
-            employee_id = str(uuid.uuid4())
-            employee_title_id = None
-            title_key = normalize_name(title)
-            if title_key and title_key in title_map:
-                employee_title_id = title_map[title_key]
+                # role: DB không cho NULL, dùng chuỗi rỗng nếu chưa có
+                role_value = ""
 
-            # role: DB không cho NULL, dùng chuỗi rỗng nếu chưa có
-            role_value = ""  # hoặc có thể map từ Chức vụ / Phòng ban nếu cần
+                # SĐT từ CSV -> mobile; notes để trống (cột notes không cho NULL)
+                notes_value = ""
 
-            # SĐT từ CSV -> mobile; notes để trống (cột notes không cho NULL)
-            notes_value = ""
+                cursor.execute("""
+                    INSERT INTO employee (
+                        employee_id, employee_code, department_id, section_id, role, full_name,
+                        employee_title_id, title, email, mobile, notes, status, manager_id
+                    )
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, N'Active', NULL)
+                """, (
+                    employee_id, code or None, department_id, section_id, role_value, full_name,
+                    employee_title_id, title or None, email or None, mobile, notes_value
+                ))
+                inserted += 1
+                existing_codes.add(code_upper)
 
-            cursor.execute("""
-                INSERT INTO employee (
-                    employee_id, employee_code, department_id, role, full_name,
-                    employee_title_id, title, email, mobile, notes, status, manager_id
-                )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, N'Active', NULL)
-            """, (
-                employee_id, code or None, department_id, role_value, full_name,
-                employee_title_id, title or None, email or None, mobile, notes_value
-            ))
-            inserted += 1
-            existing_codes.add(code_upper)
-            pending_managers.append((employee_id, full_name, manager_name))
+            if employee_id:
+                pending_managers.append((employee_id, full_name, manager_name))
 
         conn.commit()
         print(f"Đã insert {inserted} nhân viên, cập nhật mobile cho {updated_mobile} nhân viên có sẵn, bỏ qua (trùng mã, đã xử lý) {skipped}.")
@@ -253,58 +374,54 @@ def run():
         conn.commit()
         print(f"Đã cập nhật manager_id cho {updated_manager} nhân viên.")
 
-        # Tạo account cho nhân viên chưa có (quyền mặc định: Người dùng tiêu chuẩn - PERM-USER)
+        # Tạo account cho nhân viên chưa có
         cursor.execute(
-            "SELECT permission_id FROM permission WHERE permission_code = N'PERM-USER'"
+            """
+            SELECT e.employee_id, e.employee_code, e.full_name, e.email
+            FROM employee e
+            WHERE e.status = N'Active'
+              AND NOT EXISTS (SELECT 1 FROM account a WHERE a.employee_id = e.employee_id)
+              AND (e.email IS NOT NULL AND LTRIM(RTRIM(e.email)) <> N''
+                   OR (e.employee_code IS NOT NULL AND LTRIM(RTRIM(ISNULL(e.employee_code, N''))) <> N''))
+            """
         )
-        perm_row = cursor.fetchone()
-        if not perm_row:
-            print("Cảnh báo: Không tìm thấy permission PERM-USER, bỏ qua tạo account.")
-        else:
-            default_permission_id = str(perm_row[0])
+        employees_without_account = cursor.fetchall()
+        existing_usernames = set()
+        cursor.execute("SELECT user_name FROM account WHERE user_name IS NOT NULL")
+        for r in cursor.fetchall():
+            if r[0]:
+                existing_usernames.add(str(r[0]).strip().lower())
+
+        created_accounts = 0
+        for row in employees_without_account:
+            emp_id = str(row[0])
+            emp_code = (row[1] or "").strip()
+            full_name = (row[2] or "").strip()
+            email = (row[3] or "").strip()
+            # Username = email; nếu không có email thì fallback sang employee_code
+            user_name = email if email else emp_code
+            if not user_name:
+                continue
+            if user_name.lower() in existing_usernames:
+                continue
+            account_id = str(uuid.uuid4())
+            password_hash = hash_password(DEFAULT_PASSWORD)
             cursor.execute(
                 """
-                SELECT e.employee_id, e.employee_code, e.full_name, e.email
-                FROM employee e
-                WHERE e.status = N'Active'
-                  AND NOT EXISTS (SELECT 1 FROM account a WHERE a.employee_id = e.employee_id)
-                  AND (e.email IS NOT NULL AND LTRIM(RTRIM(e.email)) <> N''
-                       OR (e.employee_code IS NOT NULL AND LTRIM(RTRIM(ISNULL(e.employee_code, N''))) <> N''))
-                """
+                INSERT INTO account (account_id, employee_id, user_name, password_hash, status)
+                VALUES (?, ?, ?, ?, N'Active')
+                """,
+                (account_id, emp_id, user_name, password_hash),
             )
-            employees_without_account = cursor.fetchall()
-            existing_usernames = set()
-            cursor.execute("SELECT user_name FROM account WHERE user_name IS NOT NULL")
-            for r in cursor.fetchall():
-                if r[0]:
-                    existing_usernames.add(str(r[0]).strip().lower())
+            created_accounts += 1
+            existing_usernames.add(user_name.lower())
 
-            created_accounts = 0
-            for row in employees_without_account:
-                emp_id = str(row[0])
-                emp_code = (row[1] or "").strip()
-                full_name = (row[2] or "").strip()
-                email = (row[3] or "").strip()
-                # Username = email; nếu không có email thì fallback sang employee_code
-                user_name = email if email else emp_code
-                if not user_name:
-                    continue
-                if user_name.lower() in existing_usernames:
-                    continue
-                account_id = str(uuid.uuid4())
-                password_hash = hash_password(DEFAULT_PASSWORD)
-                cursor.execute(
-                    """
-                    INSERT INTO account (account_id, employee_id, permission_id, user_name, password_hash, status)
-                    VALUES (?, ?, ?, ?, ?, N'Active')
-                    """,
-                    (account_id, emp_id, default_permission_id, user_name, password_hash),
-                )
-                created_accounts += 1
-                existing_usernames.add(user_name.lower())
+        conn.commit()
+        print(f"Đã tạo {created_accounts} account, mật khẩu mặc định: {DEFAULT_PASSWORD!r}.")
 
-            conn.commit()
-            print(f"Đã tạo {created_accounts} account (quyền PERM-USER), mật khẩu mặc định: {DEFAULT_PASSWORD!r}.")
+        # Bước cuối: Xóa nhân viên không có trong CSV
+        cleanup_stale_employees(cursor, csv_codes)
+        conn.commit()
 
     except Exception as e:
         conn.rollback()

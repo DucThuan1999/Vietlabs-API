@@ -15,6 +15,7 @@ public class EmployeeConfiguration : IEntityTypeConfiguration<Employee>
         builder.HasKey(e => e.EmployeeId);
 
         builder.Property(e => e.DepartmentId).HasColumnName("department_id");
+        builder.Property(e => e.SectionId).HasColumnName("section_id");
         builder.Property(e => e.ExtensionNumber).HasColumnName("extension_number");
 
         builder.Property(e => e.UpdatedAt).HasColumnName("updated_at");
@@ -23,6 +24,11 @@ public class EmployeeConfiguration : IEntityTypeConfiguration<Employee>
         builder.HasOne(e => e.Department)
             .WithMany()
             .HasForeignKey(e => e.DepartmentId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(e => e.Section)
+            .WithMany(s => s.Employees)
+            .HasForeignKey(e => e.SectionId)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne(e => e.UpdatedByAccount)

@@ -16,6 +16,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<Employee> Employees { get; set; }
     public DbSet<Branch> Branches { get; set; }
     public DbSet<Department> Departments { get; set; }
+    public DbSet<Section> Sections { get; set; }
     public DbSet<Account> Accounts { get; set; }
     public DbSet<Permission> Permissions { get; set; }
     public DbSet<RefreshToken> RefreshTokens { get; set; }
@@ -69,6 +70,7 @@ public class ApplicationDbContext : DbContext
         modelBuilder.ApplyConfiguration(new EmployeeConfiguration());
         modelBuilder.ApplyConfiguration(new BranchConfiguration());
         modelBuilder.ApplyConfiguration(new DepartmentConfiguration());
+        modelBuilder.ApplyConfiguration(new SectionConfiguration());
         modelBuilder.ApplyConfiguration(new AccountConfiguration());
         modelBuilder.ApplyConfiguration(new PermissionConfiguration());
         modelBuilder.ApplyConfiguration(new RefreshTokenConfiguration());
@@ -212,6 +214,12 @@ public class ApplicationDbContext : DbContext
             .HasOne(d => d.Branch)
             .WithMany(b => b.Departments)
             .HasForeignKey(d => d.BranchId);
+
+        // Quan hệ 1-n: Department - Sections
+        modelBuilder.Entity<Section>()
+            .HasOne(s => s.Department)
+            .WithMany(d => d.Sections)
+            .HasForeignKey(s => s.DepartmentId);
 
         // Quan hệ 1-1: Employee - Account
         modelBuilder.Entity<Account>()

@@ -16,6 +16,7 @@ public class Department
     // Navigation
     public Branch? Branch { get; set; }
     public Account? UpdatedByAccount { get; set; }
+    public ICollection<Section> Sections { get; set; } = new List<Section>();
 }
 
 

@@ -21,6 +21,7 @@ public static class ODataEdmModel
         var employeeEntitySet = builder.EntitySet<Employee>("Employees");
         employeeEntitySet.EntityType.HasOptional(e => e.Department).AutoExpand = true;
         employeeEntitySet.EntityType.HasOptional(e => e.EmployeeTitle).AutoExpand = true;
+        employeeEntitySet.EntityType.HasOptional(e => e.Section).AutoExpand = true;
         employeeEntitySet.EntityType.HasOptional(e => e.UpdatedByAccount).AutoExpand = true;
         employeeEntitySet.EntityType.HasOptional(e => e.Account).AutoExpand = true;
         employeeEntitySet.EntityType.HasOptional(e => e.Manager).AutoExpand = true;
@@ -28,6 +29,9 @@ public static class ODataEdmModel
         branchEntitySet.EntityType.HasOptional(b => b.UpdatedByAccount).AutoExpand = true;
         var departmentEntitySet = builder.EntitySet<Department>("Departments");
         departmentEntitySet.EntityType.HasOptional(d => d.UpdatedByAccount).AutoExpand = true;
+        var sectionEntitySet = builder.EntitySet<Section>("Sections");
+        sectionEntitySet.EntityType.HasOptional(s => s.Department).AutoExpand = true;
+        sectionEntitySet.EntityType.HasOptional(s => s.UpdatedByAccount).AutoExpand = true;
         
         var accountEntitySet = builder.EntitySet<Account>("Accounts");
         var accountEntityType = accountEntitySet.EntityType;

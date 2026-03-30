@@ -34,6 +34,7 @@ public class EmployeesController : ODataController
     {
         return Ok(_context.Employees
             .Include(e => e.Department)
+            .Include(e => e.Section)
             .Include(e => e.EmployeeTitle)
             .Include(e => e.Manager)
             .Include(e => e.UpdatedByAccount)
@@ -46,6 +47,7 @@ public class EmployeesController : ODataController
     {
         var employee = _context.Employees
             .Include(e => e.Department)
+            .Include(e => e.Section)
             .Include(e => e.EmployeeTitle)
             .Include(e => e.Manager)
             .Include(e => e.UpdatedByAccount)
@@ -102,6 +104,7 @@ public class EmployeesController : ODataController
 
         existing.EmployeeCode = employee.EmployeeCode;
         existing.DepartmentId = employee.DepartmentId;
+        existing.SectionId = employee.SectionId;
         existing.Role = employee.Role;
         existing.FullName = employee.FullName;
         existing.EmployeeTitleId = employee.EmployeeTitleId;
@@ -134,6 +137,7 @@ public class EmployeesController : ODataController
 
         var updated = await _context.Employees
             .Include(e => e.Department)
+            .Include(e => e.Section)
             .Include(e => e.EmployeeTitle)
             .Include(e => e.Manager)
             .Include(e => e.UpdatedByAccount)

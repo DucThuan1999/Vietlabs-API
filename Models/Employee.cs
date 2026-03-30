@@ -5,6 +5,7 @@ public class Employee
     public Guid EmployeeId { get; set; }
     public string? EmployeeCode { get; set; } // Code nhân viên
     public Guid? DepartmentId { get; set; }   // FK phòng ban
+    public Guid? SectionId { get; set; }      // FK bộ phận
     public string? Role { get; set; }         // Quyền/Role
     public string FullName { get; set; } = string.Empty;     // Tên nhân viên
     public Guid? EmployeeTitleId { get; set; } // FK đến danh mục chức vụ
@@ -23,6 +24,7 @@ public class Employee
 
     // Navigation
     public Department? Department { get; set; }
+    public Section? Section { get; set; }
     public Account? UpdatedByAccount { get; set; }
     public Account? Account { get; set; }
     public Employee? Manager { get; set; }   // Manager của employee này
