@@ -28,7 +28,6 @@ public class SubcontractorCapabilityDesignationsController : ODataController
     public IActionResult Get()
     {
         return Ok(_context.SubcontractorCapabilityDesignations
-            .Include(scd => scd.SubcontractorCapability)
             .Include(scd => scd.Designation));
     }
 

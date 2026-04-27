@@ -7,15 +7,14 @@ public class AnalysisItem
     public string? NameVi { get; set; }
     public string? NameEn { get; set; }
     public string? ShortName { get; set; }  // Tên viết tắt
-    public string? Organization { get; set; }
-    
+
     // Foreign Keys
     public Guid EquipmentTypeId { get; set; }
-    public Guid AnalysisGroupId { get; set; }
+    public Guid? AnalysisGroupId { get; set; }
     public Guid SampleMatrixId { get; set; }
     public Guid SampleMatrixGroupId { get; set; }
     public Guid? ReferenceMethodId { get; set; }  // Phương pháp tham chiếu (mapping nội bộ – quốc tế)
-    public Guid? StandardId { get; set; }  // Tiêu chuẩn/qui chuẩn áp dụng
+    public Guid? StandardId { get; set; }  // Qui chuẩn/tiêu chuẩn áp dụng
     public Guid? UnitOfMeasureId { get; set; }  // Đơn vị tính (ĐVT)
     public Guid? LaboratoryTechniqueId { get; set; }  // Kĩ thuật (Sắc Ký, Cổ Điển, ...)
     

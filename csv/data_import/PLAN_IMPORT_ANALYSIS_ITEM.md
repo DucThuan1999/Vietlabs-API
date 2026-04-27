@@ -16,7 +16,7 @@
 | `TAT_Normal` | Turnaround Time Normal | `analysis_item_tat` | Lưu vào bảng riêng |
 | `TAT_Fast` | Turnaround Time Fast | `analysis_item_tat` | Lưu vào bảng riêng |
 | `TAT_Urgent` | Turnaround Time Urgent | `analysis_item_tat` | Lưu vào bảng riêng |
-| `Analysis Group Whole group standard` | Giá nhóm chuẩn | `analysis_group.whole_group_standard_price` | Cập nhật AnalysisGroup |
+| `Giá nhóm chuẩn_new` | Giá nhóm chuẩn (Excel / export CSV) | `analysis_group.whole_group_standard_price` | Cột chính; script Python còn đọc legacy `Analysis Group Whole group standard` |
 
 ## 2. Cấu trúc Database
 

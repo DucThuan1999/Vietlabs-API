@@ -1,0 +1,68 @@
+namespace VietLab.Data;
+
+/// <summary>
+/// Giá trị distinct cột &quot;Qui chuẩn/Tiêu chuẩn&quot; từ sheet Vietlabs + NTP của data/Capability.xlsx.
+/// Sinh tự động — cập nhật khi đổi Excel.
+/// </summary>
+internal static class CapabilityStandardsSeedData
+{
+    public static readonly string[] NameViList =
+    [
+        "HACCP",
+        "Luật Thú y 2015",
+        "Nghị định 15/2018/NĐ-CP",
+        "QCVN 01 - 183:2016/BNNPTNT",
+        "QCVN 01-189:2019/BNNPTNT",
+        "QCVN 01-1:2024/BYT",
+        "QCVN 03-MT:2015/BTNMT",
+        "QCVN 08:2023/BTNMT",
+        "QCVN 09-MT:2015/BTNMT",
+        "QCVN 10:2011/BYT;QCVN 01-1:2018/BYT;QCVN 8-3:2012/BYT",
+        "QCVN 10:2011/BYT;QCVN 8-3:2012/BYT",
+        "QCVN 12-1:2011/BYT",
+        "QCVN 12-2:2011/BYT",
+        "QCVN 12-3:2011/BYT",
+        "QCVN 12-4:2015/BYT",
+        "QCVN 14:2008/BTNMT;QCVN 40:2011/BTNM",
+        "QCVN 15:2008/BTNMT",
+        "QCVN 20-1:2024/BYT",
+        "QCVN 28:2010/BTNMT",
+        "QCVN 4-21:2011/BYT",
+        "QCVN 5-1:2010/BYT",
+        "QCVN 5-1:2010/BYT;QCVN 5-2:2010/BYT;QCVN 5-3:2010/BYT;QCVN 5-4:2010/BYT;QCVN 5-5:2010/BYT",
+        "QCVN 5-2:2010/BYT",
+        "QCVN 5-3:2010/BYT",
+        "QCVN 6-1:2010/BYT",
+        "QCVN 6-2:2010/BYT",
+        "QCVN 6-2:2010/BYT;QCVN 6-3:2010/BYT",
+        "QCVN 6-3:2010/BYT",
+        "QCVN 8-1:2011/BYT",
+        "QCVN 8-2:2011/BYT",
+        "QCVN 8-3:2012/BYT",
+        "Quyết định số 46/2007/QĐ-BYT",
+        "TCVN 11888:2017",
+        "TCVN 12459:2018",
+        "TCVN 12605:2019",
+        "TCVN 1763:2008",
+        "TCVN 4193:2014",
+        "TCVN 5107:2018",
+        "TCVN 5250:2015",
+        "TCVN 5251:2015",
+        "TCVN 7046:2009; TCVN 7047:2009; TCVN 12429:2018; TCVN 7049:2020; TCVN 7050:2009",
+        "TCVN 7049:2020; TCVN 7050:2009",
+        "TCVN 7405:2018",
+        "TCVN 7597:2018; TCVN 6044:2013",
+        "TCVN 7597:2018; TCVN 6044:2013; QCVN 01-190:2020/BNNPTNT",
+        "TCVN 9740:2013; TCVN 1454:2013; TCVN 12713:2019",
+        "Theo TCCS của nhà sản xuất",
+        "Theo tiêu chuẩn khách hàng",
+        "Theo tiêu chuẩn nước nhập khẩu",
+        "Theo yêu cầu Khách hàng",
+        "Thông tư 06/2011/TT-BYT",
+        "Thông tư 07/2019/TT-BNNPTNT",
+        "Thông tư 21/2019/TT-BNNPTNT",
+        "Thông tư 24/2019/TT-BYT",
+        "Thông tư 43/2014/TT-BYT",
+        "Thông tư 50/2016/TT-BYT",
+    ];
+}

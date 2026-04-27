@@ -1,3 +1,5 @@
+using System.Net;
+using System.Net.Sockets;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.OData;
 using Microsoft.EntityFrameworkCore;
@@ -59,13 +61,13 @@ builder.Services.AddControllers()
                .OrderBy()
                .SetMaxTop(5000)
                .Count();
-        
+
         // Cấu hình OData route options
         // OData yêu cầu ít nhất một trong hai tùy chọn phải được bật
         options.RouteOptions.EnableKeyInParenthesis = true;  // Cho phép /Clients(123)
         options.RouteOptions.EnableKeyAsSegment = false;   // Không dùng /Clients/123
         options.RouteOptions.EnableControllerNameCaseInsensitive = true;
-        
+
         // Sử dụng EDM model
         // OData sẽ tự động sử dụng JsonSerializerOptions từ AddJsonOptions ở trên
         options.AddRouteComponents("odata", ODataEdmModel.GetEdmModel());
@@ -89,10 +91,10 @@ builder.Services.AddSwaggerGen(c =>
 
     // Cấu hình Swagger sử dụng camelCase cho schema (để khớp với JSON response)
     c.UseInlineDefinitionsForEnums();
-    
+
     // Schema Filter để convert property names sang camelCase
     c.SchemaFilter<CamelCaseSchemaFilter>();
-    
+
     // Sử dụng System.Text.Json naming policy cho Swagger schema
     c.UseAllOfToExtendReferenceSchemas();
     c.SupportNonNullableReferenceTypes();
@@ -148,6 +150,8 @@ builder.Services.AddSwaggerGen(c =>
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+builder.Services.AddScoped<VietLab.Data.Layer0ReferenceDataSeeder>();
+
 // Add Repositories
 builder.Services.AddScoped<VietLab.Repositories.IStoreRepository, VietLab.Repositories.StoreRepository>();
 
@@ -183,6 +187,13 @@ else
     });
 }
 
+// CORS: thêm origin từ config; cho phép IP mạng nội bộ (LAN) khi bật — tránh 403 khi mở FE bằng http://192.168.x.x:port
+var corsAllowedOriginsExtra = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? Array.Empty<string>();
+var corsExtraOriginSet = new HashSet<string>(
+    corsAllowedOriginsExtra.Where(o => !string.IsNullOrWhiteSpace(o)).Select(o => o.TrimEnd('/')),
+    StringComparer.OrdinalIgnoreCase);
+var corsAllowPrivateLan = builder.Configuration.GetValue("Cors:AllowPrivateNetworkOrigins", false);
+
 // Add CORS
 builder.Services.AddCors(options =>
 {
@@ -193,7 +204,7 @@ builder.Services.AddCors(options =>
               .AllowAnyMethod()
               .AllowAnyHeader();
     });
-    
+
     // Policy cho Production - chỉ cho phép specific origins
     // Lưu ý: Không dùng AllowCredentials() khi dùng WithOrigins() với http://localhost
     // vì browser sẽ từ chối credentials từ non-https origins
@@ -216,25 +227,41 @@ builder.Services.AddCors(options =>
               )
               .AllowAnyMethod()
               .AllowAnyHeader();
-              // Không dùng AllowCredentials() để tránh lỗi với http://localhost
+        // Không dùng AllowCredentials() để tránh lỗi với http://localhost
     });
-    
+
     // Policy cho localhost development - luôn cho phép localhost trong mọi môi trường
     // Và cũng cho phép các origins được cấu hình trong AllowSpecificOrigins
     options.AddPolicy("AllowLocalhost", policy =>
     {
         policy.SetIsOriginAllowed(origin =>
             {
+                if (string.IsNullOrEmpty(origin))
+                {
+                    return false;
+                }
+
                 try
                 {
-                    var uri = new Uri(origin);
-                    // Cho phép tất cả localhost với bất kỳ port nào
-                    if (uri.Host == "localhost" || uri.Host == "127.0.0.1")
+                    if (corsExtraOriginSet.Contains(origin.TrimEnd('/')))
                     {
                         return true;
                     }
-                    
-                    // Cho phép các origins được cấu hình
+
+                    var uri = new Uri(origin);
+                    // Localhost mọi port + IPv6 loopback
+                    if (uri.Host.Equals("localhost", StringComparison.OrdinalIgnoreCase)
+                        || uri.Host == "127.0.0.1"
+                        || uri.Host == "::1")
+                    {
+                        return true;
+                    }
+
+                    if (corsAllowPrivateLan && CorsPrivateNetwork.IsPrivateLanHost(uri.Host))
+                    {
+                        return true;
+                    }
+
                     var allowedOrigins = new[]
                     {
                         "http://localhost:3000",
@@ -251,7 +278,7 @@ builder.Services.AddCors(options =>
                         "https://localhost:5176",
                         "https://localhost:4200"
                     };
-                    
+
                     return allowedOrigins.Contains(origin);
                 }
                 catch
@@ -262,7 +289,7 @@ builder.Services.AddCors(options =>
             .AllowAnyMethod()
             .AllowAnyHeader();
     });
-    
+
     // Policy mặc định - luôn enable cho tất cả môi trường
     options.AddDefaultPolicy(policy =>
     {
@@ -293,6 +320,22 @@ else
 }
 
 // Configure the HTTP request pipeline.
+var isAuthDisabled = app.Configuration.GetValue<bool>("DisableAuthentication", false);
+var corsPolicyName = app.Environment.IsDevelopment() ? "AllowAll" : "AllowLocalhost";
+
+// UseRouting + UseCors trước Swagger/Auth — đúng thứ tự doc ASP.NET Core cho preflight OPTIONS
+app.UseRouting();
+app.UseCors(corsPolicyName);
+
+{
+    var corsLogger = app.Services.GetRequiredService<ILogger<Program>>();
+    corsLogger.LogInformation("CORS policy: {Policy} (env: {Env})", corsPolicyName, app.Environment.EnvironmentName);
+    if (isAuthDisabled)
+    {
+        corsLogger.LogWarning("⚠️  AUTHENTICATION IS DISABLED - CORS active");
+    }
+}
+
 app.UseSwagger(c =>
 {
     c.RouteTemplate = "swagger/{documentName}/swagger.json";
@@ -325,40 +368,12 @@ app.UseSwaggerUI(c =>
     c.EnableValidator();
     c.DocExpansion(Swashbuckle.AspNetCore.SwaggerUI.DocExpansion.List);
 });
-// Enable CORS - phải đặt trước UseHttpsRedirection, UseAuthorization và MapControllers
-// Trong Development, luôn bật CORS để frontend có thể gọi API
-// Trong Production, luôn cho phép localhost để frontend development có thể test với production API
-var isAuthDisabled = app.Configuration.GetValue<bool>("DisableAuthentication", false);
-if (app.Environment.IsDevelopment())
-{
-    // Development: Luôn bật CORS để dễ dàng test
-    app.UseCors("AllowAll");
-    if (isAuthDisabled)
-    {
-        var corsLogger = app.Services.GetRequiredService<ILogger<Program>>();
-        corsLogger.LogWarning("⚠️  AUTHENTICATION IS DISABLED - CORS is enabled for development");
-    }
-}
-else
-{
-    // Production: Luôn cho phép localhost để frontend development có thể test
-    // Sử dụng policy cho phép localhost và các origins được cấu hình
-    // Policy này sẽ tự động kiểm tra origin và cho phép nếu là localhost hoặc trong danh sách
-    app.UseCors("AllowLocalhost");
-    
-    if (isAuthDisabled)
-    {
-        var corsLogger = app.Services.GetRequiredService<ILogger<Program>>();
-        corsLogger.LogWarning("⚠️  AUTHENTICATION IS DISABLED - CORS is enabled for localhost");
-    }
-    else
-    {
-        var corsLogger = app.Services.GetRequiredService<ILogger<Program>>();
-        corsLogger.LogInformation("CORS enabled for localhost and configured origins");
-    }
-}
 
-app.UseHttpsRedirection();
+// Development: không redirect HTTP→HTTPS để tránh preflight OPTIONS bị redirect và browser báo lỗi CORS khi gọi http://localhost:5000
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 
 // CamelCase middleware cho OData - đảm bảo OData response là camelCase
 // Tạm thời disable để test - OData có thể đã tự động sử dụng JsonSerializerOptions
@@ -388,7 +403,7 @@ using (var scope = app.Services.CreateScope())
     {
         var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-        
+
         // Kiểm tra xem database có tồn tại và có bảng không
         if (!dbContext.Database.CanConnect())
         {
@@ -413,8 +428,23 @@ using (var scope = app.Services.CreateScope())
                 logger.LogInformation("Database recreated successfully with all tables");
             }
         }
-        
+
         logger.LogInformation("Database initialized successfully");
+
+        if (app.Configuration.GetValue("Seed:Layer0:Enabled", false))
+        {
+            var layer0Logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+            try
+            {
+                var layer0 = scope.ServiceProvider.GetRequiredService<VietLab.Data.Layer0ReferenceDataSeeder>();
+                layer0.SyncAsync(dbContext).GetAwaiter().GetResult();
+                layer0Logger.LogInformation("Seed:Layer0 completed");
+            }
+            catch (Exception layer0Ex)
+            {
+                layer0Logger.LogError(layer0Ex, "Seed:Layer0 failed");
+            }
+        }
     }
     catch (Exception ex)
     {
@@ -425,4 +455,39 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.Run();
+
+/// <summary>IP private RFC1918 — dùng cho CORS khi FE truy cập qua IP LAN.</summary>
+internal static class CorsPrivateNetwork
+{
+    public static bool IsPrivateLanHost(string host)
+    {
+        if (string.IsNullOrEmpty(host) || !IPAddress.TryParse(host, out var ip))
+        {
+            return false;
+        }
+
+        if (ip.AddressFamily != AddressFamily.InterNetwork)
+        {
+            return false;
+        }
+
+        var b = ip.GetAddressBytes();
+        if (b[0] == 10)
+        {
+            return true;
+        }
+
+        if (b[0] == 172 && b[1] >= 16 && b[1] <= 31)
+        {
+            return true;
+        }
+
+        if (b[0] == 192 && b[1] == 168)
+        {
+            return true;
+        }
+
+        return false;
+    }
+}
 

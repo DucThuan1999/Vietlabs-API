@@ -27,8 +27,8 @@ public class DepartmentAnalysisCapabilityDesignationsController : ODataControlle
     [EnableQuery]
     public IActionResult Get()
     {
+        // List: chỉ Include Designation — tránh nạp toàn bộ DepartmentAnalysisCapability × N (báo giá / OData list).
         return Ok(_context.DepartmentAnalysisCapabilityDesignations
-            .Include(dacd => dacd.DepartmentAnalysisCapability)
             .Include(dacd => dacd.Designation));
     }
 

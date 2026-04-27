@@ -34,18 +34,13 @@ public class AnalysisItemConfiguration : IEntityTypeConfiguration<AnalysisItem>
             .HasColumnName("short_name")
             .HasMaxLength(255);
 
-        builder.Property(ai => ai.Organization)
-            .HasColumnName("organization")
-            .HasMaxLength(500);
-
         // Foreign Keys
         builder.Property(ai => ai.EquipmentTypeId)
             .HasColumnName("equipment_type_id")
             .IsRequired();
 
         builder.Property(ai => ai.AnalysisGroupId)
-            .HasColumnName("analysis_group_id")
-            .IsRequired();
+            .HasColumnName("analysis_group_id");
 
         builder.Property(ai => ai.SampleMatrixId)
             .HasColumnName("sample_matrix_id")

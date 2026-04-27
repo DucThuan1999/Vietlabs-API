@@ -32,8 +32,7 @@ public class SubcontractorCapabilitiesController : ODataController
     {
         return Ok(_context.SubcontractorCapabilities
             .Include(sc => sc.Subcontractor)
-            .Include(sc => sc.AnalysisItem)
-            .Include(sc => sc.Designations).ThenInclude(d => d.Designation));
+            .Include(sc => sc.AnalysisItem));
     }
 
     [HttpGet("SubcontractorCapabilities({key})")]

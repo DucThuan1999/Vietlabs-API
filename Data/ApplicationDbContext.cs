@@ -28,6 +28,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<DepartmentAnalysisCapability> DepartmentAnalysisCapabilities { get; set; }
     public DbSet<DepartmentAnalysisCapabilityDesignation> DepartmentAnalysisCapabilityDesignations { get; set; }
     public DbSet<Quotation> Quotations { get; set; }
+    public DbSet<QuotationSample> QuotationSamples { get; set; }
     public DbSet<QuotationItem> QuotationItems { get; set; }
     public DbSet<QuotationAnalysisGroup> QuotationAnalysisGroups { get; set; }
     public DbSet<Package> Packages { get; set; }
@@ -75,6 +76,7 @@ public class ApplicationDbContext : DbContext
         modelBuilder.ApplyConfiguration(new PermissionConfiguration());
         modelBuilder.ApplyConfiguration(new RefreshTokenConfiguration());
         modelBuilder.ApplyConfiguration(new QuotationConfiguration());
+        modelBuilder.ApplyConfiguration(new QuotationSampleConfiguration());
         modelBuilder.ApplyConfiguration(new QuotationItemConfiguration());
         modelBuilder.ApplyConfiguration(new QuotationAnalysisGroupConfiguration());
         modelBuilder.ApplyConfiguration(new ClientDebtConfiguration());
@@ -1158,9 +1160,7 @@ public class ApplicationDbContext : DbContext
                 FullName = "Nguyễn Văn An",
                 Email = "an.nguyen@company.com",
                 Phone = "0901234567",
-                Department = "Kinh doanh",
                 Title = "Giám đốc Kinh doanh",
-                IsPrimary = true
             },
             new Contact
             {
@@ -1169,9 +1169,7 @@ public class ApplicationDbContext : DbContext
                 FullName = "Lê Thị Hương",
                 Email = "huong.le@company.com",
                 Phone = "0912345678",
-                Department = "Kỹ thuật",
                 Title = "Trưởng phòng Kỹ thuật",
-                IsPrimary = false
             },
             new Contact
             {
@@ -1180,9 +1178,7 @@ public class ApplicationDbContext : DbContext
                 FullName = "Trần Thị B",
                 Email = "b.tran@xyz.com",
                 Phone = "0987654321",
-                Department = "Mua hàng",
                 Title = "Trưởng phòng mua hàng",
-                IsPrimary = true
             },
             new Contact
             {
@@ -1191,9 +1187,7 @@ public class ApplicationDbContext : DbContext
                 FullName = "Phạm Văn C",
                 Email = "c.pham@xyz.com",
                 Phone = "0987654322",
-                Department = "Kế toán",
                 Title = "Kế toán trưởng",
-                IsPrimary = false
             },
             new Contact
             {
@@ -1202,9 +1196,7 @@ public class ApplicationDbContext : DbContext
                 FullName = "Phạm Văn D",
                 Email = "d.pham@ghi.com",
                 Phone = "0123456780",
-                Department = "Điều hành",
                 Title = "Tổng giám đốc",
-                IsPrimary = true
             },
             new Contact
             {
@@ -1213,9 +1205,7 @@ public class ApplicationDbContext : DbContext
                 FullName = "Nguyễn Thị E",
                 Email = "e.nguyen@ghi.com",
                 Phone = "0123456781",
-                Department = "Tài chính",
                 Title = "Giám đốc Tài chính",
-                IsPrimary = false
             },
             new Contact
             {
@@ -1224,9 +1214,7 @@ public class ApplicationDbContext : DbContext
                 FullName = "Hoàng Thị E",
                 Email = "e.hoang@jkl.com",
                 Phone = "0987654320",
-                Department = "Kinh doanh",
                 Title = "Giám đốc Kinh doanh",
-                IsPrimary = true
             },
             new Contact
             {
@@ -1235,9 +1223,7 @@ public class ApplicationDbContext : DbContext
                 FullName = "Vũ Văn F",
                 Email = "f.vu@mno.com",
                 Phone = "0912345670",
-                Department = "Điều hành",
                 Title = "Giám đốc",
-                IsPrimary = true
             },
             new Contact
             {
@@ -1246,9 +1232,7 @@ public class ApplicationDbContext : DbContext
                 FullName = "Lý Thị I",
                 Email = "i.ly@vwx.com",
                 Phone = "0912345608",
-                Department = "Hành chính",
                 Title = "Hiệu trưởng",
-                IsPrimary = true
             },
             new Contact
             {
@@ -1257,9 +1241,7 @@ public class ApplicationDbContext : DbContext
                 FullName = "Trần Văn J",
                 Email = "j.tran@vwx.com",
                 Phone = "0912345609",
-                Department = "Điều hành",
                 Title = "Phó hiệu trưởng",
-                IsPrimary = false
             },
             new Contact
             {
@@ -1268,9 +1250,7 @@ public class ApplicationDbContext : DbContext
                 FullName = "Ngô Văn J",
                 Email = "j.ngo@yza.com",
                 Phone = "0123456708",
-                Department = "Điều hành",
                 Title = "Giám đốc",
-                IsPrimary = true
             },
             new Contact
             {
@@ -1279,9 +1259,7 @@ public class ApplicationDbContext : DbContext
                 FullName = "Lê Thị K",
                 Email = "k.le@yza.com",
                 Phone = "0123456709",
-                Department = "Y tế",
                 Title = "Trưởng khoa",
-                IsPrimary = false
             },
             new Contact
             {
@@ -1290,9 +1268,7 @@ public class ApplicationDbContext : DbContext
                 FullName = "Lê Văn O",
                 Email = "o.le@nop.com",
                 Phone = "0912345606",
-                Department = "Điều hành",
                 Title = "Tổng giám đốc",
-                IsPrimary = true
             },
             new Contact
             {
@@ -1301,9 +1277,7 @@ public class ApplicationDbContext : DbContext
                 FullName = "Phạm Thị P",
                 Email = "p.pham@nop.com",
                 Phone = "0912345607",
-                Department = "Kỹ thuật",
                 Title = "CTO",
-                IsPrimary = false
             },
             new Contact
             {
@@ -1312,9 +1286,7 @@ public class ApplicationDbContext : DbContext
                 FullName = "Hoàng Văn Q",
                 Email = "q.hoang@nop.com",
                 Phone = "0912345608",
-                Department = "Kinh doanh",
                 Title = "Giám đốc Kinh doanh",
-                IsPrimary = false
             }
         );
 

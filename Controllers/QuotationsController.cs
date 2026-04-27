@@ -25,12 +25,26 @@ public class QuotationsController : ODataController
     [EnableQuery]
     public IActionResult Get()
     {
-        return Ok(_context.Quotations
-            .Include(q => q.Client)
-            .Include(q => q.Employee)
-            .Include(q => q.Contact)
-            .Include(q => q.QuotationItems)
-            .Include(q => q.QuotationAnalysisGroups));
+        try
+        {
+            var query = _context.Quotations
+                .AsNoTracking()
+                .Include(q => q.Client)
+                .Include(q => q.Employee)
+                .Include(q => q.Contact)
+                .Include(q => q.QuotationItems)
+                .Include(q => q.QuotationSamples)
+                .Include(q => q.QuotationAnalysisGroups);
+
+            var result = query.ToList();
+
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error while querying Quotations");
+            throw;
+        }
     }
 
     [HttpGet("Quotations({key})")]
@@ -42,6 +56,7 @@ public class QuotationsController : ODataController
             .Include(q => q.Employee)
             .Include(q => q.Contact)
             .Include(q => q.QuotationItems)
+            .Include(q => q.QuotationSamples)
             .Include(q => q.QuotationAnalysisGroups)
             .FirstOrDefault(q => q.QuotationId == key);
         if (quotation == null)

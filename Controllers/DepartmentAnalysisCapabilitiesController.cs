@@ -25,10 +25,10 @@ public class DepartmentAnalysisCapabilitiesController : ODataController
     [EnableQuery]
     public IActionResult Get()
     {
+        // Không Include Designations trên list — client dùng $expand hoặc bảng DepartmentAnalysisCapabilityDesignations.
         return Ok(_context.DepartmentAnalysisCapabilities
             .Include(dac => dac.Department)
-            .Include(dac => dac.AnalysisItem)
-            .Include(dac => dac.Designations).ThenInclude(d => d.Designation));
+            .Include(dac => dac.AnalysisItem));
     }
 
     [HttpGet("DepartmentAnalysisCapabilities({key})")]
@@ -38,6 +38,7 @@ public class DepartmentAnalysisCapabilitiesController : ODataController
         var departmentAnalysisCapability = _context.DepartmentAnalysisCapabilities
             .Include(dac => dac.Department)
             .Include(dac => dac.AnalysisItem)
+                .ThenInclude(ai => ai!.SampleMatrix)
             .Include(dac => dac.Designations).ThenInclude(d => d.Designation)
             .FirstOrDefault(dac => dac.DepartmentAnalysisCapabilityId == key);
         if (departmentAnalysisCapability == null)

@@ -22,7 +22,7 @@ public class AnalysisItemsController : ODataController
     }
 
     [HttpGet("AnalysisItems")]
-    [EnableQuery]
+    [EnableQuery(MaxNodeCount = 500)]
     public IActionResult Get()
     {
         return Ok(_context.AnalysisItems
@@ -30,6 +30,8 @@ public class AnalysisItemsController : ODataController
             .Include(ai => ai.AnalysisGroup)
             .Include(ai => ai.SampleMatrix)
             .Include(ai => ai.SampleMatrixGroup)
+            .Include(ai => ai.Standard)
+            .Include(ai => ai.ReferenceMethod)
             .Include(ai => ai.UnitOfMeasure)
             .Include(ai => ai.StandardQuantityUnitOfMeasure)
             .Include(ai => ai.LaboratoryTechnique)
@@ -37,7 +39,7 @@ public class AnalysisItemsController : ODataController
     }
 
     [HttpGet("AnalysisItems({key})")]
-    [EnableQuery]
+    [EnableQuery(MaxNodeCount = 500)]
     public IActionResult Get([FromRoute] Guid key)
     {
         var item = _context.AnalysisItems
@@ -45,6 +47,8 @@ public class AnalysisItemsController : ODataController
             .Include(ai => ai.AnalysisGroup)
             .Include(ai => ai.SampleMatrix)
             .Include(ai => ai.SampleMatrixGroup)
+            .Include(ai => ai.Standard)
+            .Include(ai => ai.ReferenceMethod)
             .Include(ai => ai.UnitOfMeasure)
             .Include(ai => ai.StandardQuantityUnitOfMeasure)
             .Include(ai => ai.LaboratoryTechnique)

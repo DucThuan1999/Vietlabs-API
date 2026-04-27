@@ -60,6 +60,7 @@ public static class ODataEdmModel
 
         // Quotation entities
         builder.EntitySet<Quotation>("Quotations");
+        builder.EntitySet<QuotationSample>("QuotationSamples");
         var quotationItemEntitySet = builder.EntitySet<QuotationItem>("QuotationItems");
         quotationItemEntitySet.EntityType.HasOptional(qi => qi.UpdatedByAccount).AutoExpand = true;
         var quotationAnalysisGroupEntitySet = builder.EntitySet<QuotationAnalysisGroup>("QuotationAnalysisGroups");
@@ -137,7 +138,7 @@ public static class ODataEdmModel
         // Năng lực nhà thầu phụ - Chỉ định (có ngày hết hạn)
         builder.EntitySet<SubcontractorCapabilityDesignation>("SubcontractorCapabilityDesignations");
 
-        // Danh mục Tiêu chuẩn/Qui chuẩn
+        // Danh mục Qui chuẩn/Tiêu chuẩn
         var standardEntitySet = builder.EntitySet<Standard>("Standards");
         standardEntitySet.EntityType.HasOptional(s => s.UpdatedByAccount).AutoExpand = true;
 

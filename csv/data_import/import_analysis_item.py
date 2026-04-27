@@ -28,11 +28,26 @@ CONNECTION_STRING = (
     "PWD=Sbt@2024;"
     "TrustServerCertificate=yes;"
     "Encrypt=yes;"
+    "Login Timeout=60;"
 )
 
 # Đường dẫn đến file CSV (từ folder data_import, cần lên 1 cấp)
 CSV_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "csv")
 ANALYSIS_ITEM_CSV = os.path.join(CSV_DIR, "analysis_item.csv")
+
+# Cột giá nhóm chuẩn trên Capability.xlsx (export CSV); ưu tiên tên mới, fallback tên cũ
+WHOLE_GROUP_PRICE_KEYS = (
+    "Giá nhóm chuẩn_new",
+    "Analysis Group Whole group standard",
+)
+
+
+def row_first_non_empty(row: dict, keys: tuple) -> str:
+    for k in keys:
+        v = row.get(k)
+        if v is not None and str(v).strip():
+            return str(v).strip()
+    return ""
 
 
 def to_sentence_case(text: str) -> str:
@@ -201,10 +216,10 @@ def get_or_create_analysis_group(connection, name: str, mappings: Dict) -> str:
     name_vi = to_sentence_case(name)
     name_en = name_vi  # Sử dụng name_vi làm name_en nếu không có
     
-    # Generate code theo format GPCT-0001
+    # Generate code theo format NCT-0001 (seed Layer0; legacy GPCT-/AG- vẫn tính max)
     max_num = get_max_analysis_group_code(connection)
     next_num = max_num + 1
-    group_code = f"GPCT-{next_num:04d}"
+    group_code = f"NCT-{next_num:04d}"
     
     cursor.execute("""
         INSERT INTO analysis_group (analysis_group_id, analysis_group_code, name_vi, name_en, status, created_at)
@@ -220,12 +235,12 @@ def get_or_create_analysis_group(connection, name: str, mappings: Dict) -> str:
 
 
 def get_max_equipment_type_code(connection) -> int:
-    """Lấy số thứ tự lớn nhất cho equipment_type_code (GPTP-0001 hoặc ET-0001)"""
+    """Lấy số thứ tự lớn nhất cho equipment_type_code (TB-001 chuẩn; còn TP-/GPTP-/ET- là legacy)."""
     cursor = connection.cursor()
     
     max_num = 0
-    # Tìm trong cả GPTP- và ET- (code cũ)
-    for prefix in ["GPTP", "ET"]:
+    # TB- (chuẩn), TP-/GPTP-/ET- (code cũ) — gộp max để mã TB mới không đụng số cũ
+    for prefix in ["TB", "TP", "GPTP", "ET"]:
         try:
             cursor.execute("""
                 SELECT TOP 1 equipment_type_code 
@@ -262,10 +277,10 @@ def get_or_create_equipment_type(connection, name: str, mappings: Dict) -> str:
     name_vi = to_sentence_case(name) if name else name
     name_en = name_vi  # Sử dụng name_vi làm name_en nếu không có
     
-    # Generate code theo format GPTP-0001
+    # Generate code theo format TB-001
     max_num = get_max_equipment_type_code(connection)
     next_num = max_num + 1
-    eq_code = f"GPTP-{next_num:04d}"
+    eq_code = f"TB-{next_num:03d}"
     
     cursor.execute("""
         INSERT INTO equipment_type (equipment_type_id, equipment_type_code, name_vi, name_en, status)
@@ -438,12 +453,11 @@ def get_max_analysis_item_code(connection) -> int:
 
 
 def get_max_analysis_group_code(connection) -> int:
-    """Lấy số thứ tự lớn nhất cho analysis_group_code (GPCT-0001 hoặc AG-0001)"""
+    """Lấy số thứ tự lớn nhất cho analysis_group_code (NCT-0001, GPCT-, AG-)"""
     cursor = connection.cursor()
     
     max_num = 0
-    # Tìm trong cả GPCT- và AG- (code cũ)
-    for prefix in ["GPCT", "AG"]:
+    for prefix in ["NCT", "GPCT", "AG"]:
         try:
             cursor.execute("""
                 SELECT TOP 1 analysis_group_code 
@@ -574,7 +588,7 @@ def process_analysis_item_csv(csv_path: str, connection, mappings: Dict, start_c
                 tat_fast = row.get('TAT_Fast', '').strip()
                 tat_urgent = row.get('TAT_Urgent', '').strip()
                 unit_price_raw = row.get('unit_price', '').strip()
-                whole_group_standard = row.get('Analysis Group Whole group standard', '').strip()
+                whole_group_standard = row_first_non_empty(row, WHOLE_GROUP_PRICE_KEYS)
                 
                 # Bỏ qua nếu thiếu thông tin cần thiết
                 if not name_vi_raw:

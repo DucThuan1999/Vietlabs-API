@@ -200,6 +200,8 @@ dotnet ef database update
 
 ```bash
 dotnet publish -c Release -o publish
+dotnet publish VietLab.csproj -c Release -o ../VietLab-publish
+
 ```
 
 #### 2. Sử dụng script tự động (Khuyến nghị)

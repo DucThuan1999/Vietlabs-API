@@ -4,6 +4,8 @@ public class Quotation
 {
     public Guid QuotationId { get; set; }
     public string? QuotationCode { get; set; } // Mã báo giá
+    /// <summary>Tiêu đề hiển thị trên báo giá / báo cáo in.</summary>
+    public string? QuotationTitle { get; set; }
 
     // THÔNG TIN NHÂN VIÊN KINH DOANH (NGƯỜI TẠO BÁO GIÁ)
     public Guid? EmployeeId { get; set; } // Foreign key đến Employee
@@ -36,6 +38,7 @@ public class Quotation
 
     // GIẢM GIÁ
     public decimal? DiscountPercent { get; set; } // Giảm giá %
+    public decimal? DiscountAmount { get; set; } // Số tiền giảm giá
 
     // TÓM TẮT
     public decimal? SubTotal { get; set; } // Tạm tính
@@ -74,6 +77,7 @@ public class Quotation
     public Client? Client { get; set; }
     public Contact? Contact { get; set; }
     public ICollection<QuotationItem> QuotationItems { get; set; } = new List<QuotationItem>();
+    public ICollection<QuotationSample> QuotationSamples { get; set; } = new List<QuotationSample>();
     public ICollection<QuotationAnalysisGroup> QuotationAnalysisGroups { get; set; } = new List<QuotationAnalysisGroup>();
     public ICollection<QuotationHistory> QuotationHistories { get; set; } = new List<QuotationHistory>();
 }

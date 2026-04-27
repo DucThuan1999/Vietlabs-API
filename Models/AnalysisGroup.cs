@@ -6,7 +6,8 @@ public class AnalysisGroup
     public string? AnalysisGroupCode { get; set; }
     public string? NameVi { get; set; }
     public string? NameEn { get; set; }
-    public decimal? WholeGroupStandardPrice { get; set; } // Giá group (Whole group standard)
+    /// <summary>Giá nhóm chuẩn — cột Excel <c>Giá nhóm chuẩn_new</c> (sheet Vietlabs / export CSV).</summary>
+    public decimal? WholeGroupStandardPrice { get; set; }
     public decimal? StepPrice { get; set; } // Giá bước nhảy
     public string Status { get; set; } = "Active";
     public string? Notes { get; set; }

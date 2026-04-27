@@ -1,15 +1,15 @@
 namespace VietLab.Models;
 
 /// <summary>
-/// Danh mục Tiêu chuẩn/Qui chuẩn
+/// Danh mục Qui chuẩn/Tiêu chuẩn
 /// </summary>
 public class Standard
 {
     public Guid StandardId { get; set; }
     public int? SequenceNumber { get; set; }  // STT
-    public string? StandardCode { get; set; }  // Mã tiêu chuẩn/qui chuẩn
-    public string? NameVi { get; set; }  // Tiêu chuẩn/Qui chuẩn (VIE)
-    public string? NameEn { get; set; }  // Tên tiêu chuẩn/Qui chuẩn (ENG)
+    public string? StandardCode { get; set; }  // Mã qui chuẩn/tiêu chuẩn
+    public string? NameVi { get; set; }  // Qui chuẩn/Tiêu chuẩn (VIE)
+    public string? NameEn { get; set; }  // Tên qui chuẩn/tiêu chuẩn (ENG)
     public string Status { get; set; } = "Active";  // Trạng thái
     public string? Notes { get; set; }  // Ghi chú
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

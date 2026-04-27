@@ -8,9 +8,7 @@ public class Contact
     public string FullName { get; set; } = string.Empty;
     public string? Email { get; set; }
     public string? Phone { get; set; }
-    public string? Department { get; set; }
     public string? Title { get; set; } // Chức vụ
-    public bool IsPrimary { get; set; }
     public string? Notes { get; set; } // Ghi chú
     
     // Vai trò người liên hệ
