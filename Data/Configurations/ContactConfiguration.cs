@@ -14,6 +14,9 @@ public class ContactConfiguration : IEntityTypeConfiguration<Contact>
         // Primary key
         builder.HasKey(c => c.ContactId);
 
+        builder.HasAlternateKey(c => new { c.ContactId, c.ClientId })
+            .HasName("AK_contact_contact_id_client_id");
+
         builder.HasOne(c => c.UpdatedByAccount)
             .WithMany()
             .HasForeignKey(c => c.UpdatedBy)

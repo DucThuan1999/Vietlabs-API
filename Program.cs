@@ -381,45 +381,31 @@ else
 
 app.MapControllers();
 
-// Tự động tạo database nếu chưa tồn tại
+// Tự động apply EF Core migrations khi ứng dụng khởi động
 using (var scope = app.Services.CreateScope())
 {
     try
     {
         var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-        
-        // Kiểm tra xem database có tồn tại và có bảng không
-        if (!dbContext.Database.CanConnect())
+
+        var pendingMigrations = dbContext.Database.GetPendingMigrations().ToList();
+        if (pendingMigrations.Count > 0)
         {
-            logger.LogInformation("Database does not exist. Creating database...");
-            dbContext.Database.EnsureCreated();
-            logger.LogInformation("Database created successfully");
+            logger.LogInformation("Applying {Count} pending migrations: {Migrations}", pendingMigrations.Count, string.Join(", ", pendingMigrations));
         }
         else
         {
-            // Kiểm tra xem bảng Contacts có tồn tại không
-            try
-            {
-                var testQuery = dbContext.Contacts.Count();
-                logger.LogInformation("Database and tables are ready");
-            }
-            catch (Exception tableEx)
-            {
-                logger.LogWarning(tableEx, "Some tables are missing. Recreating database...");
-                // Xóa và tạo lại database
-                dbContext.Database.EnsureDeleted();
-                dbContext.Database.EnsureCreated();
-                logger.LogInformation("Database recreated successfully with all tables");
-            }
+            logger.LogInformation("No pending migrations found");
         }
-        
-        logger.LogInformation("Database initialized successfully");
+
+        dbContext.Database.Migrate();
+        logger.LogInformation("Database migrations applied successfully");
     }
     catch (Exception ex)
     {
         var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "An error occurred while initializing the database. Please check your connection string in appsettings.json");
+        logger.LogError(ex, "An error occurred while applying database migrations. Please check your connection string and migration files");
         // Không throw exception để ứng dụng vẫn có thể chạy
     }
 }

@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using VietLab.Data;
 
@@ -11,9 +12,11 @@ using VietLab.Data;
 namespace VietLab.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260419153450_UpdateOrderTemplateParent")]
+    partial class UpdateOrderTemplateParent
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -224,7 +227,7 @@ namespace VietLab.Migrations
                         {
                             AnalysisGroupId = new Guid("aaaaaaaa-0001-0001-0001-000000000001"),
                             AnalysisGroupCode = "AG-001",
-                            CreatedAt = new DateTime(2026, 4, 20, 9, 7, 54, 389, DateTimeKind.Utc).AddTicks(7426),
+                            CreatedAt = new DateTime(2026, 4, 19, 15, 34, 48, 825, DateTimeKind.Utc).AddTicks(9982),
                             NameEn = "Hematology",
                             NameVi = "Huyết học",
                             Notes = "Nhóm chỉ tiêu về huyết học",
@@ -234,7 +237,7 @@ namespace VietLab.Migrations
                         {
                             AnalysisGroupId = new Guid("aaaaaaaa-0002-0002-0002-000000000002"),
                             AnalysisGroupCode = "AG-002",
-                            CreatedAt = new DateTime(2026, 4, 20, 9, 7, 54, 389, DateTimeKind.Utc).AddTicks(7428),
+                            CreatedAt = new DateTime(2026, 4, 19, 15, 34, 48, 825, DateTimeKind.Utc).AddTicks(9985),
                             NameEn = "Biochemistry",
                             NameVi = "Sinh hóa",
                             Notes = "Nhóm chỉ tiêu về sinh hóa",
@@ -244,7 +247,7 @@ namespace VietLab.Migrations
                         {
                             AnalysisGroupId = new Guid("aaaaaaaa-0003-0003-0003-000000000003"),
                             AnalysisGroupCode = "AG-003",
-                            CreatedAt = new DateTime(2026, 4, 20, 9, 7, 54, 389, DateTimeKind.Utc).AddTicks(7430),
+                            CreatedAt = new DateTime(2026, 4, 19, 15, 34, 48, 825, DateTimeKind.Utc).AddTicks(9986),
                             NameEn = "Microbiology",
                             NameVi = "Vi sinh",
                             Notes = "Nhóm chỉ tiêu về vi sinh",
@@ -254,7 +257,7 @@ namespace VietLab.Migrations
                         {
                             AnalysisGroupId = new Guid("aaaaaaaa-0004-0004-0004-000000000004"),
                             AnalysisGroupCode = "AG-004",
-                            CreatedAt = new DateTime(2026, 4, 20, 9, 7, 54, 389, DateTimeKind.Utc).AddTicks(7432),
+                            CreatedAt = new DateTime(2026, 4, 19, 15, 34, 48, 825, DateTimeKind.Utc).AddTicks(9988),
                             NameEn = "Immunology",
                             NameVi = "Miễn dịch",
                             Notes = "Nhóm chỉ tiêu về miễn dịch",
@@ -264,7 +267,7 @@ namespace VietLab.Migrations
                         {
                             AnalysisGroupId = new Guid("aaaaaaaa-0005-0005-0005-000000000005"),
                             AnalysisGroupCode = "AG-005",
-                            CreatedAt = new DateTime(2026, 4, 20, 9, 7, 54, 389, DateTimeKind.Utc).AddTicks(7434),
+                            CreatedAt = new DateTime(2026, 4, 19, 15, 34, 48, 825, DateTimeKind.Utc).AddTicks(9990),
                             NameEn = "Urine Analysis",
                             NameVi = "Nước tiểu",
                             Notes = "Nhóm chỉ tiêu về nước tiểu",
@@ -274,7 +277,7 @@ namespace VietLab.Migrations
                         {
                             AnalysisGroupId = new Guid("aaaaaaaa-0006-0006-0006-000000000006"),
                             AnalysisGroupCode = "AG-006",
-                            CreatedAt = new DateTime(2026, 4, 20, 9, 7, 54, 389, DateTimeKind.Utc).AddTicks(7435),
+                            CreatedAt = new DateTime(2026, 4, 19, 15, 34, 48, 825, DateTimeKind.Utc).AddTicks(9992),
                             NameEn = "Serology",
                             NameVi = "Huyết thanh học",
                             Notes = "Nhóm chỉ tiêu về huyết thanh học",
@@ -819,11 +822,11 @@ namespace VietLab.Migrations
                             CommissionRate = 5m,
                             CompanyName = "Công ty ABC",
                             Country = "Việt Nam",
-                            CreatedDate = new DateTime(2026, 4, 20, 16, 7, 54, 389, DateTimeKind.Local).AddTicks(6955),
+                            CreatedDate = new DateTime(2026, 4, 19, 22, 34, 48, 825, DateTimeKind.Local).AddTicks(9589),
                             CustomerType = "Enterprise",
                             InternalCode = "CLI-ABC-001",
                             IsBlacklisted = false,
-                            LastContactDate = new DateTime(2026, 4, 15, 16, 7, 54, 389, DateTimeKind.Local).AddTicks(6969),
+                            LastContactDate = new DateTime(2026, 4, 14, 22, 34, 48, 825, DateTimeKind.Local).AddTicks(9601),
                             Notes = "Khách hàng tiềm năng cao",
                             Profession = "Công nghệ thông tin",
                             Province = "Hà Nội",
@@ -847,11 +850,11 @@ namespace VietLab.Migrations
                             CommissionRate = 3m,
                             CompanyName = "Công ty XYZ",
                             Country = "Việt Nam",
-                            CreatedDate = new DateTime(2026, 3, 21, 16, 7, 54, 389, DateTimeKind.Local).AddTicks(6986),
+                            CreatedDate = new DateTime(2026, 3, 20, 22, 34, 48, 825, DateTimeKind.Local).AddTicks(9618),
                             CustomerType = "SMB",
                             InternalCode = "CLI-XYZ-002",
                             IsBlacklisted = false,
-                            LastContactDate = new DateTime(2026, 4, 18, 16, 7, 54, 389, DateTimeKind.Local).AddTicks(6986),
+                            LastContactDate = new DateTime(2026, 4, 17, 22, 34, 48, 825, DateTimeKind.Local).AddTicks(9619),
                             Notes = "Khách hàng thân thiết",
                             Profession = "Thương mại điện tử",
                             Province = "TP. Hồ Chí Minh",
@@ -875,7 +878,7 @@ namespace VietLab.Migrations
                             CommissionRate = 0m,
                             CompanyName = "Công ty DEF",
                             Country = "Việt Nam",
-                            CreatedDate = new DateTime(2026, 2, 19, 16, 7, 54, 389, DateTimeKind.Local).AddTicks(6991),
+                            CreatedDate = new DateTime(2026, 2, 18, 22, 34, 48, 825, DateTimeKind.Local).AddTicks(9623),
                             CustomerType = "Prospect",
                             InternalCode = "CLI-DEF-003",
                             IsBlacklisted = true,
@@ -902,11 +905,11 @@ namespace VietLab.Migrations
                             CommissionRate = 7m,
                             CompanyName = "Công ty GHI",
                             Country = "Việt Nam",
-                            CreatedDate = new DateTime(2026, 4, 5, 16, 7, 54, 389, DateTimeKind.Local).AddTicks(6996),
+                            CreatedDate = new DateTime(2026, 4, 4, 22, 34, 48, 825, DateTimeKind.Local).AddTicks(9628),
                             CustomerType = "Enterprise",
                             InternalCode = "CLI-GHI-004",
                             IsBlacklisted = false,
-                            LastContactDate = new DateTime(2026, 4, 19, 16, 7, 54, 389, DateTimeKind.Local).AddTicks(6997),
+                            LastContactDate = new DateTime(2026, 4, 18, 22, 34, 48, 825, DateTimeKind.Local).AddTicks(9629),
                             Notes = "Khách hàng VIP",
                             Profession = "Tài chính - Ngân hàng",
                             Province = "Hà Nội",
@@ -930,11 +933,11 @@ namespace VietLab.Migrations
                             CommissionRate = 4m,
                             CompanyName = "Công ty JKL",
                             Country = "Việt Nam",
-                            CreatedDate = new DateTime(2026, 3, 6, 16, 7, 54, 389, DateTimeKind.Local).AddTicks(7002),
+                            CreatedDate = new DateTime(2026, 3, 5, 22, 34, 48, 825, DateTimeKind.Local).AddTicks(9635),
                             CustomerType = "SMB",
                             InternalCode = "CLI-JKL-005",
                             IsBlacklisted = false,
-                            LastContactDate = new DateTime(2026, 4, 17, 16, 7, 54, 389, DateTimeKind.Local).AddTicks(7003),
+                            LastContactDate = new DateTime(2026, 4, 16, 22, 34, 48, 825, DateTimeKind.Local).AddTicks(9635),
                             Notes = "Khách hàng ổn định",
                             Profession = "Bán lẻ",
                             Province = "TP. Hồ Chí Minh",
@@ -958,11 +961,11 @@ namespace VietLab.Migrations
                             CommissionRate = 2m,
                             CompanyName = "Công ty MNO",
                             Country = "Việt Nam",
-                            CreatedDate = new DateTime(2026, 3, 31, 16, 7, 54, 389, DateTimeKind.Local).AddTicks(7008),
+                            CreatedDate = new DateTime(2026, 3, 30, 22, 34, 48, 825, DateTimeKind.Local).AddTicks(9683),
                             CustomerType = "SMB",
                             InternalCode = "CLI-MNO-006",
                             IsBlacklisted = false,
-                            LastContactDate = new DateTime(2026, 4, 13, 16, 7, 54, 389, DateTimeKind.Local).AddTicks(7009),
+                            LastContactDate = new DateTime(2026, 4, 12, 22, 34, 48, 825, DateTimeKind.Local).AddTicks(9684),
                             Notes = "Khách hàng mới",
                             Profession = "Logistics",
                             Province = "Hải Phòng",
@@ -986,11 +989,11 @@ namespace VietLab.Migrations
                             CommissionRate = 0m,
                             CompanyName = "Công ty PQR",
                             Country = "Việt Nam",
-                            CreatedDate = new DateTime(2026, 4, 10, 16, 7, 54, 389, DateTimeKind.Local).AddTicks(7015),
+                            CreatedDate = new DateTime(2026, 4, 9, 22, 34, 48, 825, DateTimeKind.Local).AddTicks(9689),
                             CustomerType = "Prospect",
                             InternalCode = "CLI-PQR-007",
                             IsBlacklisted = false,
-                            LastContactDate = new DateTime(2026, 4, 16, 16, 7, 54, 389, DateTimeKind.Local).AddTicks(7016),
+                            LastContactDate = new DateTime(2026, 4, 15, 22, 34, 48, 825, DateTimeKind.Local).AddTicks(9690),
                             Notes = "Đang tư vấn",
                             Profession = "Du lịch",
                             Province = "Đà Nẵng",
@@ -1014,11 +1017,11 @@ namespace VietLab.Migrations
                             CommissionRate = 3m,
                             CompanyName = "Công ty STU",
                             Country = "Việt Nam",
-                            CreatedDate = new DateTime(2026, 3, 26, 16, 7, 54, 389, DateTimeKind.Local).AddTicks(7075),
+                            CreatedDate = new DateTime(2026, 3, 25, 22, 34, 48, 825, DateTimeKind.Local).AddTicks(9694),
                             CustomerType = "SMB",
                             InternalCode = "CLI-STU-008",
                             IsBlacklisted = false,
-                            LastContactDate = new DateTime(2026, 4, 14, 16, 7, 54, 389, DateTimeKind.Local).AddTicks(7076),
+                            LastContactDate = new DateTime(2026, 4, 13, 22, 34, 48, 825, DateTimeKind.Local).AddTicks(9695),
                             Notes = "Khách hàng tiềm năng",
                             Profession = "Nông nghiệp",
                             Province = "Cần Thơ",
@@ -1042,11 +1045,11 @@ namespace VietLab.Migrations
                             CommissionRate = 6m,
                             CompanyName = "Công ty VWX",
                             Country = "Việt Nam",
-                            CreatedDate = new DateTime(2026, 3, 11, 16, 7, 54, 389, DateTimeKind.Local).AddTicks(7081),
+                            CreatedDate = new DateTime(2026, 3, 10, 22, 34, 48, 825, DateTimeKind.Local).AddTicks(9700),
                             CustomerType = "Enterprise",
                             InternalCode = "CLI-VWX-009",
                             IsBlacklisted = false,
-                            LastContactDate = new DateTime(2026, 4, 18, 16, 7, 54, 389, DateTimeKind.Local).AddTicks(7082),
+                            LastContactDate = new DateTime(2026, 4, 17, 22, 34, 48, 825, DateTimeKind.Local).AddTicks(9701),
                             Notes = "Khách hàng thân thiết",
                             Profession = "Giáo dục",
                             Province = "Hà Nội",
@@ -1070,11 +1073,11 @@ namespace VietLab.Migrations
                             CommissionRate = 8m,
                             CompanyName = "Công ty YZA",
                             Country = "Việt Nam",
-                            CreatedDate = new DateTime(2026, 3, 16, 16, 7, 54, 389, DateTimeKind.Local).AddTicks(7087),
+                            CreatedDate = new DateTime(2026, 3, 15, 22, 34, 48, 825, DateTimeKind.Local).AddTicks(9706),
                             CustomerType = "Enterprise",
                             InternalCode = "CLI-YZA-010",
                             IsBlacklisted = false,
-                            LastContactDate = new DateTime(2026, 4, 19, 16, 7, 54, 389, DateTimeKind.Local).AddTicks(7088),
+                            LastContactDate = new DateTime(2026, 4, 18, 22, 34, 48, 825, DateTimeKind.Local).AddTicks(9707),
                             Notes = "Khách hàng VIP",
                             Profession = "Y tế",
                             Province = "TP. Hồ Chí Minh",
@@ -1098,11 +1101,11 @@ namespace VietLab.Migrations
                             CommissionRate = 3m,
                             CompanyName = "Công ty BCD",
                             Country = "Việt Nam",
-                            CreatedDate = new DateTime(2026, 3, 1, 16, 7, 54, 389, DateTimeKind.Local).AddTicks(7093),
+                            CreatedDate = new DateTime(2026, 2, 28, 22, 34, 48, 825, DateTimeKind.Local).AddTicks(9712),
                             CustomerType = "SMB",
                             InternalCode = "CLI-BCD-011",
                             IsBlacklisted = false,
-                            LastContactDate = new DateTime(2026, 4, 12, 16, 7, 54, 389, DateTimeKind.Local).AddTicks(7093),
+                            LastContactDate = new DateTime(2026, 4, 11, 22, 34, 48, 825, DateTimeKind.Local).AddTicks(9712),
                             Notes = "Khách hàng ổn định",
                             Profession = "Xây dựng",
                             Province = "Đà Nẵng",
@@ -1126,11 +1129,11 @@ namespace VietLab.Migrations
                             CommissionRate = 0m,
                             CompanyName = "Công ty EFG",
                             Country = "Việt Nam",
-                            CreatedDate = new DateTime(2026, 4, 15, 16, 7, 54, 389, DateTimeKind.Local).AddTicks(7100),
+                            CreatedDate = new DateTime(2026, 4, 14, 22, 34, 48, 825, DateTimeKind.Local).AddTicks(9717),
                             CustomerType = "Prospect",
                             InternalCode = "CLI-EFG-012",
                             IsBlacklisted = false,
-                            LastContactDate = new DateTime(2026, 4, 19, 16, 7, 54, 389, DateTimeKind.Local).AddTicks(7100),
+                            LastContactDate = new DateTime(2026, 4, 18, 22, 34, 48, 825, DateTimeKind.Local).AddTicks(9718),
                             Notes = "Đang tư vấn",
                             Profession = "Truyền thông",
                             Province = "Hà Nội",
@@ -1154,11 +1157,11 @@ namespace VietLab.Migrations
                             CommissionRate = 4m,
                             CompanyName = "Công ty HIJ",
                             Country = "Việt Nam",
-                            CreatedDate = new DateTime(2026, 2, 24, 16, 7, 54, 389, DateTimeKind.Local).AddTicks(7105),
+                            CreatedDate = new DateTime(2026, 2, 23, 22, 34, 48, 825, DateTimeKind.Local).AddTicks(9723),
                             CustomerType = "SMB",
                             InternalCode = "CLI-HIJ-013",
                             IsBlacklisted = false,
-                            LastContactDate = new DateTime(2026, 4, 16, 16, 7, 54, 389, DateTimeKind.Local).AddTicks(7106),
+                            LastContactDate = new DateTime(2026, 4, 15, 22, 34, 48, 825, DateTimeKind.Local).AddTicks(9724),
                             Notes = "Khách hàng thân thiết",
                             Profession = "Thực phẩm",
                             Province = "TP. Hồ Chí Minh",
@@ -1182,11 +1185,11 @@ namespace VietLab.Migrations
                             CommissionRate = 2m,
                             CompanyName = "Công ty KLM",
                             Country = "Việt Nam",
-                            CreatedDate = new DateTime(2026, 2, 9, 16, 7, 54, 389, DateTimeKind.Local).AddTicks(7111),
+                            CreatedDate = new DateTime(2026, 2, 8, 22, 34, 48, 825, DateTimeKind.Local).AddTicks(9728),
                             CustomerType = "SMB",
                             InternalCode = "CLI-KLM-014",
                             IsBlacklisted = false,
-                            LastContactDate = new DateTime(2026, 4, 10, 16, 7, 54, 389, DateTimeKind.Local).AddTicks(7112),
+                            LastContactDate = new DateTime(2026, 4, 9, 22, 34, 48, 825, DateTimeKind.Local).AddTicks(9729),
                             Notes = "Khách hàng tạm dừng",
                             Profession = "Năng lượng",
                             Province = "Cần Thơ",
@@ -1210,11 +1213,11 @@ namespace VietLab.Migrations
                             CommissionRate = 10m,
                             CompanyName = "Công ty NOP",
                             Country = "Việt Nam",
-                            CreatedDate = new DateTime(2026, 1, 20, 16, 7, 54, 389, DateTimeKind.Local).AddTicks(7116),
+                            CreatedDate = new DateTime(2026, 1, 19, 22, 34, 48, 825, DateTimeKind.Local).AddTicks(9735),
                             CustomerType = "Enterprise",
                             InternalCode = "CLI-NOP-015",
                             IsBlacklisted = false,
-                            LastContactDate = new DateTime(2026, 4, 19, 16, 7, 54, 389, DateTimeKind.Local).AddTicks(7117),
+                            LastContactDate = new DateTime(2026, 4, 18, 22, 34, 48, 825, DateTimeKind.Local).AddTicks(9736),
                             Notes = "Khách hàng chiến lược",
                             Profession = "Công nghệ thông tin",
                             Province = "Hà Nội",
@@ -3146,10 +3149,6 @@ namespace VietLab.Migrations
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("order_id");
 
-                    b.Property<Guid?>("QuotationId")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("quotation_id");
-
                     b.Property<string>("ResultTurnaroundTimeRequirement")
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)")
@@ -3197,9 +3196,6 @@ namespace VietLab.Migrations
 
                     b.HasIndex("OrderId")
                         .HasDatabaseName("i_x_order_sample_order_id");
-
-                    b.HasIndex("QuotationId")
-                        .HasDatabaseName("i_x_order_sample_quotation_id");
 
                     b.HasIndex("SampleMatrixId")
                         .HasDatabaseName("i_x_order_sample_sample_matrix_id");
@@ -3584,17 +3580,13 @@ namespace VietLab.Migrations
                         .HasColumnType("datetime2")
                         .HasColumnName("created_at");
 
-                    b.Property<Guid?>("CreatedBy")
+                    b.Property<Guid?>("CreatedByAccountId")
                         .HasColumnType("uniqueidentifier")
-                        .HasColumnName("created_by");
+                        .HasColumnName("created_by_account_id");
 
                     b.Property<Guid>("OrderSampleId")
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("order_sample_id");
-
-                    b.Property<Guid?>("QuotationId")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("quotation_id");
 
                     b.Property<string>("TemplateName")
                         .IsRequired()
@@ -3604,11 +3596,8 @@ namespace VietLab.Migrations
 
                     b.HasKey("TemplateId");
 
-                    b.HasIndex("CreatedBy")
-                        .HasDatabaseName("i_x_order_template_created_by");
-
-                    b.HasIndex("QuotationId")
-                        .HasDatabaseName("i_x_order_template_quotation_id");
+                    b.HasIndex("CreatedByAccountId")
+                        .HasDatabaseName("i_x_order_template_created_by_account_id");
 
                     b.HasIndex("OrderSampleId", "TemplateName")
                         .HasDatabaseName("i_x_order_template_sample_name");
@@ -4060,7 +4049,7 @@ namespace VietLab.Migrations
                         new
                         {
                             PackageId = new Guid("bbbbbbbb-0001-0001-0001-000000000001"),
-                            CreatedAt = new DateTime(2026, 4, 20, 9, 7, 54, 389, DateTimeKind.Utc).AddTicks(7497),
+                            CreatedAt = new DateTime(2026, 4, 19, 15, 34, 48, 826, DateTimeKind.Utc).AddTicks(49),
                             DefaultPrice = 1500000.00m,
                             Description = "Gói xét nghiệm tổng quát bao gồm các chỉ tiêu cơ bản về huyết học, sinh hóa và nước tiểu",
                             NameEn = "General Health Check Package",
@@ -4073,7 +4062,7 @@ namespace VietLab.Migrations
                         new
                         {
                             PackageId = new Guid("bbbbbbbb-0002-0002-0002-000000000002"),
-                            CreatedAt = new DateTime(2026, 4, 20, 9, 7, 54, 389, DateTimeKind.Utc).AddTicks(7501),
+                            CreatedAt = new DateTime(2026, 4, 19, 15, 34, 48, 826, DateTimeKind.Utc).AddTicks(53),
                             DefaultPrice = 3500000.00m,
                             Description = "Gói xét nghiệm nâng cao bao gồm đầy đủ các chỉ tiêu: huyết học, sinh hóa, vi sinh, miễn dịch",
                             NameEn = "Advanced Health Check Package",
@@ -4086,7 +4075,7 @@ namespace VietLab.Migrations
                         new
                         {
                             PackageId = new Guid("bbbbbbbb-0003-0003-0003-000000000003"),
-                            CreatedAt = new DateTime(2026, 4, 20, 9, 7, 54, 389, DateTimeKind.Utc).AddTicks(7504),
+                            CreatedAt = new DateTime(2026, 4, 19, 15, 34, 48, 826, DateTimeKind.Utc).AddTicks(56),
                             DefaultPrice = 800000.00m,
                             Description = "Gói xét nghiệm cơ bản chỉ bao gồm huyết học và sinh hóa",
                             NameEn = "Basic Health Check Package",
@@ -4099,7 +4088,7 @@ namespace VietLab.Migrations
                         new
                         {
                             PackageId = new Guid("bbbbbbbb-0004-0004-0004-000000000004"),
-                            CreatedAt = new DateTime(2026, 4, 20, 9, 7, 54, 389, DateTimeKind.Utc).AddTicks(7507),
+                            CreatedAt = new DateTime(2026, 4, 19, 15, 34, 48, 826, DateTimeKind.Utc).AddTicks(59),
                             DefaultPrice = 2500000.00m,
                             Description = "Gói xét nghiệm chuyên sâu về vi sinh và miễn dịch",
                             NameEn = "Microbiology Package",
@@ -4112,7 +4101,7 @@ namespace VietLab.Migrations
                         new
                         {
                             PackageId = new Guid("bbbbbbbb-0005-0005-0005-000000000005"),
-                            CreatedAt = new DateTime(2026, 4, 20, 9, 7, 54, 389, DateTimeKind.Utc).AddTicks(7510),
+                            CreatedAt = new DateTime(2026, 4, 19, 15, 34, 48, 826, DateTimeKind.Utc).AddTicks(62),
                             DefaultPrice = 5000000.00m,
                             Description = "Gói xét nghiệm đầy đủ tất cả các chỉ tiêu có sẵn",
                             NameEn = "Comprehensive Health Package",
@@ -6254,12 +6243,6 @@ namespace VietLab.Migrations
                         .IsRequired()
                         .HasConstraintName("f_k_order_sample_order_order_id");
 
-                    b.HasOne("VietLab.Models.Quotation", "Quotation")
-                        .WithMany()
-                        .HasForeignKey("QuotationId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("f_k_order_sample_quotation_quotation_id");
-
                     b.HasOne("VietLab.Models.SampleMatrix", "SampleMatrix")
                         .WithMany()
                         .HasForeignKey("SampleMatrixId")
@@ -6268,8 +6251,6 @@ namespace VietLab.Migrations
                         .HasConstraintName("f_k_order_sample_sample_matrix_sample_matrix_id");
 
                     b.Navigation("Order");
-
-                    b.Navigation("Quotation");
 
                     b.Navigation("SampleMatrix");
                 });
@@ -6424,9 +6405,9 @@ namespace VietLab.Migrations
                 {
                     b.HasOne("VietLab.Models.Account", "CreatedByAccount")
                         .WithMany()
-                        .HasForeignKey("CreatedBy")
+                        .HasForeignKey("CreatedByAccountId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("f_k_order_template_account_created_by");
+                        .HasConstraintName("f_k_order_template_account_created_by_account_id");
 
                     b.HasOne("VietLab.Models.OrderSample", "OrderSample")
                         .WithMany("OrderTemplates")
@@ -6435,17 +6416,9 @@ namespace VietLab.Migrations
                         .IsRequired()
                         .HasConstraintName("f_k_order_template_order_sample_order_sample_id");
 
-                    b.HasOne("VietLab.Models.Quotation", "Quotation")
-                        .WithMany()
-                        .HasForeignKey("QuotationId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("f_k_order_template_quotation_quotation_id");
-
                     b.Navigation("CreatedByAccount");
 
                     b.Navigation("OrderSample");
-
-                    b.Navigation("Quotation");
                 });
 
             modelBuilder.Entity("VietLab.Models.OrderTemplateAnalysisGroup", b =>

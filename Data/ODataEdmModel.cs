@@ -80,6 +80,45 @@ public static class ODataEdmModel
         // Client related entities
         var clientDebtEntitySet = builder.EntitySet<ClientDebt>("ClientDebts");
         clientDebtEntitySet.EntityType.HasOptional(cd => cd.UpdatedByAccount).AutoExpand = true;
+        var orderEntitySet = builder.EntitySet<Order>("Orders");
+        orderEntitySet.EntityType.HasOptional(o => o.Client).AutoExpand = true;
+        orderEntitySet.EntityType.HasOptional(o => o.Contact).AutoExpand = true;
+        orderEntitySet.EntityType.HasOptional(o => o.CreatedByAccount).AutoExpand = true;
+        var orderSampleEntitySet = builder.EntitySet<OrderSample>("OrderSamples");
+        orderSampleEntitySet.EntityType.HasOptional(os => os.Order).AutoExpand = true;
+        orderSampleEntitySet.EntityType.HasOptional(os => os.SampleMatrix).AutoExpand = true;
+
+        var orderSampleItemEntitySet = builder.EntitySet<OrderSampleItem>("OrderSampleItems");
+        orderSampleItemEntitySet.EntityType.HasOptional(qi => qi.UpdatedByAccount).AutoExpand = true;
+        var orderSampleAnalysisGroupEntitySet = builder.EntitySet<OrderSampleAnalysisGroup>("OrderSampleAnalysisGroups");
+        orderSampleAnalysisGroupEntitySet.EntityType.HasOptional(qag => qag.UpdatedByAccount).AutoExpand = true;
+        var orderSamplePackageEntitySet = builder.EntitySet<OrderSamplePackage>("OrderSamplePackages");
+        orderSamplePackageEntitySet.EntityType.HasOptional(p => p.UpdatedByAccount).AutoExpand = true;
+        var orderSamplePackageAnalysisItemEntitySet = builder.EntitySet<OrderSamplePackageAnalysisItem>("OrderSamplePackageAnalysisItems");
+        orderSamplePackageAnalysisItemEntitySet.EntityType.HasOptional(pai => pai.UpdatedByAccount).AutoExpand = true;
+
+        var orderTemplateEntitySet = builder.EntitySet<OrderTemplate>("OrderTemplates");
+        orderTemplateEntitySet.EntityType.HasKey(t => t.TemplateId);
+        orderTemplateEntitySet.EntityType.HasOptional(t => t.OrderSample).AutoExpand = true;
+        orderTemplateEntitySet.EntityType.HasOptional(t => t.CreatedByAccount).AutoExpand = true;
+
+        var orderTemplateItemEntitySet = builder.EntitySet<OrderTemplateItem>("OrderTemplateItems");
+        orderTemplateItemEntitySet.EntityType.HasOptional(qi => qi.UpdatedByAccount).AutoExpand = true;
+        orderTemplateItemEntitySet.EntityType.HasOptional(qi => qi.OrderTemplate).AutoExpand = true;
+        var orderTemplateAnalysisGroupEntitySet = builder.EntitySet<OrderTemplateAnalysisGroup>("OrderTemplateAnalysisGroups");
+        orderTemplateAnalysisGroupEntitySet.EntityType.HasOptional(qag => qag.UpdatedByAccount).AutoExpand = true;
+        orderTemplateAnalysisGroupEntitySet.EntityType.HasOptional(qag => qag.OrderTemplate).AutoExpand = true;
+        var orderTemplatePackageEntitySet = builder.EntitySet<OrderTemplatePackage>("OrderTemplatePackages");
+        orderTemplatePackageEntitySet.EntityType.HasOptional(p => p.UpdatedByAccount).AutoExpand = true;
+        orderTemplatePackageEntitySet.EntityType.HasOptional(p => p.OrderTemplate).AutoExpand = true;
+        var orderTemplatePackageAnalysisItemEntitySet = builder.EntitySet<OrderTemplatePackageAnalysisItem>("OrderTemplatePackageAnalysisItems");
+        orderTemplatePackageAnalysisItemEntitySet.EntityType.HasOptional(pai => pai.UpdatedByAccount).AutoExpand = true;
+        orderTemplatePackageAnalysisItemEntitySet.EntityType.HasOptional(pai => pai.OrderTemplatePackage).AutoExpand = true;
+
+        // OrderHistories với AutoExpand cho navigation properties
+        var orderHistoryEntitySet = builder.EntitySet<OrderHistory>("OrderHistories");
+        var orderHistoryEntityType = orderHistoryEntitySet.EntityType;
+        orderHistoryEntityType.HasRequired(oh => oh.CreatedByAccount).AutoExpand = true;
         
         // ClientForecast với AutoExpand cho navigation properties
         var clientForecastEntitySet = builder.EntitySet<ClientForecast>("ClientForecasts");

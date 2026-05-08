@@ -42,6 +42,8 @@ public class ApplicationDbContext : DbContext
     public DbSet<Ward> Wards { get; set; }
     public DbSet<QuotationApprovalThreshold> QuotationApprovalThresholds { get; set; }
     public DbSet<QuotationHistory> QuotationHistories { get; set; }
+    public DbSet<Order> Orders { get; set; }
+    public DbSet<OrderHistory> OrderHistories { get; set; }
     public DbSet<ModuleApprover> ModuleApprovers { get; set; }
     public DbSet<ClientIndustry> ClientIndustries { get; set; }
     public DbSet<EmployeeTitle> EmployeeTitles { get; set; }
@@ -59,6 +61,16 @@ public class ApplicationDbContext : DbContext
     public DbSet<MatrixAction> MatrixActions { get; set; }
     public DbSet<SecurityModuleAction> SecurityModuleActions { get; set; }
     public DbSet<AccountModuleGrant> AccountModuleGrants { get; set; }
+    public DbSet<OrderSample> OrderSamples { get; set; }
+    public DbSet<OrderSampleItem> OrderSampleItems { get; set; }
+    public DbSet<OrderSampleAnalysisGroup> OrderSampleAnalysisGroups { get; set; }
+    public DbSet<OrderSamplePackage> OrderSamplePackages { get; set; }
+    public DbSet<OrderSamplePackageAnalysisItem> OrderSamplePackageAnalysisItems { get; set; }
+    public DbSet<OrderTemplate> OrderTemplates { get; set; }
+    public DbSet<OrderTemplateItem> OrderTemplateItems { get; set; }
+    public DbSet<OrderTemplateAnalysisGroup> OrderTemplateAnalysisGroups { get; set; }
+    public DbSet<OrderTemplatePackage> OrderTemplatePackages { get; set; }
+    public DbSet<OrderTemplatePackageAnalysisItem> OrderTemplatePackageAnalysisItems { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -96,6 +108,18 @@ public class ApplicationDbContext : DbContext
         modelBuilder.ApplyConfiguration(new WardConfiguration());
         modelBuilder.ApplyConfiguration(new QuotationApprovalThresholdConfiguration());
         modelBuilder.ApplyConfiguration(new QuotationHistoryConfiguration());
+        modelBuilder.ApplyConfiguration(new OrderConfiguration());
+        modelBuilder.ApplyConfiguration(new OrderHistoryConfiguration());
+        modelBuilder.ApplyConfiguration(new OrderSampleConfiguration());
+        modelBuilder.ApplyConfiguration(new OrderSampleItemConfiguration());
+        modelBuilder.ApplyConfiguration(new OrderSampleAnalysisGroupConfiguration());
+        modelBuilder.ApplyConfiguration(new OrderSamplePackageConfiguration());
+        modelBuilder.ApplyConfiguration(new OrderSamplePackageAnalysisItemConfiguration());
+        modelBuilder.ApplyConfiguration(new OrderTemplateConfiguration());
+        modelBuilder.ApplyConfiguration(new OrderTemplateItemConfiguration());
+        modelBuilder.ApplyConfiguration(new OrderTemplateAnalysisGroupConfiguration());
+        modelBuilder.ApplyConfiguration(new OrderTemplatePackageConfiguration());
+        modelBuilder.ApplyConfiguration(new OrderTemplatePackageAnalysisItemConfiguration());
         modelBuilder.ApplyConfiguration(new ModuleApproverConfiguration());
         modelBuilder.ApplyConfiguration(new ClientIndustryConfiguration());
         modelBuilder.ApplyConfiguration(new EmployeeTitleConfiguration());
@@ -240,6 +264,12 @@ public class ApplicationDbContext : DbContext
             .WithMany(c => c.Quotations)
             .HasForeignKey(q => q.ClientId);
 
+        // Quan hệ 1-n: Client - Orders
+        modelBuilder.Entity<Order>()
+            .HasOne(o => o.Client)
+            .WithMany(c => c.Orders)
+            .HasForeignKey(o => o.ClientId);
+
         // Quan hệ n-1: Quotation - Employee (nhân viên tạo báo giá)
         modelBuilder.Entity<Quotation>()
             .HasOne(q => q.Employee)
@@ -313,6 +343,31 @@ public class ApplicationDbContext : DbContext
 
         // Quan hệ n-1: QuotationItem - Package (optional)
         modelBuilder.Entity<QuotationItem>()
+            .HasOne(qi => qi.Package)
+            .WithMany()
+            .HasForeignKey(qi => qi.PackageId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        // Quan hệ 1-n: OrderSample - OrderSampleItems
+        modelBuilder.Entity<OrderSampleItem>()
+            .HasOne(qi => qi.OrderSample)
+            .WithMany(os => os.OrderSampleItems)
+            .HasForeignKey(qi => qi.OrderSampleId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<OrderSampleItem>()
+            .HasOne(qi => qi.AnalysisItem)
+            .WithMany()
+            .HasForeignKey(qi => qi.AnalysisItemId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        modelBuilder.Entity<OrderSampleItem>()
+            .HasOne(qi => qi.AnalysisGroup)
+            .WithMany()
+            .HasForeignKey(qi => qi.AnalysisGroupId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        modelBuilder.Entity<OrderSampleItem>()
             .HasOne(qi => qi.Package)
             .WithMany()
             .HasForeignKey(qi => qi.PackageId)

@@ -898,6 +898,12 @@
     "quotationApprovalThresholds": "/odata/QuotationApprovalThresholds",
     "moduleApprovers": "/odata/ModuleApprovers",
     "storeRecords": "/odata/StoreRecords",
-    "clientHistories": "/odata/ClientHistories"
+    "clientHistories": "/odata/ClientHistories",
+    "orders": "/odata/Orders",
+    "orderSamples": "/odata/OrderSamples",
+    "orderSampleItems": "/odata/OrderSampleItems",
+    "orderSampleAnalysisGroups": "/odata/OrderSampleAnalysisGroups",
+    "orderSamplePackages": "/odata/OrderSamplePackages",
+    "orderSamplePackageAnalysisItems": "/odata/OrderSamplePackageAnalysisItems"
   }
 }

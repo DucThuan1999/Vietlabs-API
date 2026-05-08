@@ -60,6 +60,8 @@ public class Client
     public ICollection<Contact> Contacts { get; set; } = new List<Contact>();
     // Navigation: mỗi khách hàng có nhiều báo giá
     public ICollection<Quotation> Quotations { get; set; } = new List<Quotation>();
+    // Navigation: mỗi khách hàng có nhiều đơn hàng
+    public ICollection<Order> Orders { get; set; } = new List<Order>();
     // Navigation: mỗi khách hàng có 1 công nợ latest
     public ClientDebt? ClientDebt { get; set; }
     // Navigation: mỗi khách hàng có nhiều forecast
