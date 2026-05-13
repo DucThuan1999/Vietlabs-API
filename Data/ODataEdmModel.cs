@@ -63,9 +63,12 @@ public static class ODataEdmModel
         builder.EntitySet<QuotationSample>("QuotationSamples");
         var quotationItemEntitySet = builder.EntitySet<QuotationItem>("QuotationItems");
         quotationItemEntitySet.EntityType.HasOptional(qi => qi.UpdatedByAccount).AutoExpand = true;
+        var quotationNonNd107ItemEntitySet = builder.EntitySet<QuotationNonNd107Item>("QuotationNonNd107Items");
+        quotationNonNd107ItemEntitySet.EntityType.HasOptional(x => x.UpdatedByAccount).AutoExpand = true;
         var quotationAnalysisGroupEntitySet = builder.EntitySet<QuotationAnalysisGroup>("QuotationAnalysisGroups");
         quotationAnalysisGroupEntitySet.EntityType.HasOptional(qag => qag.UpdatedByAccount).AutoExpand = true;
         builder.EntitySet<QuotationApprovalThreshold>("QuotationApprovalThresholds");
+        builder.EntitySet<VatRate>("VatRates");
         
         // QuotationHistory với AutoExpand cho navigation properties
         var quotationHistoryEntitySet = builder.EntitySet<QuotationHistory>("QuotationHistories");
@@ -138,7 +141,7 @@ public static class ODataEdmModel
         // Năng lực nhà thầu phụ - Chỉ định (có ngày hết hạn)
         builder.EntitySet<SubcontractorCapabilityDesignation>("SubcontractorCapabilityDesignations");
 
-        // Danh mục Qui chuẩn/Tiêu chuẩn
+        // Danh mục Quy chuẩn/Tiêu chuẩn
         var standardEntitySet = builder.EntitySet<Standard>("Standards");
         standardEntitySet.EntityType.HasOptional(s => s.UpdatedByAccount).AutoExpand = true;
 

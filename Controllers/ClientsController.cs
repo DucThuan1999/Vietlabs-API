@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OData.Query;
 using Microsoft.AspNetCore.OData.Routing.Controllers;
 using Microsoft.EntityFrameworkCore;
+using System.Globalization;
 using System.Security.Claims;
 using VietLab.Data;
 using VietLab.Helpers;
@@ -49,6 +50,48 @@ public class ClientsController : ODataController
             .Include(c => c.ClientIndustry));
     }
 
+    /// <summary>
+    /// Sinh mã khách hàng nội bộ kế tiếp dựa trên dữ liệu đầy đủ trên DB (không giới hạn 1000 bản ghi phía client).
+    /// Nếu có <paramref name="agentClientId"/>: mã khách con = {Mã nội bộ đại lý}.{số thứ tự}, bỏ qua địa chỉ khách.
+    /// </summary>
+    [HttpGet("Clients/NextInternalCode")]
+    [Authorize]
+    public async Task<IActionResult> GetNextInternalCode(
+        [FromQuery] string? customerType,
+        [FromQuery] string? country,
+        [FromQuery] string? province,
+        [FromQuery] Guid? agentClientId)
+    {
+        if (string.IsNullOrWhiteSpace(customerType))
+        {
+            return BadRequest(new { message = "customerType là bắt buộc." });
+        }
+
+        if (agentClientId.HasValue && agentClientId.Value != Guid.Empty)
+        {
+            return await ComputeNextForAgentCustomerInternalCodeAsync(agentClientId.Value);
+        }
+
+        var areaCode = await ResolveAreaCodeAsync(province, country);
+        if (string.IsNullOrEmpty(areaCode))
+        {
+            return BadRequest(new { message = "Không xác định được mã khu vực (tỉnh/quốc gia)." });
+        }
+
+        var ct = customerType.Trim();
+        if (ct is "Cá nhân" or "Doanh nghiệp" or "Nhà nước")
+        {
+            return await ComputeNextStandardInternalCodeAsync(areaCode);
+        }
+
+        if (ct is "Đại lý" or "CTV")
+        {
+            return await ComputeNextAgentOrCtvInternalCodeAsync(areaCode);
+        }
+
+        return BadRequest(new { message = "Loại khách hàng không hợp lệ." });
+    }
+
     [HttpGet("Clients({key})")]
     [EnableQuery]
     public IActionResult Get([FromRoute] Guid key)
@@ -72,6 +115,12 @@ public class ClientsController : ODataController
         if (!ModelState.IsValid)
         {
             return BadRequest(ModelState);
+        }
+
+        if (!string.IsNullOrWhiteSpace(client.InternalCode) &&
+            await InternalCodeInUseAsync(client.InternalCode.Trim(), excludeClientId: null))
+        {
+            return Conflict(new { message = "Mã khách hàng nội bộ đã tồn tại." });
         }
 
         client.ClientId = client.ClientId == Guid.Empty ? Guid.NewGuid() : client.ClientId;
@@ -123,6 +172,12 @@ public class ClientsController : ODataController
         if (originalClient == null)
         {
             return NotFound();
+        }
+
+        if (!string.IsNullOrWhiteSpace(client.InternalCode) &&
+            await InternalCodeInUseAsync(client.InternalCode.Trim(), excludeClientId: key))
+        {
+            return Conflict(new { message = "Mã khách hàng nội bộ đã tồn tại." });
         }
 
         // Build change description
@@ -214,6 +269,195 @@ public class ClientsController : ODataController
     private bool ClientExists(Guid key)
     {
         return _context.Clients.Any(e => e.ClientId == key);
+    }
+
+    private async Task<bool> InternalCodeInUseAsync(string internalCode, Guid? excludeClientId)
+    {
+        if (string.IsNullOrWhiteSpace(internalCode))
+        {
+            return false;
+        }
+
+        var normalized = internalCode.Trim().ToLowerInvariant();
+        return await _context.Clients.AsNoTracking().AnyAsync(c =>
+            c.InternalCode != null &&
+            (excludeClientId == null || c.ClientId != excludeClientId.Value) &&
+            c.InternalCode.ToLower() == normalized);
+    }
+
+    private async Task<string?> ResolveAreaCodeAsync(string? province, string? country)
+    {
+        if (!string.IsNullOrWhiteSpace(province))
+        {
+            Province? provinceEntity;
+            if (Guid.TryParse(province, out var provinceId))
+            {
+                provinceEntity = await _context.Provinces.AsNoTracking()
+                    .FirstOrDefaultAsync(p => p.ProvinceId == provinceId);
+            }
+            else
+            {
+                var pTrim = province.Trim();
+                provinceEntity = await _context.Provinces.AsNoTracking()
+                    .FirstOrDefaultAsync(p =>
+                        p.Name == pTrim ||
+                        (p.FullName != null && p.FullName == pTrim));
+            }
+
+            if (!string.IsNullOrWhiteSpace(provinceEntity?.ProvinceCode))
+            {
+                return provinceEntity!.ProvinceCode!.ToUpperInvariant();
+            }
+        }
+
+        if (!string.IsNullOrWhiteSpace(country))
+        {
+            Country? countryEntity;
+            if (Guid.TryParse(country, out var countryId))
+            {
+                countryEntity = await _context.Countries.AsNoTracking()
+                    .FirstOrDefaultAsync(c => c.CountryId == countryId);
+            }
+            else
+            {
+                var cTrim = country.Trim();
+                countryEntity = await _context.Countries.AsNoTracking()
+                    .FirstOrDefaultAsync(c =>
+                        c.FullNameVi == cTrim ||
+                        c.NameEn == cTrim ||
+                        c.FullNameEn == cTrim);
+            }
+
+            if (countryEntity != null)
+            {
+                if (!string.IsNullOrWhiteSpace(countryEntity.Alpha2))
+                {
+                    return countryEntity.Alpha2.ToUpperInvariant();
+                }
+
+                if (!string.IsNullOrWhiteSpace(countryEntity.Alpha3))
+                {
+                    return countryEntity.Alpha3.ToUpperInvariant();
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private async Task<IActionResult> ComputeNextForAgentCustomerInternalCodeAsync(Guid agentClientId)
+    {
+        var agent = await _context.Clients.AsNoTracking()
+            .FirstOrDefaultAsync(c => c.ClientId == agentClientId);
+
+        if (agent == null)
+        {
+            return NotFound(new { message = "Không tìm thấy đại lý/CTV." });
+        }
+
+        if (agent.CustomerType != "Đại lý" && agent.CustomerType != "CTV")
+        {
+            return BadRequest(new { message = "Khách được chọn không phải Đại lý/CTV." });
+        }
+
+        if (string.IsNullOrWhiteSpace(agent.InternalCode))
+        {
+            return BadRequest(new { message = "Đại lý/CTV chưa có mã khách hàng nội bộ." });
+        }
+
+        var prefix = agent.InternalCode.Trim();
+        var prefixDot = prefix + ".";
+
+        // Đếm mã đã có dạng {mã_agent}.{số} trên toàn DB — không lọc AgentClientId vì dữ liệu cũ có thể thiếu/sai FK.
+        // Prefix kèm dấu chấm tránh nhầm N/CTH0001.* với N/CTH00010.*
+        var codes = await _context.Clients.AsNoTracking()
+            .Where(c => c.InternalCode != null && c.InternalCode.StartsWith(prefixDot))
+            .Select(c => c.InternalCode!)
+            .ToListAsync();
+
+        var max = 0;
+        foreach (var code in codes)
+        {
+            if (!code.StartsWith(prefixDot, StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            var suffix = code.Substring(prefixDot.Length);
+            if (int.TryParse(suffix, NumberStyles.Integer, CultureInfo.InvariantCulture, out var n))
+            {
+                max = Math.Max(max, n);
+            }
+        }
+
+        var next = max + 1;
+        return Ok(new { internalCode = $"{prefix}.{next}" });
+    }
+
+    private async Task<IActionResult> ComputeNextStandardInternalCodeAsync(string areaCode)
+    {
+        var totalLen = areaCode.Length + 5;
+        var standardTypes = new[] { "Cá nhân", "Doanh nghiệp", "Nhà nước" };
+
+        var candidates = await _context.Clients.AsNoTracking()
+            .Where(c => c.InternalCode != null
+                && c.InternalCode.Length == totalLen
+                && c.InternalCode.StartsWith(areaCode)
+                && c.CustomerType != null
+                && standardTypes.Contains(c.CustomerType))
+            .Select(c => c.InternalCode!)
+            .ToListAsync();
+
+        var max = 0;
+        foreach (var code in candidates)
+        {
+            var suffix = code.Substring(areaCode.Length);
+            if (suffix.Length == 5 && int.TryParse(suffix, NumberStyles.Integer, CultureInfo.InvariantCulture, out var n))
+            {
+                max = Math.Max(max, n);
+            }
+        }
+
+        var next = max + 1;
+        if (next > 99999)
+        {
+            return BadRequest(new { message = "Đã hết dải mã (5 chữ số) cho khu vực này." });
+        }
+
+        return Ok(new { internalCode = $"{areaCode}{next.ToString("D5", CultureInfo.InvariantCulture)}" });
+    }
+
+    private async Task<IActionResult> ComputeNextAgentOrCtvInternalCodeAsync(string areaCode)
+    {
+        var prefix = "N/" + areaCode;
+        var totalLen = prefix.Length + 4;
+
+        var candidates = await _context.Clients.AsNoTracking()
+            .Where(c => c.InternalCode != null
+                && c.InternalCode.Length == totalLen
+                && c.InternalCode.StartsWith(prefix)
+                && !c.InternalCode.Contains('.')
+                && (c.CustomerType == "Đại lý" || c.CustomerType == "CTV"))
+            .Select(c => c.InternalCode!)
+            .ToListAsync();
+
+        var max = 0;
+        foreach (var code in candidates)
+        {
+            var seqStr = code.Substring(prefix.Length);
+            if (seqStr.Length == 4 && int.TryParse(seqStr, NumberStyles.Integer, CultureInfo.InvariantCulture, out var n))
+            {
+                max = Math.Max(max, n);
+            }
+        }
+
+        var next = max + 1;
+        if (next > 9999)
+        {
+            return BadRequest(new { message = "Đã hết dải mã (4 chữ số) cho khu vực này." });
+        }
+
+        return Ok(new { internalCode = $"{prefix}{next.ToString("D4", CultureInfo.InvariantCulture)}" });
     }
 }
 

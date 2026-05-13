@@ -286,7 +286,7 @@ namespace VietLab.Migrations
                         .HasDefaultValue(false)
                         .HasColumnName("cuc_chan_nuoi");
 
-                    b.Property<Guid>("EquipmentTypeId")
+                    b.Property<Guid?>("EquipmentTypeId")
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("equipment_type_id");
 
@@ -362,7 +362,7 @@ namespace VietLab.Migrations
                         .HasColumnType("nvarchar(50)")
                         .HasColumnName("unit");
 
-                    b.Property<decimal>("UnitPrice")
+                    b.Property<decimal?>("UnitPrice")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("decimal(18,2)")
                         .HasDefaultValue(0m)

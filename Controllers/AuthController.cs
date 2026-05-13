@@ -49,6 +49,7 @@ public class AuthController : ControllerBase
     /// <param name="request">Thông tin đăng nhập (UserName và Password)</param>
     /// <returns>Thông tin user và token nếu đăng nhập thành công</returns>
     [HttpPost("login")]
+    [AllowAnonymous]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
         if (string.IsNullOrWhiteSpace(request.UserName) || string.IsNullOrWhiteSpace(request.Password))

@@ -9,12 +9,12 @@ public class AnalysisItem
     public string? ShortName { get; set; }  // Tên viết tắt
 
     // Foreign Keys
-    public Guid EquipmentTypeId { get; set; }
+    public Guid? EquipmentTypeId { get; set; }
     public Guid? AnalysisGroupId { get; set; }
     public Guid SampleMatrixId { get; set; }
     public Guid SampleMatrixGroupId { get; set; }
     public Guid? ReferenceMethodId { get; set; }  // Phương pháp tham chiếu (mapping nội bộ – quốc tế)
-    public Guid? StandardId { get; set; }  // Qui chuẩn/tiêu chuẩn áp dụng
+    public Guid? StandardId { get; set; }  // Quy chuẩn/tiêu chuẩn áp dụng
     public Guid? UnitOfMeasureId { get; set; }  // Đơn vị tính (ĐVT)
     public Guid? LaboratoryTechniqueId { get; set; }  // Kĩ thuật (Sắc Ký, Cổ Điển, ...)
     
@@ -26,7 +26,7 @@ public class AnalysisItem
     public string? StandardQuantityText { get; set; }
     /// <summary>Đơn vị tính cho khối lượng tiêu chuẩn (riêng với UnitOfMeasureId).</summary>
     public Guid? StandardQuantityUnitOfMeasureId { get; set; }
-    public decimal UnitPrice { get; set; } // Đơn giá
+    public decimal? UnitPrice { get; set; } // Đơn giá
 
     public string Status { get; set; } = "Active";
     public string? Notes { get; set; }

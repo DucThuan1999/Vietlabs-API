@@ -67,7 +67,7 @@ public class StandardsController : ODataController
         }
         catch (DbUpdateException ex)
         {
-            return this.HandleDatabaseError(ex, _logger, "lưu qui chuẩn/tiêu chuẩn");
+            return this.HandleDatabaseError(ex, _logger, "lưu quy chuẩn/tiêu chuẩn");
         }
 
         return Created($"odata/Standards({standard.StandardId})", standard);
@@ -115,7 +115,7 @@ public class StandardsController : ODataController
         }
         catch (DbUpdateException ex)
         {
-            return this.HandleDatabaseError(ex, _logger, "cập nhật qui chuẩn/tiêu chuẩn");
+            return this.HandleDatabaseError(ex, _logger, "cập nhật quy chuẩn/tiêu chuẩn");
         }
 
         await _context.Entry(existing).Reference(s => s.UpdatedByAccount).LoadAsync();
@@ -139,7 +139,7 @@ public class StandardsController : ODataController
         }
         catch (DbUpdateException ex)
         {
-            return this.HandleDatabaseError(ex, _logger, "xóa qui chuẩn/tiêu chuẩn");
+            return this.HandleDatabaseError(ex, _logger, "xóa quy chuẩn/tiêu chuẩn");
         }
 
         return NoContent();

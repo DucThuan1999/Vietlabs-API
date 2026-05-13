@@ -36,8 +36,7 @@ public class AnalysisItemConfiguration : IEntityTypeConfiguration<AnalysisItem>
 
         // Foreign Keys
         builder.Property(ai => ai.EquipmentTypeId)
-            .HasColumnName("equipment_type_id")
-            .IsRequired();
+            .HasColumnName("equipment_type_id");
 
         builder.Property(ai => ai.AnalysisGroupId)
             .HasColumnName("analysis_group_id");
@@ -88,8 +87,7 @@ public class AnalysisItemConfiguration : IEntityTypeConfiguration<AnalysisItem>
         builder.Property(ai => ai.UnitPrice)
             .HasColumnName("unit_price")
             .HasColumnType("decimal(18,2)")
-            .IsRequired()
-            .HasDefaultValue(0);
+            .HasDefaultValue(0m);
 
         builder.Property(ai => ai.Status)
             .HasColumnName("status")

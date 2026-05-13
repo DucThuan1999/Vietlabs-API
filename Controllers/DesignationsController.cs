@@ -94,7 +94,9 @@ public class DesignationsController : ODataController
 
         existing.SequenceNumber = designation.SequenceNumber;
         existing.DesignationCode = designation.DesignationCode;
+        existing.SymbolCode = designation.SymbolCode;
         existing.Name = designation.Name;
+        existing.Description = designation.Description;
         existing.Note = designation.Note;
         existing.Status = designation.Status;
         existing.UpdatedAt = DateTime.UtcNow;

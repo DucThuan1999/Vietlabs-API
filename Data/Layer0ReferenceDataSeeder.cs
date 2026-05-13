@@ -184,7 +184,7 @@ public sealed class Layer0ReferenceDataSeeder
     }
 
     /// <summary>
-    /// Qui chuẩn/tiêu chuẩn từ Capability.xlsx (distinct cột tương ứng). Idempotent theo tên hoặc id cố định. Mã TC-001… khớp form frontend.
+    /// Quy chuẩn/tiêu chuẩn từ Capability.xlsx (distinct cột tương ứng). Idempotent theo tên hoặc id cố định. Mã TC-001… khớp form frontend.
     /// </summary>
     private async Task SyncStandardsFromCapabilityXlsxAsync(ApplicationDbContext db, CancellationToken cancellationToken)
     {
@@ -531,43 +531,53 @@ public sealed class Layer0ReferenceDataSeeder
     /// </summary>
     private async Task SyncDesignationsAsync(ApplicationDbContext db, CancellationToken cancellationToken)
     {
-        var seeds = new (string Code, int Seq, string Name, string? Note)[]
+        var seeds = new (string Code, int Seq, string Name, string SymbolCode, string Description, string? Note)[]
         {
             (
                 CapabilityImportRules.DesignationCodes.Iso,
                 1,
                 "ISO",
+                "a",
+                "Chỉ tiêu được công nhận ISO/IEC 17025:2017 / Parameter is accredited to ISO/IEC 17025:2017.",
                 "Excel (a). HCM + Cần Thơ → DepartmentAnalysisCapabilityDesignation.ExpiredDate theo chi nhánh."
             ),
             (
                 CapabilityImportRules.DesignationCodes.CucBvtv,
                 2,
                 "Cục BVTV",
+                "b",
+                "Chỉ tiêu được chỉ định của Cục Trồng trọt và Bảo vệ thực vật / Parameter is designated by the Department of Crop Production and Plant Protection.",
                 "Excel (b), chi nhánh HCM → DepartmentAnalysisCapabilityDesignation.ExpiredDate."
             ),
             (
                 CapabilityImportRules.DesignationCodes.BoCongThuong,
                 3,
                 "Bộ Công thương",
+                "e",
+                "Chỉ tiêu được chỉ định của Bộ Công thương / Parameter designated by the Ministry of Industry and Trade.",
                 "Excel (e), chi nhánh HCM → DepartmentAnalysisCapabilityDesignation.ExpiredDate."
             ),
             (
                 CapabilityImportRules.DesignationCodes.Nafi,
                 4,
                 "Nafi",
+                "d",
+                "Chỉ tiêu được chỉ định của Cục Chất lượng, Chế biến và Phát triển thị trường / Parameter is designated by the National Authority for Agro-Forestry-Fishery Quality, Processing and Market Development.",
                 "Excel (d), chi nhánh HCM → DepartmentAnalysisCapabilityDesignation.ExpiredDate."
             ),
             (
                 CapabilityImportRules.DesignationCodes.CucChanNuoi,
                 5,
                 "Cục chăn nuôi",
+                "c",
+                "Chỉ tiêu được chỉ định của Cục Chăn nuôi và Thú y / Parameter is designated by the Department of Livestock Production and Veterinary.",
                 "Excel (c), chi nhánh HCM → DepartmentAnalysisCapabilityDesignation.ExpiredDate."
             )
         };
 
         var utc = DateTime.UtcNow;
 
-        foreach (var (code, seq, name, note) in seeds)
+        foreach (var (code, seq, name, symbolCode, description, note) in seeds)
         {
             var existing = await db.Designations.FirstOrDefaultAsync(d => d.DesignationCode == code, cancellationToken);
             if (existing is null)
@@ -582,6 +592,8 @@ public sealed class Layer0ReferenceDataSeeder
                     DesignationCode = code,
                     SequenceNumber = seq,
                     Name = name,
+                    SymbolCode = symbolCode,
+                    Description = description,
                     Note = note,
                     Status = "Active",
                     CreatedAt = utc
@@ -592,6 +604,8 @@ public sealed class Layer0ReferenceDataSeeder
             {
                 existing.SequenceNumber = seq;
                 existing.Name = name;
+                existing.SymbolCode = symbolCode;
+                existing.Description = description;
                 existing.Note = note;
                 existing.Status = "Active";
                 existing.UpdatedAt = utc;

@@ -160,6 +160,9 @@ builder.Services.AddScoped<VietLab.Services.IClientHistoryService, VietLab.Servi
 builder.Services.AddScoped<VietLab.Services.IQuotationHistoryService, VietLab.Services.QuotationHistoryService>();
 builder.Services.AddScoped<VietLab.Services.ModulePermissionService>();
 
+builder.Services.Configure<VietLab.Configuration.SmtpOptions>(builder.Configuration.GetSection(VietLab.Configuration.SmtpOptions.SectionName));
+builder.Services.AddScoped<VietLab.Services.IEmailSender, VietLab.Services.SmtpEmailSender>();
+
 // Luôn đăng ký Authentication + scheme Bearer (tránh lỗi "No authentication handlers are registered" khi gọi [Authorize(AuthenticationSchemes = "Bearer")])
 builder.Services.AddAuthentication(options =>
 {

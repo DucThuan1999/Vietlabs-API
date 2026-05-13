@@ -90,7 +90,7 @@ public static class CapabilityImportRules
     public static IReadOnlyList<SampleMatrixSeed> SampleMatricesFromCapabilityXlsx => CapabilitySampleMatricesSeedData.Rows;
 
     /// <summary>
-    /// Distinct cột &quot;Qui chuẩn/Tiêu chuẩn&quot; từ sheet Vietlabs + NTP — danh sách trong <see cref="CapabilityStandardsSeedData"/>.
+    /// Distinct cột &quot;Quy chuẩn/Tiêu chuẩn&quot; từ sheet Vietlabs + NTP — danh sách trong <see cref="CapabilityStandardsSeedData"/>.
     /// </summary>
     public static IReadOnlyList<string> StandardNamesFromCapabilityXlsx => CapabilityStandardsSeedData.NameViList;
 

@@ -22,9 +22,17 @@ public class DesignationConfiguration : IEntityTypeConfiguration<Designation>
             .HasColumnName("designation_code")
             .HasMaxLength(100);
 
+        builder.Property(d => d.SymbolCode)
+            .HasColumnName("symbol_code")
+            .HasMaxLength(20);
+
         builder.Property(d => d.Name)
             .HasColumnName("name")
             .HasMaxLength(500);
+
+        builder.Property(d => d.Description)
+            .HasColumnName("description")
+            .HasMaxLength(4000);
 
         builder.Property(d => d.Note)
             .HasColumnName("note")

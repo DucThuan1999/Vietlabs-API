@@ -21,23 +21,33 @@ public class PackagesController : ODataController
         _logger = logger;
     }
 
+    /// <summary>
+    /// Cho phép $expand sâu tới AnalysisItem → ReferenceMethod/UnitOfMeasure/AnalysisItemTats (độ sâu &gt; 2).
+    /// </summary>
     [HttpGet("Packages")]
-    [EnableQuery]
+    [EnableQuery(MaxExpansionDepth = 4)]
     public IActionResult Get()
     {
-        return Ok(_context.Packages
-            .Include(p => p.PackageAnalysisItems)
-                .ThenInclude(pai => pai.AnalysisItem)
-            .Include(p => p.SampleMatrix));
+        // Keep the collection endpoint lightweight; OData $expand decides when related data is needed.
+        return Ok(_context.Packages.AsNoTracking());
     }
 
     [HttpGet("Packages({key})")]
-    [EnableQuery]
+    [EnableQuery(MaxExpansionDepth = 4)]
     public IActionResult Get([FromRoute] Guid key)
     {
         var package = _context.Packages
+            .AsNoTracking()
+            .AsSplitQuery()
             .Include(p => p.PackageAnalysisItems)
-                .ThenInclude(pai => pai.AnalysisItem)
+                .ThenInclude(pai => pai.AnalysisItem!)
+                    .ThenInclude(ai => ai.ReferenceMethod)
+            .Include(p => p.PackageAnalysisItems)
+                .ThenInclude(pai => pai.AnalysisItem!)
+                    .ThenInclude(ai => ai.UnitOfMeasure)
+            .Include(p => p.PackageAnalysisItems)
+                .ThenInclude(pai => pai.AnalysisItem!)
+                    .ThenInclude(ai => ai.AnalysisItemTats)
             .Include(p => p.SampleMatrix)
             .FirstOrDefault(p => p.PackageId == key);
         if (package == null)

@@ -1,7 +1,7 @@
 namespace VietLab.Data;
 
 /// <summary>
-/// Giá trị distinct cột &quot;Qui chuẩn/Tiêu chuẩn&quot; từ sheet Vietlabs + NTP của data/Capability.xlsx.
+/// Giá trị distinct cột &quot;Quy chuẩn/Tiêu chuẩn&quot; từ sheet Vietlabs + NTP của data/Capability.xlsx.
 /// Sinh tự động — cập nhật khi đổi Excel.
 /// </summary>
 internal static class CapabilityStandardsSeedData

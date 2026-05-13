@@ -77,6 +77,7 @@ public class Quotation
     public Client? Client { get; set; }
     public Contact? Contact { get; set; }
     public ICollection<QuotationItem> QuotationItems { get; set; } = new List<QuotationItem>();
+    public ICollection<QuotationNonNd107Item> QuotationNonNd107Items { get; set; } = new List<QuotationNonNd107Item>();
     public ICollection<QuotationSample> QuotationSamples { get; set; } = new List<QuotationSample>();
     public ICollection<QuotationAnalysisGroup> QuotationAnalysisGroups { get; set; } = new List<QuotationAnalysisGroup>();
     public ICollection<QuotationHistory> QuotationHistories { get; set; } = new List<QuotationHistory>();

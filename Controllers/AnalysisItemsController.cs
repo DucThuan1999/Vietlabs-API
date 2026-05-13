@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OData.Query;
 using Microsoft.AspNetCore.OData.Routing.Controllers;
 using Microsoft.EntityFrameworkCore;
+using System.Globalization;
 using VietLab.Data;
 using VietLab.Helpers;
 using VietLab.Models;
@@ -36,6 +37,37 @@ public class AnalysisItemsController : ODataController
             .Include(ai => ai.StandardQuantityUnitOfMeasure)
             .Include(ai => ai.LaboratoryTechnique)
             .Include(ai => ai.AnalysisItemTats));
+    }
+
+    /// <summary>
+    /// Sinh mã chỉ tiêu kế tiếp dựa trên toàn bộ DB mà không cần tải full danh sách về client.
+    /// </summary>
+    [HttpGet("AnalysisItems/NextCode")]
+    public async Task<IActionResult> GetNextCode()
+    {
+        var codes = await _context.AnalysisItems
+            .AsNoTracking()
+            .Where(ai => ai.AnalysisItemCode != null)
+            .Select(ai => ai.AnalysisItemCode!)
+            .ToListAsync();
+
+        var maxSequence = 0;
+        foreach (var code in codes)
+        {
+            var trimmed = code.Trim();
+            if (!trimmed.StartsWith("CT-", StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            var suffix = trimmed["CT-".Length..];
+            if (int.TryParse(suffix, NumberStyles.None, CultureInfo.InvariantCulture, out var sequence))
+            {
+                maxSequence = Math.Max(maxSequence, sequence);
+            }
+        }
+
+        return Ok(new { analysisItemCode = $"CT-{maxSequence + 1:D4}" });
     }
 
     [HttpGet("AnalysisItems({key})")]

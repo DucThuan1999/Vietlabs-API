@@ -30,6 +30,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<Quotation> Quotations { get; set; }
     public DbSet<QuotationSample> QuotationSamples { get; set; }
     public DbSet<QuotationItem> QuotationItems { get; set; }
+    public DbSet<QuotationNonNd107Item> QuotationNonNd107Items { get; set; }
     public DbSet<QuotationAnalysisGroup> QuotationAnalysisGroups { get; set; }
     public DbSet<Package> Packages { get; set; }
     public DbSet<PackageAnalysisItem> PackageAnalysisItems { get; set; }
@@ -42,6 +43,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<Province> Provinces { get; set; }
     public DbSet<Ward> Wards { get; set; }
     public DbSet<QuotationApprovalThreshold> QuotationApprovalThresholds { get; set; }
+    public DbSet<VatRate> VatRates { get; set; }
     public DbSet<QuotationHistory> QuotationHistories { get; set; }
     public DbSet<ModuleApprover> ModuleApprovers { get; set; }
     public DbSet<ClientIndustry> ClientIndustries { get; set; }
@@ -78,6 +80,7 @@ public class ApplicationDbContext : DbContext
         modelBuilder.ApplyConfiguration(new QuotationConfiguration());
         modelBuilder.ApplyConfiguration(new QuotationSampleConfiguration());
         modelBuilder.ApplyConfiguration(new QuotationItemConfiguration());
+        modelBuilder.ApplyConfiguration(new QuotationNonNd107ItemConfiguration());
         modelBuilder.ApplyConfiguration(new QuotationAnalysisGroupConfiguration());
         modelBuilder.ApplyConfiguration(new ClientDebtConfiguration());
         modelBuilder.ApplyConfiguration(new ClientForecastConfiguration());
@@ -97,6 +100,7 @@ public class ApplicationDbContext : DbContext
         modelBuilder.ApplyConfiguration(new ProvinceConfiguration());
         modelBuilder.ApplyConfiguration(new WardConfiguration());
         modelBuilder.ApplyConfiguration(new QuotationApprovalThresholdConfiguration());
+        modelBuilder.ApplyConfiguration(new VatRateConfiguration());
         modelBuilder.ApplyConfiguration(new QuotationHistoryConfiguration());
         modelBuilder.ApplyConfiguration(new ModuleApproverConfiguration());
         modelBuilder.ApplyConfiguration(new ClientIndustryConfiguration());
@@ -318,6 +322,31 @@ public class ApplicationDbContext : DbContext
             .HasOne(qi => qi.Package)
             .WithMany()
             .HasForeignKey(qi => qi.PackageId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        // Quan hệ 1-n: Quotation - QuotationNonNd107Items
+        modelBuilder.Entity<QuotationNonNd107Item>()
+            .HasOne(x => x.Quotation)
+            .WithMany(q => q.QuotationNonNd107Items)
+            .HasForeignKey(x => x.QuotationId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<QuotationNonNd107Item>()
+            .HasOne(x => x.AnalysisItem)
+            .WithMany()
+            .HasForeignKey(x => x.AnalysisItemId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        modelBuilder.Entity<QuotationNonNd107Item>()
+            .HasOne(x => x.AnalysisGroup)
+            .WithMany()
+            .HasForeignKey(x => x.AnalysisGroupId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        modelBuilder.Entity<QuotationNonNd107Item>()
+            .HasOne(x => x.Package)
+            .WithMany()
+            .HasForeignKey(x => x.PackageId)
             .OnDelete(DeleteBehavior.SetNull);
 
         // Check constraint: Đảm bảo chỉ một trong 3 foreign keys có giá trị
