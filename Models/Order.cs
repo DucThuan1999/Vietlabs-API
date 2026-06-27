@@ -1,9 +1,21 @@
+using System.ComponentModel.DataAnnotations.Schema;
+
 namespace VietLab.Models;
 
 public class Order
 {
     public Guid OrderId { get; set; }
     public Guid ClientId { get; set; }
+
+    /// <summary>Đơn cha (null = đơn gốc).</summary>
+    public Guid? ParentOrderId { get; set; }
+
+    /// <summary>Số thứ tự cố định /1, /2 trên đơn con.</summary>
+    public int? LinkedOrderIndex { get; set; }
+
+    /// <summary>Đếm số đơn con — chỉ có trên đơn cha, không lưu DB.</summary>
+    [NotMapped]
+    public int? LinkedOrderCount { get; set; }
     public Guid? ContactId { get; set; } // Người liên hệ (phải thuộc cùng ClientId)
 
     // THÔNG TIN KHÁCH HÀNG
@@ -57,6 +69,8 @@ public class Order
     public Contact? Contact { get; set; }
     public Quotation? Quotation { get; set; }
     public Account? CreatedByAccount { get; set; }
+    public Order? ParentOrder { get; set; }
+    public ICollection<Order> LinkedOrders { get; set; } = new List<Order>();
     public ICollection<OrderSample> OrderSamples { get; set; } = new List<OrderSample>();
     public ICollection<OrderHistory> OrderHistories { get; set; } = new List<OrderHistory>();
 }

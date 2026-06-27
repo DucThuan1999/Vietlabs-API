@@ -22,6 +22,14 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
         builder.Property(o => o.ContactId)
             .HasColumnName("contact_id");
 
+        builder.Property(o => o.ParentOrderId)
+            .HasColumnName("parent_order_id");
+
+        builder.Property(o => o.LinkedOrderIndex)
+            .HasColumnName("linked_order_index");
+
+        builder.Ignore(o => o.LinkedOrderCount);
+
         builder.Property(o => o.CreatedAt)
             .HasColumnName("created_at")
             .IsRequired()
@@ -109,6 +117,20 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
             .WithMany()
             .HasForeignKey(o => o.CreatedBy)
             .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(o => o.ParentOrder)
+            .WithMany(o => o.LinkedOrders)
+            .HasForeignKey(o => o.ParentOrderId)
+            .OnDelete(DeleteBehavior.NoAction)
+            .HasConstraintName("f_k_order_order_parent_order_id");
+
+        builder.HasIndex(o => o.ParentOrderId)
+            .HasDatabaseName("i_x_order_parent_order_id");
+
+        builder.HasIndex(o => new { o.ParentOrderId, o.LinkedOrderIndex })
+            .IsUnique()
+            .HasFilter("[parent_order_id] IS NOT NULL AND [linked_order_index] IS NOT NULL")
+            .HasDatabaseName("u_q_order_parent_linked_index");
 
         builder.HasIndex(o => o.ClientId)
             .HasDatabaseName("i_x_order_client_id");

@@ -84,6 +84,7 @@ public static class ODataEdmModel
         orderEntitySet.EntityType.HasOptional(o => o.Client).AutoExpand = true;
         orderEntitySet.EntityType.HasOptional(o => o.Contact).AutoExpand = true;
         orderEntitySet.EntityType.HasOptional(o => o.CreatedByAccount).AutoExpand = true;
+        orderEntitySet.EntityType.HasOptional(o => o.ParentOrder).AutoExpand = true;
         var orderSampleEntitySet = builder.EntitySet<OrderSample>("OrderSamples");
         orderSampleEntitySet.EntityType.HasOptional(os => os.Order).AutoExpand = true;
         orderSampleEntitySet.EntityType.HasOptional(os => os.SampleMatrix).AutoExpand = true;
