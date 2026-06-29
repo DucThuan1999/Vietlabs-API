@@ -35,8 +35,8 @@ public class Order
 
     public string? IssueInvoice { get; set; } // (VN: Xuất hóa đơn)
     public bool? IsApproved { get; set; } // (VN: IsApproved / Trạng thái duyệt)
-    public string? RejectionNote { get; set; } // (VN: Note rejected / Ghi chú từ chối)
-    public string? ApprovalNote { get; set; } // (VN: Note approve / Ghi chú duyệt)
+    public string? ApprovalReason { get; set; } // (VN: Lý do duyệt/từ chối)
+    public string? ApprovalNotes { get; set; } // (VN: Ghi chú duyệt)
 
     public Guid? QuotationId { get; set; } // (VN: Khóa ngoại bảng Quotation)
 
