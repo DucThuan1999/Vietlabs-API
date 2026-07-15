@@ -31,6 +31,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<QuotationSample> QuotationSamples { get; set; }
     public DbSet<QuotationItem> QuotationItems { get; set; }
     public DbSet<QuotationNonNd107Item> QuotationNonNd107Items { get; set; }
+    public DbSet<QuotationSurcharge> QuotationSurcharges { get; set; }
     public DbSet<QuotationAnalysisGroup> QuotationAnalysisGroups { get; set; }
     public DbSet<Package> Packages { get; set; }
     public DbSet<PackageAnalysisItem> PackageAnalysisItems { get; set; }
@@ -44,6 +45,8 @@ public class ApplicationDbContext : DbContext
     public DbSet<Ward> Wards { get; set; }
     public DbSet<QuotationApprovalThreshold> QuotationApprovalThresholds { get; set; }
     public DbSet<VatRate> VatRates { get; set; }
+    public DbSet<QuotationIssueInfo> QuotationIssueInfos { get; set; }
+    public DbSet<RegistrationPermitLabelConfig> RegistrationPermitLabelConfigs { get; set; }
     public DbSet<QuotationHistory> QuotationHistories { get; set; }
     public DbSet<ModuleApprover> ModuleApprovers { get; set; }
     public DbSet<ClientIndustry> ClientIndustries { get; set; }
@@ -62,6 +65,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<MatrixAction> MatrixActions { get; set; }
     public DbSet<SecurityModuleAction> SecurityModuleActions { get; set; }
     public DbSet<AccountModuleGrant> AccountModuleGrants { get; set; }
+    public DbSet<AmisCallbackLog> AmisCallbackLogs { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -81,6 +85,7 @@ public class ApplicationDbContext : DbContext
         modelBuilder.ApplyConfiguration(new QuotationSampleConfiguration());
         modelBuilder.ApplyConfiguration(new QuotationItemConfiguration());
         modelBuilder.ApplyConfiguration(new QuotationNonNd107ItemConfiguration());
+        modelBuilder.ApplyConfiguration(new QuotationSurchargeConfiguration());
         modelBuilder.ApplyConfiguration(new QuotationAnalysisGroupConfiguration());
         modelBuilder.ApplyConfiguration(new ClientDebtConfiguration());
         modelBuilder.ApplyConfiguration(new ClientForecastConfiguration());
@@ -101,6 +106,8 @@ public class ApplicationDbContext : DbContext
         modelBuilder.ApplyConfiguration(new WardConfiguration());
         modelBuilder.ApplyConfiguration(new QuotationApprovalThresholdConfiguration());
         modelBuilder.ApplyConfiguration(new VatRateConfiguration());
+        modelBuilder.ApplyConfiguration(new QuotationIssueInfoConfiguration());
+        modelBuilder.ApplyConfiguration(new RegistrationPermitLabelConfigConfiguration());
         modelBuilder.ApplyConfiguration(new QuotationHistoryConfiguration());
         modelBuilder.ApplyConfiguration(new ModuleApproverConfiguration());
         modelBuilder.ApplyConfiguration(new ClientIndustryConfiguration());
@@ -119,6 +126,7 @@ public class ApplicationDbContext : DbContext
         modelBuilder.ApplyConfiguration(new MatrixActionConfiguration());
         modelBuilder.ApplyConfiguration(new SecurityModuleActionConfiguration());
         modelBuilder.ApplyConfiguration(new AccountModuleGrantConfiguration());
+        modelBuilder.ApplyConfiguration(new AmisCallbackLogConfiguration());
 
         // Tất cả tên bảng đã được set trong Configuration classes
         // Chỉ cần convert tên cột sang snake_case
@@ -348,6 +356,13 @@ public class ApplicationDbContext : DbContext
             .WithMany()
             .HasForeignKey(x => x.PackageId)
             .OnDelete(DeleteBehavior.SetNull);
+
+        // Quan hệ 1-n: Quotation - QuotationSurcharges
+        modelBuilder.Entity<QuotationSurcharge>()
+            .HasOne(x => x.Quotation)
+            .WithMany(q => q.QuotationSurcharges)
+            .HasForeignKey(x => x.QuotationId)
+            .OnDelete(DeleteBehavior.Cascade);
 
         // Check constraint: Đảm bảo chỉ một trong 3 foreign keys có giá trị
         // (sẽ được thêm trong SQL script vì EF Core không hỗ trợ check constraint trực tiếp)

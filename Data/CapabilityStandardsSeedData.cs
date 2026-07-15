@@ -1,15 +1,15 @@
 namespace VietLab.Data;
 
 /// <summary>
-/// Giá trị distinct cột &quot;Quy chuẩn/Tiêu chuẩn&quot; từ sheet Vietlabs + NTP của data/Capability.xlsx.
+/// Giá trị distinct cột Quy chuẩn/Tiêu chuẩn từ sheet Vietlabs + NTP (Danh mục Năng lực v2).
 /// Sinh tự động — cập nhật khi đổi Excel.
 /// </summary>
 internal static class CapabilityStandardsSeedData
 {
     public static readonly string[] NameViList =
     [
+        "-",
         "HACCP",
-        "Luật Thú y 2015",
         "Nghị định 15/2018/NĐ-CP",
         "QCVN 01 - 183:2016/BNNPTNT",
         "QCVN 01-189:2019/BNNPTNT",

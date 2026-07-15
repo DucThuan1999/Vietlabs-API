@@ -38,6 +38,7 @@ ANALYSIS_ITEM_CSV = os.path.join(CSV_DIR, "analysis_item.csv")
 # Cột giá nhóm chuẩn trên Capability.xlsx (export CSV); ưu tiên tên mới, fallback tên cũ
 WHOLE_GROUP_PRICE_KEYS = (
     "Giá nhóm chuẩn_new",
+    "Giá nhóm chuẩn",
     "Analysis Group Whole group standard",
 )
 
@@ -48,6 +49,11 @@ def row_first_non_empty(row: dict, keys: tuple) -> str:
         if v is not None and str(v).strip():
             return str(v).strip()
     return ""
+
+
+def preserve_excel_text(text: str) -> str:
+    """Giữ nguyên hoa thường từ Excel, chỉ trim khoảng trắng."""
+    return text.strip() if text else text
 
 
 def to_sentence_case(text: str) -> str:
@@ -70,6 +76,14 @@ def normalize_text(text: str) -> str:
     text = text.strip().upper()
     text = re.sub(r'[^\w]', '', text)
     return text
+
+
+def is_blank_analysis_group_cell(text: str) -> bool:
+    """Ô Nhóm chỉ tiêu trống trên Excel: -, NA, N/A, … (đồng bộ import UOM/TAT)."""
+    if not text or not str(text).strip():
+        return True
+    u = str(text).strip().upper().replace(" ", "")
+    return u in ("", "NA", "N/A", "-", "--", "NONE", "NULL", "KHÔNG", "KHONGCO")
 
 
 def parse_decimal_with_unit(value: str) -> Tuple[Optional[float], Optional[str]]:
@@ -205,6 +219,9 @@ def load_mappings(connection) -> Dict:
 
 def get_or_create_analysis_group(connection, name: str, mappings: Dict) -> str:
     """Lấy hoặc tạo mới AnalysisGroup"""
+    if is_blank_analysis_group_cell(name):
+        raise ValueError(f"Không tạo analysis_group với tên sentinel/trống: {name!r}")
+
     cursor = connection.cursor()
     
     normalized = normalize_text(name)
@@ -274,7 +291,7 @@ def get_or_create_equipment_type(connection, name: str, mappings: Dict) -> str:
     
     # Tạo mới
     eq_id = str(uuid.uuid4())
-    name_vi = to_sentence_case(name) if name else name
+    name_vi = preserve_excel_text(name) if name else name
     name_en = name_vi  # Sử dụng name_vi làm name_en nếu không có
     
     # Generate code theo format TB-001
@@ -313,7 +330,7 @@ def get_or_create_sample_matrix_group(connection, name: str, mappings: Dict) -> 
     
     # Tạo mới SampleMatrixGroup
     group_id = str(uuid.uuid4())
-    group_name = to_sentence_case(name)
+    group_name = preserve_excel_text(name)
     
     # Generate code theo format GPNM-0001
     max_num = get_max_sample_matrix_group_code(connection)
@@ -351,16 +368,21 @@ def get_or_create_sample_matrix(connection, matrix_name: str, group_id: str, map
         # Tạo mẫu mặc định
         matrix_name = "Mẫu chung"
     
-    # Tìm trong mapping
+    # Tìm trong mapping (case-insensitive qua normalize_text)
     normalized = normalize_text(matrix_name)
-    key = f"{normalized}_{group_id}"  # Key kết hợp name và group_id
-    
-    # Kiểm tra trong database
+    key = f"{normalized}_{group_id}"
+    if key in mappings['sample_matrices']:
+        matrix_id, _ = mappings['sample_matrices'][key]
+        return matrix_id
+
+    matrix_name_vi = preserve_excel_text(matrix_name)
+
+    # Kiểm tra trong database (khớp đúng hoa thường từ Excel)
     cursor.execute("""
         SELECT sample_matrix_id
         FROM sample_matrix
         WHERE sample_matrix_group_id = ? AND name_vi = ?
-    """, group_id, to_sentence_case(matrix_name))
+    """, group_id, matrix_name_vi)
     row = cursor.fetchone()
     if row:
         matrix_id = row[0]
@@ -370,7 +392,6 @@ def get_or_create_sample_matrix(connection, matrix_name: str, group_id: str, map
     
     # Tạo mới SampleMatrix
     matrix_id = str(uuid.uuid4())
-    matrix_name_vi = to_sentence_case(matrix_name)
     
     # Generate code theo format NM-0001
     max_num = get_max_sample_matrix_code(connection)
@@ -601,12 +622,13 @@ def process_analysis_item_csv(csv_path: str, connection, mappings: Dict, start_c
                 if not name_en or not name_en.strip():
                     name_en = name_vi
                 
-                # Mapping AnalysisGroup
-                if analysis_group_name:
-                    analysis_group_id = get_or_create_analysis_group(connection, analysis_group_name, mappings)
+                # Mapping AnalysisGroup (NULL khi ô trống / - / NA / N/A)
+                if is_blank_analysis_group_cell(analysis_group_name):
+                    analysis_group_id = None
                 else:
-                    errors.append(f"Khong co analysis_group cho record: {name_vi}")
-                    continue
+                    analysis_group_id = get_or_create_analysis_group(
+                        connection, analysis_group_name, mappings
+                    )
                 
                 # Mapping EquipmentType
                 if equipment_type_name:

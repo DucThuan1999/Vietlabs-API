@@ -185,6 +185,15 @@ dotnet ef migrations add InitialCreate
 dotnet ef database update
 ```
 
+### Tích hợp AMIS / MISA (khách hàng & công nợ)
+
+- **Hướng dẫn:** [Docs/amis-khach-hang-cong-no.md](Docs/amis-khach-hang-cong-no.md)
+- Cấu hình `Amis` trong [appsettings.json](appsettings.json): `ApiUrl`, `AppId`, `AccessCode`, `OrgCompanyCode`
+- API nội bộ:
+  - `POST /api/AmisCustomers` — tạo khách hàng trên AMIS
+  - `GET /api/AmisCustomers` — lấy khách hàng từ AMIS
+  - `GET /api/AmisCustomers/debts` — lấy công nợ (mặc định phải thu `dataType=0`)
+
 ## Deploy lên IIS Subapplication
 
 ### Yêu cầu

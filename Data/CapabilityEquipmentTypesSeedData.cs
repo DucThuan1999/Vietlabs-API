@@ -1,13 +1,14 @@
 namespace VietLab.Data;
 
 /// <summary>
-/// Giá trị distinct cột &quot;Thiết bị/ Equipment&quot; từ sheet Vietlabs + NTP của data/Capability.xlsx
-/// (gộp trùng sau chuẩn hóa khoảng trắng và xuống dòng).
+/// Giá trị distinct cột "Thiết bị/ Equipment" từ sheet Vietlabs + NTP (Danh mục Năng lực v2).
+/// Sinh tự động — cập nhật khi đổi Excel.
 /// </summary>
 internal static class CapabilityEquipmentTypesSeedData
 {
     public static readonly string[] NameViList =
     [
+        "-",
         "Biochrom",
         "Chiết Soxhlet",
         "Chuẩn độ",
@@ -24,7 +25,6 @@ internal static class CapabilityEquipmentTypesSeedData
         "HPLC-UV",
         "ICP-MS",
         "Khối lượng",
-        "Kiểm tra hình thái vi khuẩn",
         "Kjeldahl",
         "Kỹ thuật khoanh giấy khuếch tán",
         "LC-MS/MS",
@@ -36,8 +36,6 @@ internal static class CapabilityEquipmentTypesSeedData
         "Quang kế ngọn lửa",
         "RAPID’ Samonella",
         "RAPID’E. coli 2 Agar",
-        "Realtime PCR",
-        "Realtime RT-PCR",
         "Sấy",
         "Thể tích",
         "Tính toán",

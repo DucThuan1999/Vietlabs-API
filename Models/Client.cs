@@ -14,6 +14,9 @@ public class Client
     public string? Province { get; set; }
     public string? Country { get; set; }
     public string? Ward { get; set; } // Xã/Phường
+    public Guid? CountryId { get; set; }
+    public Guid? ProvinceId { get; set; }
+    public Guid? WardId { get; set; }
 
     public Guid? ClientIndustryId { get; set; } // FK đến bảng ngành nghề
     public string? Profession { get; set; } // Ngành nghề (giữ để tương thích / nhập tự do)

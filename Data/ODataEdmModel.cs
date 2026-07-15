@@ -36,6 +36,10 @@ public static class ODataEdmModel
         var accountEntitySet = builder.EntitySet<Account>("Accounts");
         var accountEntityType = accountEntitySet.EntityType;
         accountEntityType.HasOptional(a => a.Employee).AutoExpand = true;
+        // PasswordHash không được phép lộ ra OData (kể cả qua AutoExpand UpdatedByAccount/Employee.Account
+        // ở các entity khác) — Ignore chỉ ảnh hưởng model OData, không ảnh hưởng [FromBody] Account binding
+        // ở AccountsController (đổi mật khẩu vẫn hoạt động bình thường qua MVC model binding).
+        accountEntityType.Ignore(a => a.PasswordHash);
         
         builder.EntitySet<Permission>("Permissions");
         
@@ -65,10 +69,14 @@ public static class ODataEdmModel
         quotationItemEntitySet.EntityType.HasOptional(qi => qi.UpdatedByAccount).AutoExpand = true;
         var quotationNonNd107ItemEntitySet = builder.EntitySet<QuotationNonNd107Item>("QuotationNonNd107Items");
         quotationNonNd107ItemEntitySet.EntityType.HasOptional(x => x.UpdatedByAccount).AutoExpand = true;
+        var quotationSurchargeEntitySet = builder.EntitySet<QuotationSurcharge>("QuotationSurcharges");
+        quotationSurchargeEntitySet.EntityType.HasOptional(x => x.UpdatedByAccount).AutoExpand = true;
         var quotationAnalysisGroupEntitySet = builder.EntitySet<QuotationAnalysisGroup>("QuotationAnalysisGroups");
         quotationAnalysisGroupEntitySet.EntityType.HasOptional(qag => qag.UpdatedByAccount).AutoExpand = true;
         builder.EntitySet<QuotationApprovalThreshold>("QuotationApprovalThresholds");
         builder.EntitySet<VatRate>("VatRates");
+        builder.EntitySet<QuotationIssueInfo>("QuotationIssueInfos");
+        builder.EntitySet<RegistrationPermitLabelConfig>("RegistrationPermitLabelConfigs");
         
         // QuotationHistory với AutoExpand cho navigation properties
         var quotationHistoryEntitySet = builder.EntitySet<QuotationHistory>("QuotationHistories");

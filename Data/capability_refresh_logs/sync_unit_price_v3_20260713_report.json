@@ -1,0 +1,75 @@
+{
+  "xlsx": "/Users/ducthuan/Desktop/source/Vietlabs/data/Danh mục Năng lực v3.xlsx",
+  "sheet": "Vietlabs",
+  "dry_run": false,
+  "excel": {
+    "rows": 12080,
+    "skipped_invalid_code": 1023,
+    "zero_price": 0
+  },
+  "excel_items_with_price": 11057,
+  "db_items": 11218,
+  "item_price": {
+    "updated": 11057,
+    "unchanged": 0,
+    "missing_in_db": 0,
+    "missing_codes_sample": []
+  },
+  "group_price": {
+    "updated": 1,
+    "unchanged": 19,
+    "excel_groups": 38
+  },
+  "sample_updates": [
+    {
+      "code": "CT-0001",
+      "old": 0.0,
+      "new": 70000.0
+    },
+    {
+      "code": "CT-0002",
+      "old": 0.0,
+      "new": 70000.0
+    },
+    {
+      "code": "CT-0003",
+      "old": 0.0,
+      "new": 110000.0
+    },
+    {
+      "code": "CT-0004",
+      "old": 0.0,
+      "new": 110000.0
+    },
+    {
+      "code": "CT-0005",
+      "old": 0.0,
+      "new": 110000.0
+    },
+    {
+      "code": "CT-0006",
+      "old": 0.0,
+      "new": 150000.0
+    },
+    {
+      "code": "CT-0007",
+      "old": 0.0,
+      "new": 150000.0
+    },
+    {
+      "code": "CT-0008",
+      "old": 0.0,
+      "new": 110000.0
+    },
+    {
+      "code": "CT-0009",
+      "old": 0.0,
+      "new": 110000.0
+    },
+    {
+      "code": "CT-0010",
+      "old": 0.0,
+      "new": 110000.0
+    }
+  ]
+}

@@ -1,5 +1,5 @@
 /*
-  Xóa nhóm chỉ tiêu có name_vi = N/A (sau trim).
+  Xóa nhóm chỉ tiêu sentinel: -, --, NA, N/A, Na, NONE, NULL, … (ô trống trên Excel V3).
   Gỡ liên kết: analysis_item, quotation_item; xóa package_analysis_group / quotation_analysis_group.
 
   Chạy trong SSMS / sqlcmd sau khi đã ALTER analysis_item.analysis_group_id NULL
@@ -20,11 +20,16 @@ DECLARE @ids TABLE (id UNIQUEIDENTIFIER NOT NULL);
 INSERT INTO @ids (id)
 SELECT analysis_group_id
 FROM dbo.analysis_group
-WHERE LTRIM(RTRIM(ISNULL(name_vi, N''))) = N'N/A';
+WHERE (
+    LTRIM(RTRIM(ISNULL(name_vi, N''))) IN (N'-', N'--')
+    OR UPPER(REPLACE(LTRIM(RTRIM(ISNULL(name_vi, N''))), N' ', N'')) IN (
+        N'NA', N'N/A', N'NONE', N'NULL', N'KHÔNG', N'KHONGCO'
+    )
+);
 
 IF NOT EXISTS (SELECT 1 FROM @ids)
 BEGIN
-    SELECT N'Không có nhóm nào name_vi = N/A (sau trim). Không thay đổi.' AS message;
+    SELECT N'Không có nhóm sentinel nào. Không thay đổi.' AS message;
     ROLLBACK TRANSACTION;
     RETURN;
 END
@@ -57,4 +62,4 @@ FROM dbo.analysis_group ag
 INNER JOIN @ids i ON ag.analysis_group_id = i.id;
 
 COMMIT TRANSACTION;
-SELECT N'Hoàn tất: đã xóa nhóm N/A và gỡ liên kết.' AS message;
+SELECT N'Hoàn tất: đã xóa nhóm sentinel và gỡ liên kết.' AS message;

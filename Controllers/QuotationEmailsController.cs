@@ -102,6 +102,26 @@ public class QuotationEmailsController : ControllerBase
         {
             return BadRequest(new { title = "Dữ liệu không hợp lệ", detail = ex.Message });
         }
+        catch (GraphMailSendException ex)
+        {
+            _logger.LogWarning(ex, "Send quotation email via Microsoft Graph failed");
+            var statusCode = ex.StatusCode switch
+            {
+                StatusCodes.Status401Unauthorized => StatusCodes.Status502BadGateway,
+                StatusCodes.Status403Forbidden => StatusCodes.Status403Forbidden,
+                StatusCodes.Status404NotFound => StatusCodes.Status400BadRequest,
+                >= 400 and < 500 => StatusCodes.Status400BadRequest,
+                >= 500 => StatusCodes.Status502BadGateway,
+                _ => StatusCodes.Status502BadGateway,
+            };
+            return StatusCode(statusCode, new { title = "Gửi email thất bại", detail = ex.Message });
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogError(ex, "Send quotation email network error");
+            return StatusCode(StatusCodes.Status502BadGateway,
+                new { title = "Gửi email thất bại", detail = "Không thể kết nối Microsoft Graph. Vui lòng thử lại sau." });
+        }
 
         var accountId = GetCurrentAccountId();
         if (accountId.HasValue && await _context.Accounts.AnyAsync(a => a.AccountId == accountId.Value, cancellationToken))

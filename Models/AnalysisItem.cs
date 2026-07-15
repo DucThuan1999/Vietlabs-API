@@ -6,7 +6,13 @@ public class AnalysisItem
     public string? AnalysisItemCode { get; set; }
     public string? NameVi { get; set; }
     public string? NameEn { get; set; }
+    /// <summary>Tên hiển thị có định dạng (JSON Tiptap). Null nếu chỉ dùng text thuần ở NameVi.</summary>
+    public string? DisplayNameVi { get; set; }
+    /// <summary>Tên hiển thị EN có định dạng (JSON Tiptap). Null nếu chỉ dùng text thuần ở NameEn.</summary>
+    public string? DisplayNameEn { get; set; }
     public string? ShortName { get; set; }  // Tên viết tắt
+    /// <summary>Tên viết tắt hiển thị có định dạng (JSON Tiptap). Null nếu chỉ dùng text thuần ở ShortName.</summary>
+    public string? DisplayShortName { get; set; }
 
     // Foreign Keys
     public Guid? EquipmentTypeId { get; set; }

@@ -22,15 +22,15 @@ from typing import Any, Dict, List, Optional, Tuple
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import import_analysis_item as iai
+import capability_header_maps as chm
+import capability_workbook_paths as cwp
 try:
     import openpyxl
 except ImportError:
     print("Can cai: pip install openpyxl")
     sys.exit(1)
 
-DEFAULT_XLSX = os.path.normpath(
-    os.path.join(os.path.dirname(__file__), "..", "..", "..", "data", "Capability.xlsx")
-)
+DEFAULT_XLSX = cwp.resolve_default_capability_xlsx()
 IMPORT_BRANCH_SG_ONLY = True
 SITES_ND107_FULL: List[Tuple[str, str, str]] = [
     ("HCM", "nd107_hcm", "SG"), ("CT", "nd107_ct", "CT"),
@@ -48,10 +48,7 @@ def default_failure_log_path(xlsx_path: str) -> str:
     return os.path.join(d, f"{base}_ntp_subcontractor_cap_failures_{ts}.csv")
 
 def norm_header_cell(h: Any) -> str:
-    if h is None:
-        return ""
-    s = str(h).replace("\n", " ").replace('"', "").replace("'", "").strip()
-    return re.sub(r"\s+", " ", s).lower()
+    return chm.norm_header_cell(h)
 
 def build_column_maps(header_row: Tuple[Any, ...]) -> Tuple[Dict[str, int], Dict[str, int]]:
     pairs = [(norm_header_cell(v), i) for i, v in enumerate(header_row)]
@@ -79,29 +76,15 @@ def build_column_maps(header_row: Tuple[Any, ...]) -> Tuple[Dict[str, int], Dict
                 break
     if ntp_i is not None:
         colmap["ntp_label"] = ntp_i
-    cap: Dict[str, int] = {}
-    for nh, idx in pairs:
-        if "năng lực hcm" in nh and ("107" in nh or "đ 107" in nh or "nđ 107" in nh):
-            cap["nd107_hcm"] = idx
-        elif "năng lực ct" in nh and ("107" in nh or "đ 107" in nh or "nđ 107" in nh):
-            cap["nd107_ct"] = idx
-        elif "năng lực bl" in nh and ("107" in nh or "đ 107" in nh or "nđ 107" in nh):
-            cap["nd107_bl"] = idx
-        elif "năng lực cm" in nh and ("107" in nh or "đ 107" in nh or "nđ 107" in nh):
-            cap["nd107_cm"] = idx
-        elif "cục bvtv" in nh or "cuc bvtv" in nh:
-            cap["cuc_bvtv"] = idx
-        elif "bộ công thương" in nh or "bo cong thuong" in nh:
-            cap["bo_cong_thuong"] = idx
-        elif "nafi" in nh:
-            cap["nafi"] = idx
-        elif "chăn nuôi" in nh or "chan nuoi" in nh:
-            cap["cuc_chan_nuoi"] = idx
-    iso_idxs = sorted(idx for nh, idx in pairs if "iso" in nh and "(" in nh and "a" in nh)
-    if len(iso_idxs) >= 1:
-        cap["iso_hcm"] = iso_idxs[0]
-    if len(iso_idxs) >= 2:
-        cap["iso_ct"] = iso_idxs[1]
+    cap = chm.map_nd107_columns(pairs)
+    chm.map_designation_columns(pairs, cap)
+    if "nd107_hcm" not in cap:
+        for nh, idx in pairs:
+            if ("chứng nhận hoạt động" in nh or "chung nhan hoat dong" in nh) and (
+                "nđ107" in nh.replace(" ", "") or "nd107" in nh.replace(" ", "")
+            ):
+                cap["nd107_hcm"] = idx
+                break
     if "nd107_hcm" not in cap:
         for nh, idx in pairs:
             if ("nđ 107" in nh or "nđ107" in nh.replace(" ", "") or "đ 107" in nh) and "năng lực" not in nh:
@@ -224,6 +207,65 @@ def resolve_subcontractor_id(cur, label_raw: str) -> Optional[str]:
         return "__ambiguous__"
     return str(rows[0][0]).strip()
 
+
+def _next_auto_subcontractor_code(cur) -> str:
+    cur.execute(
+        """SELECT code FROM subcontractor
+        WHERE code LIKE N'NTP-AUTO-%' ORDER BY code DESC"""
+    )
+    rows = cur.fetchall()
+    max_n = 0
+    for (code,) in rows:
+        if not code:
+            continue
+        m = re.match(r"(?i)NTP-AUTO-(\d+)$", str(code).strip())
+        if m:
+            max_n = max(max_n, int(m.group(1)))
+    return f"NTP-AUTO-{max_n + 1:04d}"
+
+
+def ensure_subcontractor_id(
+    cur,
+    label_raw: str,
+    dry_run: bool,
+    created: List[Tuple[str, str, str]],
+    cache: Optional[Dict[str, str]] = None,
+) -> Optional[str]:
+    """Tra short_name; nếu chưa có thì tạo subcontractor tối thiểu (code, short_name, name)."""
+    label = (label_raw or "").strip()
+    if not label:
+        return None
+    cache_key = label.casefold()
+    if cache is not None and cache_key in cache:
+        return cache[cache_key]
+
+    sub_id = resolve_subcontractor_id(cur, label_raw)
+    if sub_id == "__ambiguous__":
+        return sub_id
+    if sub_id:
+        if cache is not None:
+            cache[cache_key] = sub_id
+        return sub_id
+
+    code = _next_auto_subcontractor_code(cur)
+    new_id = str(uuid.uuid4())
+    if dry_run:
+        created.append((code, label, new_id))
+        if cache is not None:
+            cache[cache_key] = new_id
+        return new_id
+    now = datetime.now(timezone.utc)
+    cur.execute(
+        """INSERT INTO subcontractor (
+            subcontractor_id, code, short_name, name, status, notes, created_at
+        ) VALUES (?, ?, ?, ?, N'Active', N'Tu dong tao tu import NTP', ?)""",
+        (new_id, code, label, label, now),
+    )
+    created.append((code, label, new_id))
+    if cache is not None:
+        cache[cache_key] = new_id
+    return new_id
+
 def find_sc_id(cur, subcontractor_id: str, analysis_item_id: str) -> Optional[str]:
     cur.execute("SELECT subcontractor_capability_id FROM subcontractor_capability WHERE subcontractor_id = ? AND analysis_item_id = ?",
         (subcontractor_id, analysis_item_id))
@@ -324,7 +366,18 @@ def process(xlsx_path: str, sheet_name: str, connection, dry_run: bool, max_rows
     assert_subcontractor_capability_schema(cur)
     des_ids = load_designation_ids(cur)
     only_cf = {c.strip().casefold() for c in only_codes} if only_codes else None
-    stats = {"rows_ok": 0, "skip": 0, "error": 0, "sc_insert": 0, "sc_update": 0, "scd_write": 0, "scd_skip_chua_co": 0}
+    stats = {
+        "rows_ok": 0,
+        "skip": 0,
+        "error": 0,
+        "sc_insert": 0,
+        "sc_update": 0,
+        "scd_write": 0,
+        "scd_skip_chua_co": 0,
+        "subcontractor_created": 0,
+    }
+    created_subcontractors: List[Tuple[str, str, str]] = []
+    subcontractor_cache: Dict[str, str] = {}
     failure_rows: List[Tuple[int, str, str]] = []
     def log_issue(row_idx: int, item_code: str, reason: str) -> None:
         failure_rows.append((row_idx, item_code, reason))
@@ -354,9 +407,11 @@ def process(xlsx_path: str, sheet_name: str, connection, dry_run: bool, max_rows
             log_issue(ridx, code, "Cot Ghi chu (Ten NTP) trong")
             stats["error"] += 1
             continue
-        sub_id = resolve_subcontractor_id(cur, ntp_lbl)
+        sub_id = ensure_subcontractor_id(
+            cur, ntp_lbl, dry_run, created_subcontractors, subcontractor_cache
+        )
         if sub_id is None:
-            log_issue(ridx, code, f"Khong tim subcontractor short_name khop: {ntp_lbl!r}")
+            log_issue(ridx, code, f"Cot Ghi chu (Ten NTP) trong hoac khong hop le")
             stats["error"] += 1
             continue
         if sub_id == "__ambiguous__":
@@ -499,9 +554,14 @@ def process(xlsx_path: str, sheet_name: str, connection, dry_run: bool, max_rows
             w = csv.writer(lf)
             w.writerow(["sheet_row", "analysis_item_code", "reason"])
             w.writerows(failure_rows)
+    stats["subcontractor_created"] = len(created_subcontractors)
     print("\nKet qua import nang luc NTP (subcontractor_capability):")
     for k, v in stats.items():
         print(f"  {k}: {v}")
+    if created_subcontractors:
+        print("\nSubcontractor tu dong tao:")
+        for code, label, sid in created_subcontractors:
+            print(f"  {code} | short_name={label!r} | id={sid}")
     if failure_log_path:
         print(f"\nLog: {failure_log_path}" if failure_rows else "\nKhong co dong loi trong log.")
 
@@ -516,6 +576,7 @@ def main():
     parser.add_argument("--no-failure-log", action="store_true")
     parser.add_argument("--all-branches", action="store_true")
     args = parser.parse_args()
+    args.xlsx = cwp.resolve_xlsx_arg(args.xlsx)
     if not args.xlsx or not os.path.isfile(args.xlsx):
         print("Loi: can --xlsx")
         sys.exit(1)

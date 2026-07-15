@@ -20,9 +20,24 @@ public class StoreRepository : IStoreRepository
         _logger = logger;
     }
 
+    /// <summary>
+    /// Chặn path traversal: đảm bảo đường dẫn tuyệt đối sau khi resolve vẫn nằm trong thư mục
+    /// Uploads gốc, kể cả khi input chứa "..", đường dẫn tuyệt đối, hay ký tự đặc biệt khác.
+    /// </summary>
+    private string ResolveWithinUploadsRoot(string relativePath)
+    {
+        var uploadsRoot = Path.GetFullPath(Path.Combine(_environment.ContentRootPath, "Uploads") + Path.DirectorySeparatorChar);
+        var fullPath = Path.GetFullPath(Path.Combine(_environment.ContentRootPath, relativePath ?? string.Empty));
+        if (!fullPath.StartsWith(uploadsRoot, StringComparison.Ordinal))
+        {
+            throw new UnauthorizedAccessException("Đường dẫn nằm ngoài thư mục lưu trữ cho phép.");
+        }
+        return fullPath;
+    }
+
     private string GetStoragePath(string moduleCode, Guid ownerId)
     {
-        var uploadsPath = Path.Combine(_environment.ContentRootPath, "Uploads", moduleCode, ownerId.ToString());
+        var uploadsPath = ResolveWithinUploadsRoot(Path.Combine("Uploads", moduleCode, ownerId.ToString()));
         if (!Directory.Exists(uploadsPath))
         {
             Directory.CreateDirectory(uploadsPath);
@@ -85,7 +100,7 @@ public class StoreRepository : IStoreRepository
         }
 
         // Delete old file
-        var oldFilePath = Path.Combine(_environment.ContentRootPath, storeRecord.AttachmentPath);
+        var oldFilePath = ResolveWithinUploadsRoot(storeRecord.AttachmentPath);
         if (File.Exists(oldFilePath))
         {
             File.Delete(oldFilePath);
@@ -123,7 +138,7 @@ public class StoreRepository : IStoreRepository
             throw new FileNotFoundException($"Store record with ID {storeRecordId} not found");
         }
 
-        var filePath = Path.Combine(_environment.ContentRootPath, storeRecord.AttachmentPath);
+        var filePath = ResolveWithinUploadsRoot(storeRecord.AttachmentPath);
         if (!File.Exists(filePath))
         {
             throw new FileNotFoundException($"File not found at path: {filePath}");
@@ -147,7 +162,7 @@ public class StoreRepository : IStoreRepository
 
     public void DeleteFile(string attachmentPath)
     {
-        var filePath = Path.Combine(_environment.ContentRootPath, attachmentPath);
+        var filePath = ResolveWithinUploadsRoot(attachmentPath);
         if (File.Exists(filePath))
         {
             File.Delete(filePath);

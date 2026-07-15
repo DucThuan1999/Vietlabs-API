@@ -25,6 +25,7 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import import_analysis_item as iai
+import excel_cell_tiptap as ect
 
 try:
     import pyodbc
@@ -38,6 +39,10 @@ except ImportError:
     sys.exit(1)
 
 DEFAULT_XLSX = os.path.normpath(
+    os.path.join(os.path.dirname(__file__), "..", "..", "..", "data", "Danh mục Năng lực v2.xlsx")
+)
+# Legacy fallback
+DEFAULT_XLSX_LEGACY = os.path.normpath(
     os.path.join(os.path.dirname(__file__), "..", "..", "..", "data", "Capability.xlsx")
 )
 
@@ -135,10 +140,17 @@ def build_column_map(header_row: Tuple[Any, ...]) -> Dict[str, int]:
     if pn is None:
         pn = find(lambda nh: "đơn giá" in nh and "_new" in nh)
     if pn is None:
+        pn = find(
+            lambda nh: nh == "đơn giá chuẩn"
+            or ("đơn giá chuẩn" in nh and "_new" not in nh and "_old" not in nh)
+        )
+    if pn is None:
         pn = find(lambda nh: "đơn giá" in nh and "ntp" in nh)
     if pn is not None:
         m["unit_price"] = pn
     gn = find(lambda nh: "giá nhóm chuẩn_new" in nh or nh == "giá nhóm chuẩn_new")
+    if gn is None:
+        gn = find(lambda nh: nh == "giá nhóm chuẩn")
     if gn is None:
         gn = find(lambda nh: "giá nhóm" in nh and "_new" in nh)
     if gn is not None:
@@ -165,6 +177,25 @@ def is_valid_ct_code(code: str) -> bool:
         return False
     s = code.strip()
     return bool(re.match(r"(?i)^CT-\S", s))
+
+
+def is_ntp_sheet(sheet_name: str) -> bool:
+    return str(sheet_name or "").strip().upper().startswith("NTP")
+
+
+def is_blank_sentinel(s: str) -> bool:
+    return iai.is_blank_analysis_group_cell(s)
+
+
+def parse_lod_loq_safe(raw: str) -> Tuple[Optional[float], Optional[str]]:
+    """Parse LOD/LOQ; tra ve (value, warning) — khong rut gon text pham vi do."""
+    if not raw or is_blank_sentinel(raw):
+        return None, None
+    low = raw.strip().lower()
+    if any(tok in low for tok in ("phạm vi", "pham vi", ">=", "<=", ">", "<")):
+        return None, f"LOD/LOQ khong parse an toan: {raw!r}"
+    val, _u = iai.parse_decimal_with_unit(raw)
+    return val, None
 
 
 def _tat_cell_sentinel_none(s: str) -> bool:
@@ -206,7 +237,7 @@ def parse_tat_cell_to_hours(
             return int(x)
         if "ngày" in header_norm or "ngay" in header_norm or "day" in header_norm:
             return int(x * 24)
-        if sheet_name == "NTP":
+        if is_ntp_sheet(sheet_name):
             return int(x * 24)
         return int(x)
 
@@ -235,7 +266,7 @@ def parse_tat_cell_to_hours(
         return int(n) if n == int(n) else int(n)
     if "ngày" in header_norm or "ngay" in header_norm or "day" in header_norm:
         return int(round(n * 24))
-    if sheet_name == "NTP":
+    if is_ntp_sheet(sheet_name):
         return int(round(n * 24))
     return int(n) if n == int(n) else int(n)
 
@@ -288,6 +319,11 @@ def get_table_columns(connection, table: str, table_schema: str = "dbo") -> Set[
     return {r[0] for r in cur.fetchall()}
 
 
+def _master_lookup_key(label: str) -> str:
+    key = iai.normalize_text(label)
+    return key if key else label.strip().casefold()
+
+
 def augment_master_maps(connection, mappings: Dict) -> None:
     """Thêm map standard / reference_method / unit_of_measure / laboratory_technique."""
     cur = connection.cursor()
@@ -326,17 +362,128 @@ def augment_master_maps(connection, mappings: Dict) -> None:
                 for j in text_cols:
                     label = row[j]
                     if label and str(label).strip():
-                        mappings[key][iai.normalize_text(str(label).strip())] = rid
+                        lbl = str(label).strip()
+                        mappings[key][iai.normalize_text(lbl)] = rid
+                        alt = _master_lookup_key(lbl)
+                        if alt:
+                            mappings[key][alt] = rid
         except Exception:
             # Bảng không tồn tại trên DB cũ
             mappings[key] = {}
 
 
 def resolve_master(mappings: Dict, bucket: str, text: str) -> Optional[str]:
-    if not text or not str(text).strip():
+    if not text or not str(text).strip() or is_blank_sentinel(str(text)):
         return None
     b = mappings.get(bucket) or {}
-    return b.get(iai.normalize_text(str(text).strip()))
+    return b.get(_master_lookup_key(str(text).strip()))
+
+
+def _next_prefixed_code(cur, table: str, code_col: str, prefix: str) -> str:
+    cur.execute(
+        f"""SELECT MAX(CAST(SUBSTRING({code_col}, LEN(?) + 1, 20) AS INT))
+        FROM {table} WHERE {code_col} LIKE ? + '%'""",
+        prefix,
+        prefix,
+    )
+    row = cur.fetchone()
+    n = int(row[0]) if row and row[0] is not None else 0
+    return f"{prefix}{n + 1:03d}"
+
+
+def get_or_create_standard(connection, name: str, mappings: Dict) -> Optional[str]:
+    if not name or not str(name).strip() or is_blank_sentinel(str(name)):
+        return None
+    label = str(name).strip()
+    key = _master_lookup_key(label)
+    bucket = mappings.setdefault("standards", {})
+    if key in bucket:
+        return str(bucket[key])
+    cur = connection.cursor()
+    cur.execute(
+        "SELECT standard_id FROM standard WHERE LTRIM(RTRIM(name_vi)) = ?",
+        label,
+    )
+    ex = cur.fetchone()
+    if ex:
+        sid = str(ex[0])
+        bucket[key] = sid
+        return sid
+    sid = str(uuid.uuid4())
+    code = _next_prefixed_code(cur, "standard", "standard_code", "TC-")
+    now = datetime.now(timezone.utc)
+    cur.execute(
+        """INSERT INTO standard (standard_id, standard_code, name_vi, name_en, status, created_at)
+        VALUES (?, ?, ?, ?, N'Active', ?)""",
+        (sid, code, label, label, now),
+    )
+    connection.commit()
+    bucket[key] = sid
+    return sid
+
+
+def get_or_create_reference_method(connection, name: str, mappings: Dict) -> Optional[str]:
+    if not name or not str(name).strip() or is_blank_sentinel(str(name)):
+        return None
+    label = str(name).strip()
+    key = _master_lookup_key(label)
+    bucket = mappings.setdefault("reference_methods", {})
+    if key in bucket:
+        return str(bucket[key])
+    cur = connection.cursor()
+    cur.execute(
+        "SELECT reference_method_id FROM reference_method WHERE LTRIM(RTRIM(name_vi)) = ?",
+        label,
+    )
+    ex = cur.fetchone()
+    if ex:
+        rid = str(ex[0])
+        bucket[key] = rid
+        return rid
+    rid = str(uuid.uuid4())
+    code = _next_prefixed_code(cur, "reference_method", "reference_method_code", "PP-")
+    now = datetime.now(timezone.utc)
+    cur.execute(
+        """INSERT INTO reference_method (
+            reference_method_id, reference_method_code, name_vi, name_en, status, created_at
+        ) VALUES (?, ?, ?, ?, N'Active', ?)""",
+        (rid, code, label, label, now),
+    )
+    connection.commit()
+    bucket[key] = rid
+    return rid
+
+
+def get_or_create_unit_of_measure(connection, name: str, mappings: Dict) -> Optional[str]:
+    if not name or not str(name).strip() or is_blank_sentinel(str(name)):
+        return None
+    label = str(name).strip()
+    key = _master_lookup_key(label)
+    bucket = mappings.setdefault("unit_of_measures", {})
+    if key in bucket:
+        return str(bucket[key])
+    cur = connection.cursor()
+    cur.execute(
+        "SELECT unit_of_measure_id FROM unit_of_measure WHERE LTRIM(RTRIM(name_vi)) = ?",
+        label,
+    )
+    ex = cur.fetchone()
+    if ex:
+        uid = str(ex[0])
+        bucket[key] = uid
+        return uid
+    uid = str(uuid.uuid4())
+    code = _next_prefixed_code(cur, "unit_of_measure", "unit_of_measure_code", "DVT-")
+    now = datetime.now(timezone.utc)
+    cur.execute(
+        """INSERT INTO unit_of_measure (
+            unit_of_measure_id, unit_of_measure_code, name_vi, name_en, status, created_at
+        ) VALUES (?, ?, ?, ?, N'Active', ?)""",
+        (uid, code, label, label, now),
+    )
+    connection.commit()
+    bucket[key] = uid
+    return uid
 
 
 # (py_key, sql_column) — chỉ ghi nếu cột có trong DB
@@ -344,6 +491,9 @@ ROW_SQL_FIELDS = [
     ("name_vi", "name_vi"),
     ("name_en", "name_en"),
     ("short_name", "short_name"),
+    ("display_name_vi", "display_name_vi"),
+    ("display_name_en", "display_name_en"),
+    ("display_short_name", "display_short_name"),
     ("equipment_type_id", "equipment_type_id"),
     ("analysis_group_id", "analysis_group_id"),
     ("sample_matrix_id", "sample_matrix_id"),
@@ -373,17 +523,22 @@ def filter_row_for_table(row: Dict[str, Any], table_cols: Set[str]) -> Dict[str,
             continue
         val = row[pyk]
         if val is None and pyk in (
+            "equipment_type_id",
             "reference_method_id",
             "standard_id",
             "unit_of_measure_id",
             "laboratory_technique_id",
             "published_group_code",
             "short_name",
+            "display_name_vi",
+            "display_name_en",
+            "display_short_name",
             "standard_value",
             "standard_quantity_text",
             "standard_quantity_unit_of_measure_id",
             "lod",
             "loq",
+            "unit_price",
             "notes",
             "name_en",
         ):
@@ -454,7 +609,7 @@ def upsert_analysis_item(
 def apply_tat_and_group_price(
     connection,
     analysis_item_id: str,
-    analysis_group_id: str,
+    analysis_group_id: Optional[str],
     tat_normal: Optional[int],
     tat_fast: Optional[int],
     tat_urgent: Optional[int],
@@ -507,7 +662,7 @@ def apply_tat_and_group_price(
                     now,
                 )
 
-    if whole_group_raw:
+    if whole_group_raw and analysis_group_id:
         price = iai.parse_price(whole_group_raw)
         if price:
             try:
@@ -529,22 +684,21 @@ def process_workbook(
     dry_run: bool,
     sheet_name: str,
     max_rows: Optional[int] = None,
+    only_codes: Optional[List[str]] = None,
 ) -> Dict[str, int]:
-    wb = openpyxl.load_workbook(xlsx_path, read_only=True, data_only=True)
+    wb = openpyxl.load_workbook(xlsx_path, read_only=False, data_only=True, rich_text=True)
     if sheet_name not in wb.sheetnames:
         print(f"Loi: Khong co sheet {sheet_name!r}")
         wb.close()
         return {"insert": 0, "update": 0, "skip": 0, "error": 0}
     ws = wb[sheet_name]
-    rows = ws.iter_rows(values_only=True)
-    try:
-        header = next(rows)
-    except StopIteration:
+    header_row = next(ws.iter_rows(min_row=1, max_row=1, values_only=True), None)
+    if not header_row:
         print(f"Sheet {sheet_name} rong")
         wb.close()
         return {"insert": 0, "update": 0, "skip": 0, "error": 0}
 
-    colmap = build_column_map(tuple(header))
+    colmap = build_column_map(tuple(header_row))
     required = ("code", "name_vi", "analysis_group", "equipment", "sm_group", "sm")
     missing = [k for k in required if k not in colmap]
     if missing:
@@ -554,72 +708,115 @@ def process_workbook(
 
     stats = {"insert": 0, "update": 0, "skip": 0, "error": 0}
     errors: List[str] = []
+    only_cf: Optional[Set[str]] = None
+    if only_codes:
+        only_cf = {c.strip().casefold() for c in only_codes if c and str(c).strip()}
+        print(f"  Chi xu ly {len(only_cf)} ma chi tieu")
     if max_rows is not None:
         print(f"  Gioi han: toi da {max_rows} dong insert+update thanh cong")
 
-    for ridx, row in enumerate(rows, start=2):
+    max_row = ws.max_row or 1
+    for ridx in range(2, max_row + 1):
         if max_rows is not None and (stats["insert"] + stats["update"]) >= max_rows:
             break
-        if not row:
-            continue
 
         def g(key: str) -> str:
             i = colmap.get(key)
-            if i is None or i >= len(row):
+            if i is None:
                 return ""
-            return cell_str(row[i])
+            cell = ws.cell(ridx, i + 1)
+            return cell_str(cell.value)
 
         code = g("code")
         if not code:
             stats["skip"] += 1
+            continue
+        if only_cf is not None and code.strip().casefold() not in only_cf:
             continue
         if not is_valid_ct_code(code):
             errors.append(f"Dong {ridx}: ma khong hop le (can CT-...): {code!r}")
             stats["error"] += 1
             continue
 
-        name_vi_raw = g("name_vi")
+        name_vi_cell = ws.cell(ridx, colmap["name_vi"] + 1)
+        name_vi_raw = cell_str(name_vi_cell.value)
         if not name_vi_raw:
             stats["skip"] += 1
             continue
 
-        name_vi = iai.to_sentence_case(name_vi_raw)
-        name_en = g("name_en") or name_vi
-        short_name = g("short_name") or None
-        ag_name = g("analysis_group")
-        eq_name = g("equipment")
-        if not ag_name:
-            errors.append(f"Dong {ridx} {code}: thieu Nhom chi tieu")
+        name_vi_plain, display_name_vi = ect.cell_to_plain_and_display(name_vi_cell)
+        name_en_plain, display_name_en = None, None
+        if "name_en" in colmap:
+            name_en_cell = ws.cell(ridx, colmap["name_en"] + 1)
+            name_en_plain, display_name_en = ect.cell_to_plain_and_display(name_en_cell)
+        short_plain, display_short_name = None, None
+        if "short_name" in colmap:
+            short_cell = ws.cell(ridx, colmap["short_name"] + 1)
+            short_plain, display_short_name = ect.cell_to_plain_and_display(short_cell)
+
+        sm_group_val = g("sm_group")
+        sm_val = g("sm")
+        if not sm_group_val or is_blank_sentinel(sm_group_val):
+            errors.append(f"Dong {ridx} {code}: thieu Nhom nen mau")
             stats["error"] += 1
             continue
-        if not eq_name:
-            errors.append(f"Dong {ridx} {code}: thieu Thiet bi")
+        if not sm_val or is_blank_sentinel(sm_val):
+            errors.append(f"Dong {ridx} {code}: thieu Nen mau")
             stats["error"] += 1
             continue
 
+        name_vi = name_vi_plain or name_vi_raw.strip()
+        name_en_raw = g("name_en")
+        short_raw = g("short_name")
+        name_en = name_en_plain or (
+            name_en_raw if name_en_raw and not is_blank_sentinel(name_en_raw) else name_vi
+        )
+        short_name = short_plain or (
+            short_raw if short_raw and not is_blank_sentinel(short_raw) else None
+        )
+        ag_name = g("analysis_group")
+        eq_raw = g("equipment")
+        eq_name = None if is_blank_sentinel(eq_raw) else eq_raw
+        ag_blank = iai.is_blank_analysis_group_cell(ag_name)
+
         std_text = g("standard")
+        if is_blank_sentinel(std_text):
+            std_text = ""
         ref_text = g("reference_method")
+        if is_blank_sentinel(ref_text):
+            ref_text = ""
         uom_text = g("uom")
+        if is_blank_sentinel(uom_text):
+            uom_text = ""
         lab_text = g("lab_technique")
+        if is_blank_sentinel(lab_text):
+            lab_text = ""
 
         lod_raw = g("lod")
         loq_raw = g("loq")
-        lod_value, _lod_u = iai.parse_decimal_with_unit(lod_raw)
-        loq_value, _loq_u = (
-            iai.parse_decimal_with_unit(loq_raw) if loq_raw else (None, None)
-        )
+        lod_value, lod_warn = parse_lod_loq_safe(lod_raw)
+        if lod_warn:
+            errors.append(f"Dong {ridx} {code}: {lod_warn}")
+        loq_value, loq_warn = parse_lod_loq_safe(loq_raw)
+        if loq_warn:
+            errors.append(f"Dong {ridx} {code}: {loq_warn}")
 
         std_val_cell = g("standard_value")
-        standard_value = std_val_cell if std_val_cell else None
+        standard_value = (
+            std_val_cell if std_val_cell and not is_blank_sentinel(std_val_cell) else None
+        )
 
         sq_text = g("std_qty")
         standard_quantity_text = sq_text if sq_text else None
         squ_text = g("std_qty_uom")
 
         up_raw = g("unit_price")
-        unit_price = iai.parse_price(up_raw) if up_raw else 0.0
-        if unit_price is None:
-            unit_price = 0.0
+        if up_raw and not is_blank_sentinel(up_raw):
+            unit_price = iai.parse_price(up_raw)
+            if unit_price is None:
+                errors.append(f"Dong {ridx} {code}: Don gia khong hop le: {up_raw!r}")
+        else:
+            unit_price = None
 
         st = g("status")
         if st and "inactive" in st.lower():
@@ -627,17 +824,18 @@ def process_workbook(
         else:
             status = "Active"
 
-        notes = g("notes") or None
+        notes_raw = g("notes")
+        notes = notes_raw if notes_raw and not is_blank_sentinel(notes_raw) else None
 
-        hdr = tuple(header)
+        hdr = tuple(header_row)
 
         def tat_from_col(key: str) -> Optional[int]:
             idx = colmap.get(key)
             if idx is None:
                 return None
             hn = norm_header_cell(hdr[idx]) if idx < len(hdr) else ""
-            cell = row[idx] if idx < len(row) else None
-            return parse_tat_cell_to_hours(cell, hn, sheet_name)
+            cell = ws.cell(ridx, idx + 1)
+            return parse_tat_cell_to_hours(cell.value, hn, sheet_name)
 
         tat_n = tat_from_col("tat_normal")
         tat_f = tat_from_col("tat_fast")
@@ -645,7 +843,7 @@ def process_workbook(
 
         group_price = ""
         if "group_price" in colmap:
-            group_price = cell_str(row[colmap["group_price"]])
+            group_price = cell_str(ws.cell(ridx, colmap["group_price"] + 1).value)
 
         max_attempts = 5
         for attempt in range(max_attempts):
@@ -653,11 +851,16 @@ def process_workbook(
             mappings = ctx["mappings"]
             table_cols = ctx["table_cols"]
             try:
-                analysis_group_id = iai.get_or_create_analysis_group(
-                    connection, ag_name, mappings
-                )
-                equipment_type_id = iai.get_or_create_equipment_type(
-                    connection, eq_name, mappings
+                if ag_blank:
+                    analysis_group_id = None
+                else:
+                    analysis_group_id = iai.get_or_create_analysis_group(
+                        connection, ag_name, mappings
+                    )
+                equipment_type_id = (
+                    iai.get_or_create_equipment_type(connection, eq_name, mappings)
+                    if eq_name
+                    else None
                 )
                 sm_group_id = iai.get_or_create_sample_matrix_group(
                     connection, g("sm_group"), mappings
@@ -666,16 +869,14 @@ def process_workbook(
                     connection, g("sm"), sm_group_id, mappings
                 )
 
-                standard_id = (
-                    resolve_master(mappings, "standards", std_text) if std_text else None
-                )
+                standard_id = get_or_create_standard(connection, std_text, mappings) if std_text else None
                 reference_method_id = (
-                    resolve_master(mappings, "reference_methods", ref_text)
+                    get_or_create_reference_method(connection, ref_text, mappings)
                     if ref_text
                     else None
                 )
                 unit_of_measure_id = (
-                    resolve_master(mappings, "unit_of_measures", uom_text)
+                    get_or_create_unit_of_measure(connection, uom_text, mappings)
                     if uom_text
                     else None
                 )
@@ -685,7 +886,7 @@ def process_workbook(
                     else None
                 )
                 squ_id = (
-                    resolve_master(mappings, "unit_of_measures", squ_text)
+                    get_or_create_unit_of_measure(connection, squ_text, mappings)
                     if squ_text
                     else None
                 )
@@ -694,6 +895,9 @@ def process_workbook(
                     "name_vi": name_vi,
                     "name_en": name_en,
                     "short_name": short_name,
+                    "display_name_vi": display_name_vi,
+                    "display_name_en": display_name_en,
+                    "display_short_name": display_short_name,
                     "equipment_type_id": equipment_type_id,
                     "analysis_group_id": analysis_group_id,
                     "sample_matrix_id": sm_id,
@@ -777,9 +981,9 @@ def main():
     )
     parser.add_argument(
         "--sheet",
-        choices=("vietlabs", "ntp", "all"),
+        choices=("vietlabs", "ntp", "ntp_bo_sung", "all"),
         default="vietlabs",
-        help="Sheet can import: vietlabs (mac dinh), ntp, hoac all (ca hai)",
+        help="Sheet: vietlabs (mac dinh), ntp, ntp_bo_sung, hoac all",
     )
     parser.add_argument("--dry-run", action="store_true", help="Khong ghi DB")
     parser.add_argument(
@@ -789,10 +993,22 @@ def main():
         metavar="N",
         help="Dung sau N lan insert+update thanh cong (de thu nghiem)",
     )
+    parser.add_argument(
+        "--only-code",
+        action="append",
+        dest="only_codes",
+        metavar="CODE",
+        help="Chi xu ly ma chi tieu (lap lai tuy chon de nhieu ma)",
+    )
     args = parser.parse_args()
 
     if not args.xlsx or not os.path.isfile(args.xlsx):
-        print("Loi: Chi dinh --xlsx hop le (mac dinh: ../../../data/Capability.xlsx)")
+        if os.path.isfile(DEFAULT_XLSX):
+            args.xlsx = DEFAULT_XLSX
+        elif os.path.isfile(DEFAULT_XLSX_LEGACY):
+            args.xlsx = DEFAULT_XLSX_LEGACY
+    if not args.xlsx or not os.path.isfile(args.xlsx):
+        print("Loi: Chi dinh --xlsx hop le (mac dinh: data/Danh muc Nang luc v2.xlsx)")
         sys.exit(1)
 
     if sys.platform == "win32":
@@ -805,11 +1021,22 @@ def main():
     print("Import analysis_item tu Capability.xlsx")
     print("=" * 60)
 
+    import openpyxl as _ox
+
+    wb_probe = _ox.load_workbook(args.xlsx, read_only=True)
+    available = set(wb_probe.sheetnames)
+    wb_probe.close()
+
     sheets: List[str]
     if args.sheet == "all":
-        sheets = ["Vietlabs", "NTP"]
+        sheets = ["Vietlabs"]
+        for sn in ("NTP", "NTP bổ sung"):
+            if sn in available:
+                sheets.append(sn)
     elif args.sheet == "ntp":
-        sheets = ["NTP"]
+        sheets = ["NTP"] if "NTP" in available else []
+    elif args.sheet == "ntp_bo_sung":
+        sheets = ["NTP bổ sung"] if "NTP bổ sung" in available else []
     else:
         sheets = ["Vietlabs"]
 
@@ -828,7 +1055,12 @@ def main():
         for sn in sheets:
             print(f"\n--- {sn} ---")
             process_workbook(
-                args.xlsx, ctx, args.dry_run, sn, max_rows=args.max_rows
+                args.xlsx,
+                ctx,
+                args.dry_run,
+                sn,
+                max_rows=args.max_rows,
+                only_codes=args.only_codes,
             )
     finally:
         c = ctx.get("connection")

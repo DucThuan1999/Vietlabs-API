@@ -28,8 +28,10 @@ public class QuotationItem
 
     // Thông tin hiển thị (có thể override từ master data)
     public string? ItemCode { get; set; } // Mã item
-    public string? ItemNameVi { get; set; } // Tên tiếng Việt
-    public string? ItemNameEn { get; set; } // Tên tiếng Anh
+    public string? ItemNameVi { get; set; } // Tên tiếng Việt (text thuần, search)
+    public string? ItemNameEn { get; set; } // Tên tiếng Anh (text thuần)
+    public string? ItemDisplayNameVi { get; set; } // Tên hiển thị có format (JSON)
+    public string? ItemDisplayNameEn { get; set; } // Tên EN hiển thị có format (JSON)
     public string? Description { get; set; } // Mô tả
 
     // Snapshot dữ liệu từ AnalysisItem (lưu khi tạo để backup)

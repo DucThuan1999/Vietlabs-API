@@ -33,6 +33,11 @@ SAMPLE_MATRIX_CSV = os.path.join(CSV_DIR, "sample_matrix.csv")
 SAMPLE_MATRIX_GROUP_CSV = os.path.join(CSV_DIR, "sample_matrix_group.csv")
 
 
+def preserve_excel_text(text: str) -> str:
+    """Giữ nguyên hoa thường từ Excel, chỉ trim khoảng trắng."""
+    return text.strip() if text else text
+
+
 def to_sentence_case(text: str) -> str:
     """
     Chuyển đổi text sang Sentence case (chữ cái đầu viết hoa, các chữ còn lại viết thường)
@@ -86,8 +91,7 @@ def load_sample_matrix_groups(csv_path: str) -> Tuple[Dict[str, str], Dict[str, 
                 name_vi = row.get('name_vi', '').strip()
                 
                 if group_id and name_vi:
-                    # Lưu mapping từ ID sang tên (sentence case)
-                    id_to_name[group_id] = to_sentence_case(name_vi)
+                    id_to_name[group_id] = preserve_excel_text(name_vi)
                     
                     # Tạo mapping với normalized name_vi
                     normalized_name = normalize_text(name_vi)
@@ -169,8 +173,7 @@ def process_sample_matrix_csv(csv_path: str, group_mapping: Dict[str, str], id_t
                 if not sample_matrix_id or not name_vi_raw:
                     continue
                 
-                # Convert name_vi sang Sentence case
-                name_vi = to_sentence_case(name_vi_raw)
+                name_vi = preserve_excel_text(name_vi_raw)
                 
                 # Tìm sample_matrix_group_id từ mapping
                 normalized_group_name = normalize_text(sample_matrix_group_name)
@@ -181,11 +184,8 @@ def process_sample_matrix_csv(csv_path: str, group_mapping: Dict[str, str], id_t
                     continue
                 
                 # Tạo record
-                # Lấy tên nhóm từ mapping ID -> name (sentence case)
-                group_name_sentence = id_to_name.get(sample_matrix_group_id)
-                if not group_name_sentence:
-                    # Fallback: dùng tên từ CSV nếu không tìm thấy trong mapping
-                    group_name_sentence = to_sentence_case(sample_matrix_group_name) if sample_matrix_group_name else None
+                group_name_excel = preserve_excel_text(sample_matrix_group_name) if sample_matrix_group_name else None
+                group_name_sentence = id_to_name.get(sample_matrix_group_id) or group_name_excel
                 
                 record = {
                     'sample_matrix_id': sample_matrix_id,
@@ -193,7 +193,7 @@ def process_sample_matrix_csv(csv_path: str, group_mapping: Dict[str, str], id_t
                     'name_vi': name_vi,
                     'name_en': None,  # Có thể thêm sau nếu cần
                     'sample_matrix_group_id': sample_matrix_group_id,
-                    'sample_matrix_group': group_name_sentence,  # Tên nhóm (sentence case)
+                    'sample_matrix_group': group_name_sentence,
                     'registered_matrix': None,  # Có thể thêm sau nếu cần
                     'status': 'Active',
                     'notes': None,

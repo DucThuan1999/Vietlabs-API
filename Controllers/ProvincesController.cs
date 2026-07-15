@@ -41,8 +41,7 @@ public class ProvincesController : ODataController
     {
         var provinces = _context.Provinces
             .Where(p => p.CountryId == countryId)
-            .Include(p => p.Country)
-            .Include(p => p.Wards);
+            .AsNoTracking();
         
         return Ok(provinces);
     }

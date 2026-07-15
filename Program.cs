@@ -160,8 +160,36 @@ builder.Services.AddScoped<VietLab.Services.IClientHistoryService, VietLab.Servi
 builder.Services.AddScoped<VietLab.Services.IQuotationHistoryService, VietLab.Services.QuotationHistoryService>();
 builder.Services.AddScoped<VietLab.Services.ModulePermissionService>();
 
+// Ký/xác thực access token (HMAC) — bắt buộc phải có key trước khi build (fail-fast thay vì phát hành token không ký).
+if (string.IsNullOrWhiteSpace(builder.Configuration["Auth:TokenSigningKey"]))
+{
+    if (builder.Environment.IsDevelopment())
+    {
+        // Dev-only: sinh key ngẫu nhiên mỗi lần khởi động để không cần cấu hình thủ công khi chạy local.
+        // Token sẽ mất hiệu lực khi restart server — chấp nhận được trong Development.
+        builder.Configuration["Auth:TokenSigningKey"] =
+            Convert.ToBase64String(System.Security.Cryptography.RandomNumberGenerator.GetBytes(32));
+    }
+    else
+    {
+        throw new InvalidOperationException(
+            "Auth:TokenSigningKey chưa được cấu hình. Đặt biến môi trường Auth__TokenSigningKey " +
+            "(chuỗi base64 ngẫu nhiên, tối thiểu 32 byte) trước khi chạy ngoài môi trường Development.");
+    }
+}
+builder.Services.AddSingleton<VietLab.Services.AccessTokenService>();
+
 builder.Services.Configure<VietLab.Configuration.SmtpOptions>(builder.Configuration.GetSection(VietLab.Configuration.SmtpOptions.SectionName));
-builder.Services.AddScoped<VietLab.Services.IEmailSender, VietLab.Services.SmtpEmailSender>();
+builder.Services.Configure<VietLab.Configuration.MicrosoftGraphMailOptions>(builder.Configuration.GetSection(VietLab.Configuration.MicrosoftGraphMailOptions.SectionName));
+builder.Services.Configure<VietLab.Configuration.AmisOptions>(builder.Configuration.GetSection(VietLab.Configuration.AmisOptions.SectionName));
+builder.Services.AddMemoryCache();
+builder.Services.AddHttpClient<VietLab.Services.IAmisAccountingService, VietLab.Services.AmisAccountingService>();
+builder.Services.AddHttpClient<VietLab.Services.IEmailSender, VietLab.Services.GraphEmailSender>(client =>
+{
+    client.BaseAddress = new Uri("https://graph.microsoft.com/v1.0/");
+    client.Timeout = TimeSpan.FromSeconds(120);
+});
+builder.Services.AddScoped<VietLab.Services.IAmisCallbackService, VietLab.Services.AmisCallbackService>();
 
 // Luôn đăng ký Authentication + scheme Bearer (tránh lỗi "No authentication handlers are registered" khi gọi [Authorize(AuthenticationSchemes = "Bearer")])
 builder.Services.AddAuthentication(options =>
@@ -177,7 +205,15 @@ var disableAuth = builder.Configuration.GetValue<bool>("DisableAuthentication", 
 
 if (!disableAuth)
 {
-    builder.Services.AddAuthorization();
+    builder.Services.AddAuthorization(options =>
+    {
+        // Bảo mật theo mặc định: MỌI endpoint yêu cầu đăng nhập trừ khi gắn [AllowAnonymous] rõ ràng.
+        // Trước đây không có FallbackPolicy nên controller nào quên gắn [Authorize] sẽ mặc định mở public
+        // (đã phát hiện AccountsController, EmployeesController, QuotationsController... không có [Authorize]).
+        options.FallbackPolicy = new Microsoft.AspNetCore.Authorization.AuthorizationPolicyBuilder()
+            .RequireAuthenticatedUser()
+            .Build();
+    });
 }
 else
 {
@@ -293,16 +329,15 @@ builder.Services.AddCors(options =>
             .AllowAnyHeader();
     });
 
-    // Policy mặc định - luôn enable cho tất cả môi trường
-    options.AddDefaultPolicy(policy =>
-    {
-        policy.AllowAnyOrigin()
-              .AllowAnyMethod()
-              .AllowAnyHeader();
-    });
+    // Không đăng ký AddDefaultPolicy(AllowAnyOrigin) — app.UseCors(corsPolicyName) bên dưới luôn chỉ định
+    // rõ policy theo tên ("AllowAll" chỉ ở Development, "AllowLocalhost" ở các môi trường khác), nên
+    // không cần policy mặc định cho phép mọi origin (tránh footgun nếu sau này có chỗ gọi UseCors() trống).
 });
 
 var app = builder.Build();
+
+// Fail-fast nếu Auth:TokenSigningKey thiếu/không hợp lệ ngoài Development, thay vì lỗi ngầm ở request đầu tiên.
+app.Services.GetRequiredService<VietLab.Services.AccessTokenService>();
 
 // Log base path để debug
 var startupLogger = app.Services.GetRequiredService<ILogger<Program>>();

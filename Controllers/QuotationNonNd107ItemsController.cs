@@ -109,7 +109,8 @@ public class QuotationNonNd107ItemsController : ODataController
         }
         catch (DbUpdateException ex)
         {
-            return this.HandleDatabaseError(ex, _logger, "lưu chỉ tiêu chưa NĐ107");
+            var label = await RegistrationPermitLabelReader.GetDisplayNameAsync(_context);
+            return this.HandleDatabaseError(ex, _logger, $"lưu chỉ tiêu chưa {label}");
         }
 
         return Created($"odata/QuotationNonNd107Items({entity.QuotationNonNd107ItemId})", entity);
@@ -130,7 +131,8 @@ public class QuotationNonNd107ItemsController : ODataController
         }
         catch (DbUpdateException ex)
         {
-            return this.HandleDatabaseError(ex, _logger, "xóa chỉ tiêu chưa NĐ107");
+            var label = await RegistrationPermitLabelReader.GetDisplayNameAsync(_context);
+            return this.HandleDatabaseError(ex, _logger, $"xóa chỉ tiêu chưa {label}");
         }
 
         return NoContent();

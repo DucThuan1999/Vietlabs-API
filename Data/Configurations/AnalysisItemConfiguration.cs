@@ -23,12 +23,19 @@ public class AnalysisItemConfiguration : IEntityTypeConfiguration<AnalysisItem>
             .HasMaxLength(255);
 
         builder.Property(ai => ai.NameVi)
-            .HasColumnName("name_vi")
-            .HasMaxLength(500);
+            .HasColumnName("name_vi");
 
         builder.Property(ai => ai.NameEn)
-            .HasColumnName("name_en")
-            .HasMaxLength(500);
+            .HasColumnName("name_en");
+
+        builder.Property(ai => ai.DisplayNameVi)
+            .HasColumnName("display_name_vi");
+
+        builder.Property(ai => ai.DisplayNameEn)
+            .HasColumnName("display_name_en");
+
+        builder.Property(ai => ai.DisplayShortName)
+            .HasColumnName("display_short_name");
 
         builder.Property(ai => ai.ShortName)
             .HasColumnName("short_name")

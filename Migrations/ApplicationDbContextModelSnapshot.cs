@@ -286,7 +286,7 @@ namespace VietLab.Migrations
                         .HasDefaultValue(false)
                         .HasColumnName("cuc_chan_nuoi");
 
-                    b.Property<Guid?>("EquipmentTypeId")
+                    b.Property<Guid>("EquipmentTypeId")
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("equipment_type_id");
 
@@ -309,6 +309,18 @@ namespace VietLab.Migrations
                         .HasColumnType("bit")
                         .HasDefaultValue(false)
                         .HasColumnName("nafi");
+
+                    b.Property<string>("DisplayNameEn")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("display_name_en");
+
+                    b.Property<string>("DisplayShortName")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("display_short_name");
+
+                    b.Property<string>("DisplayNameVi")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("display_name_vi");
 
                     b.Property<string>("NameEn")
                         .HasMaxLength(500)
@@ -362,7 +374,7 @@ namespace VietLab.Migrations
                         .HasColumnType("nvarchar(50)")
                         .HasColumnName("unit");
 
-                    b.Property<decimal?>("UnitPrice")
+                    b.Property<decimal>("UnitPrice")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("decimal(18,2)")
                         .HasDefaultValue(0m)
@@ -2531,10 +2543,6 @@ namespace VietLab.Migrations
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("quotation_code");
 
-                    b.Property<string>("QuotationTitle")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("quotation_title");
-
                     b.Property<decimal?>("QuotationDiscountPercent")
                         .HasColumnType("decimal(18,2)")
                         .HasColumnName("quotation_discount_percent");
@@ -2616,47 +2624,6 @@ namespace VietLab.Migrations
                         .HasDatabaseName("i_x_quotation_employee_id");
 
                     b.ToTable("quotation", (string)null);
-                });
-
-            modelBuilder.Entity("VietLab.Models.QuotationSample", b =>
-                {
-                    b.Property<Guid>("QuotationSampleId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("quotation_sample_id");
-
-                    b.Property<Guid>("QuotationId")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("quotation_id");
-
-                    b.Property<string>("SampleName")
-                        .HasMaxLength(2000)
-                        .HasColumnType("nvarchar(2000)")
-                        .HasColumnName("sample_name");
-
-                    b.Property<string>("SampleVolume")
-                        .HasMaxLength(2000)
-                        .HasColumnType("nvarchar(2000)")
-                        .HasColumnName("sample_volume");
-
-                    b.Property<int?>("DisplayOrder")
-                        .HasColumnType("int")
-                        .HasColumnName("display_order");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("created_at");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("updated_at");
-
-                    b.HasKey("QuotationSampleId");
-
-                    b.HasIndex("QuotationId")
-                        .HasDatabaseName("i_x_quotation_sample_quotation_id");
-
-                    b.ToTable("quotation_sample", (string)null);
                 });
 
             modelBuilder.Entity("VietLab.Models.QuotationItem", b =>
@@ -3294,18 +3261,6 @@ namespace VietLab.Migrations
                     b.Navigation("Quotation");
                 });
 
-            modelBuilder.Entity("VietLab.Models.QuotationSample", b =>
-                {
-                    b.HasOne("VietLab.Models.Quotation", "Quotation")
-                        .WithMany("QuotationSamples")
-                        .HasForeignKey("QuotationId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("f_k_quotation_sample_quotation_quotation_id");
-
-                    b.Navigation("Quotation");
-                });
-
             modelBuilder.Entity("VietLab.Models.RefreshToken", b =>
                 {
                     b.HasOne("VietLab.Models.Account", "Account")
@@ -3419,8 +3374,6 @@ namespace VietLab.Migrations
             modelBuilder.Entity("VietLab.Models.Quotation", b =>
                 {
                     b.Navigation("QuotationItems");
-
-                    b.Navigation("QuotationSamples");
                 });
 
             modelBuilder.Entity("VietLab.Models.SampleMatrixGroup", b =>

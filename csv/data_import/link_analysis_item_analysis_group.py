@@ -33,6 +33,9 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Sequence, Tuple
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import import_analysis_item as iai
+
 try:
     import pyodbc
 except ImportError:
@@ -419,7 +422,7 @@ def main() -> int:
 
         for code in codes:
             group_text = (ct_to_group.get(code) or "").strip()
-            if not group_text:
+            if not group_text or iai.is_blank_analysis_group_cell(group_text):
                 invalid_group_text += 1
                 continue
 

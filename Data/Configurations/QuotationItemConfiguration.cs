@@ -61,6 +61,12 @@ public class QuotationItemConfiguration : IEntityTypeConfiguration<QuotationItem
             .HasColumnName("item_name_en")
             .HasMaxLength(500);
 
+        builder.Property(qi => qi.ItemDisplayNameVi)
+            .HasColumnName("item_display_name_vi");
+
+        builder.Property(qi => qi.ItemDisplayNameEn)
+            .HasColumnName("item_display_name_en");
+
         builder.Property(qi => qi.Description)
             .HasColumnName("description")
             .HasMaxLength(2000);

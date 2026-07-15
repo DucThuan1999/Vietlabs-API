@@ -17,12 +17,18 @@ public class AuthController : ControllerBase
     private readonly ApplicationDbContext _context;
     private readonly ILogger<AuthController> _logger;
     private readonly ModulePermissionService _modulePerm;
+    private readonly AccessTokenService _tokenService;
 
-    public AuthController(ApplicationDbContext context, ILogger<AuthController> logger, ModulePermissionService modulePerm)
+    public AuthController(
+        ApplicationDbContext context,
+        ILogger<AuthController> logger,
+        ModulePermissionService modulePerm,
+        AccessTokenService tokenService)
     {
         _context = context;
         _logger = logger;
         _modulePerm = modulePerm;
+        _tokenService = tokenService;
     }
 
     private async Task<UserInfo> MapToUserInfoAsync(Account account, CancellationToken ct = default)
@@ -63,64 +69,6 @@ public class AuthController : ControllerBase
 
         try
         {
-            // Bypass test với password admin
-            if (request.Password == "admin")
-            {
-                // Tìm account đầu tiên có status Active, hoặc tìm theo username nếu có
-                var adminAccount = await _context.Accounts
-                    .Include(a => a.Employee).ThenInclude(e => e!.Department)
-                    .FirstOrDefaultAsync(a => 
-                        (string.IsNullOrEmpty(request.UserName) || a.UserName == request.UserName) 
-                        && a.Status == "Active");
-
-                if (adminAccount == null)
-                {
-                    // Nếu không tìm thấy account, tìm account đầu tiên có status Active
-                    adminAccount = await _context.Accounts
-                        .Include(a => a.Employee).ThenInclude(e => e!.Department)
-                        .FirstOrDefaultAsync(a => a.Status == "Active");
-                    
-                    if (adminAccount == null)
-                    {
-                        _logger.LogWarning("Admin bypass: No active account found in database");
-                        return Unauthorized(new LoginResponse
-                        {
-                            Success = false,
-                            Message = "Không tìm thấy account nào trong hệ thống"
-                        });
-                    }
-                }
-
-                // Tạo access token và refresh token
-                var adminAccessToken = GenerateSimpleToken(adminAccount.AccountId, adminAccount.UserName);
-                var adminRefreshToken = await GenerateAndSaveRefreshToken(adminAccount.AccountId);
-
-                // Tạo response với account tìm được
-                var adminUser = await MapToUserInfoAsync(adminAccount);
-                if (adminAccount.Employee == null)
-                {
-                    if (string.IsNullOrWhiteSpace(adminUser.FullName)) adminUser.FullName = "Admin User";
-                    if (string.IsNullOrWhiteSpace(adminUser.Email)) adminUser.Email = "admin@viet-labs.com";
-                    if (string.IsNullOrWhiteSpace(adminUser.Department)) adminUser.Department = "IT";
-                    if (string.IsNullOrWhiteSpace(adminUser.Role)) adminUser.Role = "Admin";
-                    if (string.IsNullOrWhiteSpace(adminUser.Title)) adminUser.Title = "Administrator";
-                }
-
-                var adminResponse = new LoginResponse
-                {
-                    Success = true,
-                    Message = "Đăng nhập thành công (Admin Bypass)",
-                    User = adminUser,
-                    Token = adminAccessToken,
-                    RefreshToken = adminRefreshToken.Token,
-                    TokenExpiresAt = DateTime.UtcNow.AddHours(1), // Access token hết hạn sau 1 giờ
-                    RefreshTokenExpiresAt = adminRefreshToken.ExpiresAt
-                };
-
-                _logger.LogInformation("Admin bypass login successful: {UserName}", request.UserName);
-                return Ok(adminResponse);
-            }
-
             // Tìm account theo username
             var account = await _context.Accounts
                 .Include(a => a.Employee).ThenInclude(e => e!.Department)
@@ -138,8 +86,7 @@ public class AuthController : ControllerBase
 
             // Kiểm tra password (so sánh hash)
             // Lưu ý: Trong production nên dùng BCrypt hoặc ASP.NET Identity
-            var passwordHash = HashPassword(request.Password);
-            var isValid = VerifyPassword(request.Password, account.PasswordHash, request.UserName);
+            var isValid = VerifyPassword(request.Password, account.PasswordHash);
             
             if (!isValid)
             {
@@ -163,8 +110,8 @@ public class AuthController : ControllerBase
             }
 
             // Tạo access token và refresh token
-            var accessToken = GenerateSimpleToken(account.AccountId, account.UserName);
-            var refreshToken = await GenerateAndSaveRefreshToken(account.AccountId);
+            var accessToken = _tokenService.Sign(account.AccountId, account.UserName);
+            var (refreshTokenEntity, refreshTokenRaw) = await GenerateAndSaveRefreshToken(account.AccountId);
 
             // Tạo response với thông tin user
             var response = new LoginResponse
@@ -173,9 +120,9 @@ public class AuthController : ControllerBase
                 Message = "Đăng nhập thành công",
                     User = await MapToUserInfoAsync(account),
                 Token = accessToken,
-                RefreshToken = refreshToken.Token,
-                TokenExpiresAt = DateTime.UtcNow.AddHours(1), // Access token hết hạn sau 1 giờ
-                RefreshTokenExpiresAt = refreshToken.ExpiresAt
+                RefreshToken = refreshTokenRaw,
+                TokenExpiresAt = DateTime.UtcNow.Add(_tokenService.AccessTokenLifetime),
+                RefreshTokenExpiresAt = refreshTokenEntity.ExpiresAt
             };
 
             _logger.LogInformation("Login successful: {UserName}", request.UserName);
@@ -205,58 +152,20 @@ public class AuthController : ControllerBase
     }
 
     /// <summary>
-    /// Verify password với hash hiện có
+    /// Verify password với hash hiện có.
     /// </summary>
-    private bool VerifyPassword(string password, string storedHash, string userName)
+    private bool VerifyPassword(string password, string storedHash)
     {
-        // Nếu storedHash là format cũ từ seed data (hashed-password-X)
-        if (storedHash.StartsWith("hashed-password-"))
-        {
-            // Đây là seed data, cho phép các password đơn giản để test
-            var simplePasswords = new[] { "password", "123456", "admin", userName.ToLower() };
-            
-            // Cho phép password đơn giản
-            if (simplePasswords.Contains(password.ToLower()))
-            {
-                return true;
-            }
-            
-            // Nếu password nhập vào chính là storedHash (tương thích với seed data)
-            // Ví dụ: password = "hashed-password-7" và storedHash = "hashed-password-7"
-            if (password == storedHash)
-            {
-                return true;
-            }
-            
-            return false;
-        }
-
-        // Nếu password nhập vào chính là storedHash (fallback cho trường hợp đặc biệt)
-        if (password == storedHash)
-        {
-            return true;
-        }
-
-        // So sánh hash thông thường
         var passwordHash = HashPassword(password);
         return passwordHash == storedHash;
     }
 
     /// <summary>
-    /// Generate simple token (có thể thay bằng JWT token)
+    /// Generate và lưu refresh token vào database. Chỉ hash của token được lưu (giống cách lưu
+    /// password) — nếu DB bị lộ/truy vấn trái phép, kẻ tấn công không lấy được refresh token dùng ngay
+    /// được mà không cần crack. Trả về (entity, rawToken) — chỉ rawToken được gửi cho client.
     /// </summary>
-    private string GenerateSimpleToken(Guid accountId, string userName)
-    {
-        // Simple token: Base64 của AccountId + UserName + Timestamp
-        // Trong production nên dùng JWT
-        var tokenData = $"{accountId}:{userName}:{DateTime.UtcNow:yyyyMMddHHmmss}";
-        return Convert.ToBase64String(Encoding.UTF8.GetBytes(tokenData));
-    }
-
-    /// <summary>
-    /// Generate và lưu refresh token vào database
-    /// </summary>
-    private async Task<Models.RefreshToken> GenerateAndSaveRefreshToken(Guid accountId)
+    private async Task<(Models.RefreshToken Entity, string RawToken)> GenerateAndSaveRefreshToken(Guid accountId)
     {
         // Revoke tất cả refresh token cũ của account này
         var oldTokens = await _context.RefreshTokens
@@ -270,11 +179,12 @@ public class AuthController : ControllerBase
         }
 
         // Tạo refresh token mới
+        var rawToken = GenerateRefreshTokenString();
         var refreshToken = new Models.RefreshToken
         {
             RefreshTokenId = Guid.NewGuid(),
             AccountId = accountId,
-            Token = GenerateRefreshTokenString(),
+            Token = HashRefreshToken(rawToken),
             ExpiresAt = DateTime.UtcNow.AddDays(7), // Refresh token hết hạn sau 7 ngày
             CreatedAt = DateTime.UtcNow,
             IsRevoked = false
@@ -283,7 +193,7 @@ public class AuthController : ControllerBase
         _context.RefreshTokens.Add(refreshToken);
         await _context.SaveChangesAsync();
 
-        return refreshToken;
+        return (refreshToken, rawToken);
     }
 
     /// <summary>
@@ -297,6 +207,13 @@ public class AuthController : ControllerBase
             rng.GetBytes(randomBytes);
         }
         return Convert.ToBase64String(randomBytes).Replace("+", "-").Replace("/", "_").Replace("=", "");
+    }
+
+    /// <summary>Hash refresh token để lưu trữ (token đã có đủ entropy ngẫu nhiên nên không cần salt).</summary>
+    private static string HashRefreshToken(string rawToken)
+    {
+        var hashedBytes = SHA256.HashData(Encoding.UTF8.GetBytes(rawToken));
+        return Convert.ToBase64String(hashedBytes);
     }
 
     /// <summary>
@@ -317,12 +234,13 @@ public class AuthController : ControllerBase
 
         try
         {
-            // Tìm refresh token trong database
+            // Tìm refresh token trong database (so khớp theo hash — DB chỉ lưu hash, không lưu raw token)
+            var requestTokenHash = HashRefreshToken(request.RefreshToken);
             var refreshToken = await _context.RefreshTokens
                 .Include(rt => rt.Account!)
                     .ThenInclude(a => a.Employee)
                 .Include(rt => rt.Account!)
-                .FirstOrDefaultAsync(rt => rt.Token == request.RefreshToken && !rt.IsRevoked);
+                .FirstOrDefaultAsync(rt => rt.Token == requestTokenHash && !rt.IsRevoked);
 
             if (refreshToken == null)
             {
@@ -365,10 +283,10 @@ public class AuthController : ControllerBase
             refreshToken.RevokedReason = "Rotated";
 
             // Tạo refresh token mới
-            var newRefreshToken = await GenerateAndSaveRefreshToken(refreshToken.AccountId);
+            var (newRefreshTokenEntity, newRefreshTokenRaw) = await GenerateAndSaveRefreshToken(refreshToken.AccountId);
 
             // Tạo access token mới
-            var newAccessToken = GenerateSimpleToken(refreshToken.Account.AccountId, refreshToken.Account.UserName);
+            var newAccessToken = _tokenService.Sign(refreshToken.Account.AccountId, refreshToken.Account.UserName);
 
             var accFull = await _context.Accounts
                 .Include(a => a.Employee).ThenInclude(e => e!.Department)
@@ -381,9 +299,9 @@ public class AuthController : ControllerBase
                 Success = true,
                 Message = "Token đã được làm mới thành công",
                 Token = newAccessToken,
-                RefreshToken = newRefreshToken.Token,
-                TokenExpiresAt = DateTime.UtcNow.AddHours(1),
-                RefreshTokenExpiresAt = newRefreshToken.ExpiresAt,
+                RefreshToken = newRefreshTokenRaw,
+                TokenExpiresAt = DateTime.UtcNow.Add(_tokenService.AccessTokenLifetime),
+                RefreshTokenExpiresAt = newRefreshTokenEntity.ExpiresAt,
                 User = accFull != null ? await MapToUserInfoAsync(accFull) : null
             });
         }
@@ -437,7 +355,7 @@ public class AuthController : ControllerBase
                 return Unauthorized(new { success = false, message = "Tài khoản không tồn tại hoặc đã bị vô hiệu hóa." });
             }
 
-            if (!VerifyPassword(request.CurrentPassword, account.PasswordHash, account.UserName))
+            if (!VerifyPassword(request.CurrentPassword, account.PasswordHash))
             {
                 _logger.LogWarning("ChangePassword: Current password incorrect for user - {UserName}", account.UserName);
                 return BadRequest(new { success = false, message = "Mật khẩu hiện tại không đúng." });
@@ -467,20 +385,8 @@ public class AuthController : ControllerBase
         if (string.IsNullOrWhiteSpace(token))
             return Unauthorized(new { success = false, message = "Thiếu accessToken." });
 
-        Guid accountId;
-        string userName;
-        try
-        {
-            var tokenString = Encoding.UTF8.GetString(Convert.FromBase64String(token));
-            var tokenParts = tokenString.Split(':');
-            if (tokenParts.Length < 2 || !Guid.TryParse(tokenParts[0], out accountId))
-                return Unauthorized(new { success = false, message = "Token không hợp lệ." });
-            userName = tokenParts[1];
-        }
-        catch
-        {
-            return Unauthorized(new { success = false, message = "Token không hợp lệ." });
-        }
+        if (!_tokenService.TryValidate(token, out var accountId, out var userName))
+            return Unauthorized(new { success = false, message = "Token không hợp lệ hoặc đã hết hạn." });
 
         var account = await _context.Accounts
             .Include(a => a.Employee).ThenInclude(e => e!.Department)

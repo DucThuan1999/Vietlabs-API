@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Cập nhật DB: xóa nhóm chỉ tiêu name_vi = N/A (trim), gán analysis_group_id = NULL cho chỉ tiêu liên quan.
+Cập nhật DB: xóa nhóm chỉ tiêu sentinel (-, NA, N/A, …), gán analysis_group_id = NULL cho chỉ tiêu liên quan.
 
-Giống logic migration 20260413120000_RemoveNaAnalysisGroupAndNullableAnalysisItemGroup.
+Giống logic migration 20260413120000_RemoveNaAnalysisGroupAndNullableAnalysisItemGroup,
+mở rộng thêm các giá trị trống trên Excel V3.
 
 Kết nối: cùng style các script trong thư mục này — sửa CONNECTION_STRING bên dưới.
 Có thể ghi đè bằng biến môi trường VIETLABS_SQL_ODBC hoặc tham số --conn (không bắt buộc).
@@ -37,47 +38,62 @@ CONNECTION_STRING = (
     "Login Timeout=60;"
 )
 
+# Khớp import_analysis_item.is_blank_analysis_group_cell (sau trim + bỏ khoảng trắng, so sánh UPPER).
+SENTINEL_WHERE = """
+(
+    LTRIM(RTRIM(ISNULL(name_vi, N''))) IN (N'-', N'--')
+    OR UPPER(REPLACE(LTRIM(RTRIM(ISNULL(name_vi, N''))), N' ', N'')) IN (
+        N'NA', N'N/A', N'NONE', N'NULL', N'KHÔNG', N'KHONGCO'
+    )
+)
+"""
 
-SQL_PREVIEW = """
+SQL_PREVIEW = f"""
 SELECT analysis_group_id, analysis_group_code, name_vi, name_en
 FROM analysis_group
-WHERE LTRIM(RTRIM(ISNULL(name_vi, N''))) = N'N/A';
+WHERE {SENTINEL_WHERE};
 """
 
-SQL_RUN = """
-DECLARE @ids TABLE (id UNIQUEIDENTIFIER NOT NULL);
-INSERT INTO @ids (id)
-SELECT analysis_group_id
-FROM analysis_group
-WHERE LTRIM(RTRIM(ISNULL(name_vi, N''))) = N'N/A';
+SQL_STEPS = [
+    f"""
+    DECLARE @ids TABLE (id UNIQUEIDENTIFIER NOT NULL);
+    INSERT INTO @ids (id)
+    SELECT analysis_group_id FROM analysis_group WHERE {SENTINEL_WHERE};
 
-UPDATE ai
-SET analysis_group_id = NULL,
-    updated_at = SYSUTCDATETIME()
-FROM analysis_item ai
-INNER JOIN @ids i ON ai.analysis_group_id = i.id;
+    UPDATE ai SET analysis_group_id = NULL, updated_at = SYSUTCDATETIME()
+    FROM analysis_item ai INNER JOIN @ids i ON ai.analysis_group_id = i.id;
+    """,
+    f"""
+    DECLARE @ids TABLE (id UNIQUEIDENTIFIER NOT NULL);
+    INSERT INTO @ids (id)
+    SELECT analysis_group_id FROM analysis_group WHERE {SENTINEL_WHERE};
 
-DELETE pag
-FROM package_analysis_group pag
-INNER JOIN @ids i ON pag.analysis_group_id = i.id;
+    DELETE pag FROM package_analysis_group pag INNER JOIN @ids i ON pag.analysis_group_id = i.id;
+    """,
+    f"""
+    DECLARE @ids TABLE (id UNIQUEIDENTIFIER NOT NULL);
+    INSERT INTO @ids (id)
+    SELECT analysis_group_id FROM analysis_group WHERE {SENTINEL_WHERE};
 
-UPDATE qi
-SET analysis_group_id = NULL,
-    updated_at = SYSUTCDATETIME()
-FROM quotation_item qi
-INNER JOIN @ids i ON qi.analysis_group_id = i.id;
+    UPDATE qi SET analysis_group_id = NULL, updated_at = SYSUTCDATETIME()
+    FROM quotation_item qi INNER JOIN @ids i ON qi.analysis_group_id = i.id;
+    """,
+    f"""
+    DECLARE @ids TABLE (id UNIQUEIDENTIFIER NOT NULL);
+    INSERT INTO @ids (id)
+    SELECT analysis_group_id FROM analysis_group WHERE {SENTINEL_WHERE};
 
-IF OBJECT_ID(N'quotation_analysis_group', N'U') IS NOT NULL
-BEGIN
-    DELETE qag
-    FROM quotation_analysis_group qag
-    INNER JOIN @ids i ON qag.analysis_group_id = i.id;
-END
+    IF OBJECT_ID(N'quotation_analysis_group', N'U') IS NOT NULL
+        DELETE qag FROM quotation_analysis_group qag INNER JOIN @ids i ON qag.analysis_group_id = i.id;
+    """,
+    f"""
+    DECLARE @ids TABLE (id UNIQUEIDENTIFIER NOT NULL);
+    INSERT INTO @ids (id)
+    SELECT analysis_group_id FROM analysis_group WHERE {SENTINEL_WHERE};
 
-DELETE ag
-FROM analysis_group ag
-INNER JOIN @ids i ON ag.analysis_group_id = i.id;
-"""
+    DELETE ag FROM analysis_group ag INNER JOIN @ids i ON ag.analysis_group_id = i.id;
+    """,
+]
 
 
 def ensure_nullable_analysis_group_id(cur: "pyodbc.Cursor") -> None:
@@ -103,7 +119,9 @@ def ensure_nullable_analysis_group_id(cur: "pyodbc.Cursor") -> None:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Xóa nhóm N/A và gỡ FK chỉ tiêu / báo giá / gói.")
+    parser = argparse.ArgumentParser(
+        description="Xóa nhóm chỉ tiêu sentinel (-, NA, N/A, …) và gỡ FK chỉ tiêu / báo giá / gói."
+    )
     parser.add_argument(
         "--conn",
         default="",
@@ -126,7 +144,7 @@ def main() -> int:
         cur.execute(SQL_PREVIEW)
         rows: List[Tuple] = cur.fetchall()
         if not rows:
-            print("Không có analysis_group nào có name_vi = N/A (sau trim).")
+            print("Không có analysis_group sentinel nào (-, NA, N/A, …).")
             return 0
         print("Nhóm sẽ xóa (analysis_group_id, code, name_vi, name_en):")
         for r in rows:
@@ -137,9 +155,10 @@ def main() -> int:
             return 0
 
         ensure_nullable_analysis_group_id(cur)
-        cur.execute(SQL_RUN)
+        for step_sql in SQL_STEPS:
+            cur.execute(step_sql)
         conn.commit()
-        print("Đã commit: gỡ liên kết + xóa nhóm N/A.")
+        print("Đã commit: gỡ liên kết + xóa nhóm sentinel.")
         return 0
     except Exception as ex:
         conn.rollback()

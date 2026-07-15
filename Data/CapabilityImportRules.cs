@@ -66,22 +66,21 @@ public static class CapabilityImportRules
     /// (đã gộp trùng không phân biệt hoa thường, ví dụ hai biến thể &quot;Bao bì… Thực phẩm/thực phẩm&quot;).
     /// Seed vào <see cref="VietLab.Models.SampleMatrixGroup"/> qua <see cref="Layer0ReferenceDataSeeder"/>.
     /// </summary>
-    public static readonly ReadOnlyCollection<SampleMatrixGroupSeed> SampleMatrixGroupsFromCapabilityXlsx =
+        public static readonly ReadOnlyCollection<SampleMatrixGroupSeed> SampleMatrixGroupsFromCapabilityXlsx =
         new(
         [
             new("Bao bì tiếp xúc với thực phẩm", "Food contact packaging"),
             new("Dầu mỡ động thực vật", "Animal and vegetable oils and fats"),
             new("Hóa chất", "Chemicals"),
-            new("Mẫu bệnh phẩm thú y", "Veterinary specimens"),
             new("Mẫu vệ sinh bề mặt", "Surface hygiene samples"),
             new("Mỹ phẩm", "Cosmetics"),
             new("Nước", "Water"),
             new("Nước uống có cồn và không cồn", "Alcoholic and non-alcoholic beverages"),
             new("Phân bón, chế phẩm sinh học", "Fertilizers and biological products"),
-            new("Phụ gia thực phẩm", "Food additives"),
+            new("phụ gia Thực phẩm", "Food additives"),
             new("Thức ăn và nguyên liệu thức ăn", "Animal feed and feed ingredients"),
             new("Thực phẩm", "Food"),
-            new("Đất", "Soil")
+            new("Đất", "Soil"),
         ]);
 
     /// <summary>

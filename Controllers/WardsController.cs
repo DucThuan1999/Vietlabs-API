@@ -41,8 +41,7 @@ public class WardsController : ODataController
     {
         var wards = _context.Wards
             .Where(w => w.ProvinceId == provinceId)
-            .Include(w => w.Province)
-            .Include(w => w.Country);
+            .AsNoTracking();
         
         return Ok(wards);
     }
@@ -54,8 +53,7 @@ public class WardsController : ODataController
     {
         var wards = _context.Wards
             .Where(w => w.CountryId == countryId)
-            .Include(w => w.Province)
-            .Include(w => w.Country);
+            .AsNoTracking();
         
         return Ok(wards);
     }
